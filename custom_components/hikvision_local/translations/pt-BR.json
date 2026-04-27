@@ -23,5 +23,12 @@
       "insufficient_permission": "Acesso proibido, verifique as permissões do usuário",
       "unknown": "Erro inesperado"
     }
+  },
+  "entity": {
+    "light": {
+      "supplement_light": {
+        "name": "Luz suplementar"
+      }
+    }
   }
 }

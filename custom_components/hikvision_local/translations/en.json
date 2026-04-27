@@ -105,6 +105,11 @@
         "name": "Transcoded Stream"
       }
     },
+    "light": {
+      "supplement_light": {
+        "name": "Supplement Light"
+      }
+    },
     "sensor": {
       "notifications_host_protocol_type": {
         "name": "Notifications Host Protocol"

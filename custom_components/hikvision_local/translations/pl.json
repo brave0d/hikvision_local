@@ -105,6 +105,11 @@
         "name": "Strumień transkodowany"
       }
     },
+    "light": {
+      "supplement_light": {
+        "name": "Oświetlenie dodatkowe"
+      }
+    },
     "sensor": {
       "notifications_host_protocol_type": {
         "name": "Host powiadomień protokół"

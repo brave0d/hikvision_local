@@ -23,5 +23,12 @@
       "insufficient_permission": "Accès refusé, veuillez vérifier les permissions de l'utilisateur",
       "unknown": "Erreur innatendue"
     }
+  },
+  "entity": {
+    "light": {
+      "supplement_light": {
+        "name": "Lumière auxiliaire"
+      }
+    }
   }
 }

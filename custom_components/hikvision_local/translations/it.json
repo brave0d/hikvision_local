@@ -23,5 +23,12 @@
       "insufficient_permission": "Accesso negato, controlla i permessi dell utente",
       "unknown": "Errore inaspettato"
     }
+  },
+  "entity": {
+    "light": {
+      "supplement_light": {
+        "name": "Luce supplementare"
+      }
+    }
   }
 }

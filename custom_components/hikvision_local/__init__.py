@@ -34,6 +34,7 @@ PLATFORMS = [
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.IMAGE,
+    Platform.LIGHT,
 ]
 
 type HikvisionConfigEntry = ConfigEntry[HikvisionDevice]

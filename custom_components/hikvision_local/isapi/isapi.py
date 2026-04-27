@@ -42,6 +42,9 @@ from .models import (
     MutexIssue,
     ProtocolsInfo,
     StorageInfo,
+    SupplementLight,
+    SupplementLightCapabilities,
+    SupplementLightState,
 )
 from .utils import bool_to_str, deep_get, parse_isapi_response, str_to_bool
 
@@ -97,6 +100,33 @@ class ISAPIClient:
         self.storage: list[StorageInfo] = []
         self.protocols = ProtocolsInfo()
         self.pending_initialization = False
+
+    @staticmethod
+    def _node_text(node: Any, default: str | None = None) -> str | None:
+        if node is None:
+            return default
+        if isinstance(node, dict):
+            return node.get("#text", default)
+        return node
+
+    @staticmethod
+    def _node_opt_list(node: Any) -> list[str]:
+        if node is None:
+            return []
+        if isinstance(node, dict):
+            value = node.get("@opt") or node.get("#text")
+        else:
+            value = node
+        if not value:
+            return []
+        return [opt for opt in str(value).split(",") if opt]
+
+    @staticmethod
+    def _parse_int(value: Any, default: int = 0) -> int:
+        try:
+            return int(value)
+        except TypeError, ValueError:
+            return default
 
     async def get_device_info(self):
         """Get device info."""
@@ -197,6 +227,10 @@ class ISAPIClient:
                     streams=await self.get_camera_streams(channel_id),
                 )
                 self.cameras.append(camera)
+
+                supplement_light = await self.get_camera_supplement_light(channel_id)
+                if supplement_light:
+                    camera.supplement_light = supplement_light
         else:
             # Get analog and digital cameras attached to NVR
             if self.capabilities.digital_cameras_inputs > 0:
@@ -217,22 +251,24 @@ class ISAPIClient:
                         # serial no is not always recognized correcly by NVR
                         serial_no = f"{self.device_info.serial_no}_{source.get('proxyProtocol')}_{camera_id}"
 
-                    self.cameras.append(
-                        IPCamera(
-                            id=int(camera_id),
-                            name=digital_camera.get("name"),
-                            model=source.get("model", "Unknown"),
-                            serial_no=serial_no,
-                            firmware=source.get("firmwareVersion"),
-                            input_port=int(source.get("srcInputPort")),
-                            connection_type=CONNECTION_TYPE_PROXIED,
-                            ip_addr=source.get("ipAddress"),
-                            ip_port=source.get("managePortNo"),
-                            streams=await self.get_camera_streams(
-                                camera_id, default_streams=source.get("proxyProtocol") != "HIKVISION"
-                            ),
-                        )
+                    camera = IPCamera(
+                        id=int(camera_id),
+                        name=digital_camera.get("name"),
+                        model=source.get("model", "Unknown"),
+                        serial_no=serial_no,
+                        firmware=source.get("firmwareVersion"),
+                        input_port=int(source.get("srcInputPort")),
+                        connection_type=CONNECTION_TYPE_PROXIED,
+                        ip_addr=source.get("ipAddress"),
+                        ip_port=source.get("managePortNo"),
+                        streams=await self.get_camera_streams(
+                            camera_id, default_streams=source.get("proxyProtocol") != "HIKVISION"
+                        ),
                     )
+                    supplement_light = await self.get_camera_supplement_light(int(camera_id))
+                    if supplement_light:
+                        camera.supplement_light = supplement_light
+                    self.cameras.append(camera)
 
             # Get analog cameras
             if self.capabilities.analog_cameras_inputs > 0:
@@ -250,17 +286,19 @@ class ISAPIClient:
                     device_serial_no = f"{self.device_info.serial_no}-VI{camera_id}"
                     input_port = clean_int(analog_camera.get("inputPort"))
 
-                    self.cameras.append(
-                        AnalogCamera(
-                            id=camera_id,
-                            name=analog_camera.get("name"),
-                            model=analog_camera.get("resDesc"),
-                            serial_no=device_serial_no,
-                            input_port=input_port,
-                            connection_type=CONNECTION_TYPE_DIRECT,
-                            streams=await self.get_camera_streams(camera_id),
-                        )
+                    camera = AnalogCamera(
+                        id=camera_id,
+                        name=analog_camera.get("name"),
+                        model=analog_camera.get("resDesc"),
+                        serial_no=device_serial_no,
+                        input_port=input_port,
+                        connection_type=CONNECTION_TYPE_DIRECT,
+                        streams=await self.get_camera_streams(camera_id),
                     )
+                    supplement_light = await self.get_camera_supplement_light(int(camera_id))
+                    if supplement_light:
+                        camera.supplement_light = supplement_light
+                    self.cameras.append(camera)
 
     async def get_protocols(self):
         """Get protocols and ports."""
@@ -371,6 +409,89 @@ class ISAPIClient:
                             events.append(event)
 
         return events
+
+    async def get_camera_supplement_light(self, channel_id: int) -> SupplementLight | None:
+        """Fetch camera supplement light details if supported."""
+
+        capabilities = await self.get_supplement_light_capabilities(channel_id)
+        if not capabilities or not capabilities.supported_modes:
+            return None
+
+        state = await self.get_supplement_light_state(channel_id)
+        if not state:
+            return None
+
+        return SupplementLight(channel_id=channel_id, capabilities=capabilities, state=state)
+
+    async def get_supplement_light_capabilities(self, channel_id: int) -> SupplementLightCapabilities | None:
+        """Retrieve supplement light capabilities for a given channel."""
+
+        try:
+            response = await self.request(GET, f"Image/channels/{channel_id}/capabilities")
+        except HTTPStatusError, httpx.HTTPError, ISAPIForbiddenError, ISAPIUnauthorizedError:
+            return None
+
+        supplement = deep_get(response, "ImageChannel.SupplementLight")
+        if not supplement:
+            return None
+
+        brightness_node = supplement.get("whiteLightBrightness", {}) or {}
+        brightness_min = self._parse_int(brightness_node.get("@min"), 0)
+        brightness_max = self._parse_int(brightness_node.get("@max"), 100)
+        auto_cfg = str_to_bool(str(self._node_text(supplement.get("isAutoModeBrightnessCfg"), "false")))
+
+        return SupplementLightCapabilities(
+            supported_modes=self._node_opt_list(supplement.get("supplementLightMode")),
+            supported_regulation_modes=self._node_opt_list(supplement.get("mixedLightBrightnessRegulatMode")),
+            brightness_min=brightness_min,
+            brightness_max=brightness_max,
+            auto_mode_brightness_configurable=auto_cfg,
+        )
+
+    async def get_supplement_light_state(self, channel_id: int) -> SupplementLightState | None:
+        """Get supplement light state for a channel."""
+
+        try:
+            response = await self.request(GET, f"Image/channels/{channel_id}/supplementLight")
+        except HTTPStatusError, httpx.HTTPError, ISAPIForbiddenError, ISAPIUnauthorizedError:
+            return None
+
+        supplement = response.get("SupplementLight") or deep_get(response, "ImageChannel.SupplementLight")
+        if not supplement:
+            return None
+
+        mode = self._node_text(supplement.get("supplementLightMode"))
+        if not mode:
+            return None
+
+        brightness_node = supplement.get("whiteLightBrightness")
+        brightness = self._parse_int(self._node_text(brightness_node), 0)
+        regulation_mode = self._node_text(supplement.get("mixedLightBrightnessRegulatMode"))
+
+        return SupplementLightState(mode=mode, brightness=brightness, regulation_mode=regulation_mode)
+
+    async def set_supplement_light_state(
+        self,
+        channel_id: int,
+        mode: str,
+        brightness: int,
+        regulation_mode: str | None = None,
+    ) -> SupplementLightState:
+        """Set supplement light state."""
+
+        payload = {
+            "SupplementLight": {
+                "supplementLightMode": mode,
+                "whiteLightBrightness": str(brightness),
+            }
+        }
+
+        if regulation_mode:
+            payload["SupplementLight"]["mixedLightBrightnessRegulatMode"] = regulation_mode
+
+        xml = xmltodict.unparse(payload)
+        await self.request(PUT, f"Image/channels/{channel_id}/supplementLight", present="xml", data=xml)
+        return SupplementLightState(mode=mode, brightness=brightness, regulation_mode=regulation_mode)
 
     def get_event_url(self, event_id: str, channel_id: int, io_port_id: int, is_proxy: bool) -> str | None:
         """Get event ISAPI URL."""
@@ -895,12 +1016,17 @@ class ISAPIClient:
             if not self._auth_method:
                 await self._detect_auth_method()
 
+            request_kwargs = {
+                "auth": self._auth_method,
+                "timeout": self.timeout,
+            }
+            if data is not None:
+                request_kwargs["content"] = data
+
             response = await self._session.request(
                 method,
                 full_url,
-                auth=self._auth_method,
-                content=data,
-                timeout=self.timeout,
+                **request_kwargs,
             )
             response.raise_for_status()
             result = parse_isapi_response(response, present)

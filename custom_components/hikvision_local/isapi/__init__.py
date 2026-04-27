@@ -11,4 +11,7 @@ from .models import (  # noqa: F401
     EventInfo,
     IPCamera,
     StorageInfo,
+    SupplementLight,
+    SupplementLightCapabilities,
+    SupplementLightState,
 )
