@@ -1377,6 +1377,9 @@
             ]
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "status_code": 403
       }
     }
   }

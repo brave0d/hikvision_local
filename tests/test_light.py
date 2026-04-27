@@ -12,10 +12,10 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from tests.conftest import TEST_HOST
 
 
-ENTITY_ID = "light.ds_2cd2346g2_isu_sl00000000aawrj00000000_1_supplement_light"
+ENTITY_ID = "light.ds_2cd2386g2_iu00000000aawrj00000000_1_supplement_light"
 
 
-@pytest.mark.parametrize("init_integration", ["DS-2CD2346G2-ISU"], indirect=True)
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
 async def test_supplement_light_state(
     hass: HomeAssistant,
     init_integration: MockConfigEntry,
@@ -28,7 +28,7 @@ async def test_supplement_light_state(
     assert state.attributes.get("regulation_mode") == "auto"
 
 
-@pytest.mark.parametrize("init_integration", ["DS-2CD2346G2-ISU"], indirect=True)
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
 async def test_supplement_light_turn_on_off(
     hass: HomeAssistant,
     respx_mock: respx.Router,

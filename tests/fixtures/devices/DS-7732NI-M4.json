@@ -8695,6 +8695,60 @@
             "sensitivityLevel": "50"
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/2/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/3/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/4/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/5/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/6/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/7/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/8/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/9/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/10/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/11/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/12/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/13/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/14/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/15/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/16/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/17/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/18/capabilities": {
+        "status_code": 403
       }
     }
   }

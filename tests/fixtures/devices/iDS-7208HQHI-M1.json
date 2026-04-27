@@ -4458,6 +4458,30 @@
             "vehicleMisinfoFilterEnabled": "false"
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/2/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/3/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/4/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/5/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/6/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/7/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/8/capabilities": {
+        "status_code": 403
       }
     }
   }

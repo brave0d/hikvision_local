@@ -2078,6 +2078,12 @@
             }
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "status_code": 403
+      },
+      "Image/channels/2/capabilities": {
+        "status_code": 403
       }
     }
   }

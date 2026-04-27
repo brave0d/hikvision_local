@@ -1230,6 +1230,20 @@
             ]
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "response": {
+          "ImageChannel": {
+            "@version": "1.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "id": "1",
+            "inputPort": "1",
+            "imageMode": {
+              "@opt": "standard,indoor,dimLight,outdoor",
+              "#text": "standard"
+            }
+          }
+        }
       }
     }
   }
