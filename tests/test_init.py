@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -191,3 +192,23 @@ async def test_async_setup_entry_nvr_outside_network(hass: HomeAssistant, init_i
     await hass.async_block_till_done()
 
     assert not hass.data.get(DOMAIN)
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_camera_devices_linked_to_nvr(hass: HomeAssistant, init_integration: MockConfigEntry, caplog) -> None:
+    """Test camera devices are linked to the NVR device without deprecated via_device."""
+
+    device: HikvisionDevice = init_integration.runtime_data
+    device_registry = dr.async_get(hass)
+
+    devices = dr.async_entries_for_config_entry(device_registry, init_integration.entry_id)
+    nvr_identifier = (DOMAIN, device.device_info.serial_no)
+    nvr_device = next(entry for entry in devices if nvr_identifier in entry.identifiers)
+    assert nvr_device.via_device_id is None
+
+    camera_devices = [entry for entry in devices if entry.id != nvr_device.id]
+    assert len(camera_devices) > 0
+    for camera_device in camera_devices:
+        assert camera_device.via_device_id == nvr_device.id
+
+    assert "deprecated `via_device`" not in caplog.text
