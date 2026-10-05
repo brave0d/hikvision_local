@@ -1947,6 +1947,270 @@
       },
       "Image/channels/1/capabilities": {
         "status_code": 403
+      },
+      "Event/triggers/notifications/AudioAlarm/capabilities?format=json": {
+        "response": {
+          "AudioAlarmCap": {
+            "audioTypeListCap": [
+              {
+                "audioID": 1,
+                "audioDescription": "Siren"
+              },
+              {
+                "audioID": 2,
+                "audioDescription": "Warning,this is restricted area"
+              },
+              {
+                "audioID": 3,
+                "audioDescription": "Warning,this is restricted area,please keep away"
+              },
+              {
+                "audioID": 4,
+                "audioDescription": "Warning,this is no-parking zone"
+              },
+              {
+                "audioID": 5,
+                "audioDescription": "Warning,this is no-parking zone,please keep away"
+              },
+              {
+                "audioID": 6,
+                "audioDescription": "Attention please.The area is under surveillance"
+              },
+              {
+                "audioID": 7,
+                "audioDescription": "Welcome,Please notice that the area is under surveillance"
+              },
+              {
+                "audioID": 8,
+                "audioDescription": "Welcome"
+              },
+              {
+                "audioID": 9,
+                "audioDescription": "Danger!Please keep away"
+              },
+              {
+                "audioID": 10,
+                "audioDescription": "(Siren)&Danger,please keep away"
+              },
+              {
+                "audioID": 11,
+                "audioDescription": "Audio Warning"
+              },
+              {
+                "audioID": 12,
+                "audioDescription": "Beep Sound"
+              }
+            ],
+            "audioVolume": {
+              "@min": 1,
+              "@max": 100,
+              "@def": 100
+            },
+            "alarmTimes": {
+              "@min": 1,
+              "@max": 50,
+              "@def": 5
+            },
+            "TimeRangeCap": {
+              "week": {
+                "@opt": "1,2,3,4,5,6,7"
+              },
+              "id": {
+                "@maxSize": "8"
+              },
+              "beginTime": {
+                "@min": "00:00",
+                "@max": "24:00"
+              },
+              "endTime": {
+                "@min": "00:00",
+                "@max": "24:00"
+              }
+            },
+            "audioClass": {
+              "@opt": "alertAudio,promptAudio,customAudio",
+              "@def": "alertAudio"
+            },
+            "AlertAudioTypeListCap": [
+              {
+                "alertAudioID": 1,
+                "alertAudioDescription": "Siren"
+              },
+              {
+                "alertAudioID": 2,
+                "alertAudioDescription": "Warning,this is restricted area"
+              },
+              {
+                "alertAudioID": 3,
+                "alertAudioDescription": "Warning,this is restricted area,please keep away"
+              },
+              {
+                "alertAudioID": 4,
+                "alertAudioDescription": "Warning,this is no-parking zone"
+              },
+              {
+                "alertAudioID": 5,
+                "alertAudioDescription": "Warning,this is no-parking zone,please keep away"
+              },
+              {
+                "alertAudioID": 6,
+                "alertAudioDescription": "Attention please.The area is under surveillance"
+              },
+              {
+                "alertAudioID": 7,
+                "alertAudioDescription": "Welcome,Please notice that the area is under surveillance"
+              },
+              {
+                "alertAudioID": 8,
+                "alertAudioDescription": "Welcome"
+              },
+              {
+                "alertAudioID": 9,
+                "alertAudioDescription": "Danger!Please keep away"
+              },
+              {
+                "alertAudioID": 10,
+                "alertAudioDescription": "(Siren)&Danger,please keep away"
+              },
+              {
+                "alertAudioID": 11,
+                "alertAudioDescription": "Audio Warning"
+              }
+            ],
+            "customAudioID": {
+              "@min": 1,
+              "@max": 3,
+              "@def": 1
+            },
+            "isSupportCustomAudio": true,
+            "isSupportAudioTest": true,
+            "customAudioName": {
+              "@min": "1",
+              "@max": 32
+            },
+            "isSupportCustomAudioURL": true,
+            "isSupportAudioURLWithHTTPS": true
+          }
+        }
+      },
+      "Event/triggers/notifications/AudioAlarm?format=json": {
+        "response": {
+          "AudioAlarm": {
+            "audioID": 1,
+            "audioVolume": 98,
+            "alarmTimes": 5,
+            "TimeRangeList": [
+              {
+                "week": 1,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              },
+              {
+                "week": 2,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              },
+              {
+                "week": 3,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              },
+              {
+                "week": 4,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              },
+              {
+                "week": 5,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              },
+              {
+                "week": 6,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              },
+              {
+                "week": 7,
+                "TimeRange": [
+                  {
+                    "id": 1,
+                    "beginTime": "00:00",
+                    "endTime": "08:00"
+                  },
+                  {
+                    "id": 2,
+                    "beginTime": "19:30",
+                    "endTime": "24:00"
+                  }
+                ]
+              }
+            ],
+            "audioClass": "alertAudio",
+            "alertAudioID": 1,
+            "customAudioID": 1
+          }
+        }
       }
     }
   }

@@ -1244,6 +1244,9 @@
             }
           }
         }
+      },
+      "Event/triggers/notifications/AudioAlarm/capabilities?format=json": {
+        "status_code": 404
       }
     }
   }
