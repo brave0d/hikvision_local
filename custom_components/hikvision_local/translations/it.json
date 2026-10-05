@@ -39,6 +39,14 @@
       "audio_alarm_sound": {
         "name": "Suono allarme acustico"
       }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Volume allarme acustico"
+      },
+      "audio_alarm_times": {
+        "name": "Ripetizioni allarme acustico"
+      }
     }
   }
 }

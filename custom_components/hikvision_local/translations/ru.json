@@ -39,6 +39,14 @@
       "audio_alarm_sound": {
         "name": "Звук тревоги"
       }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Громкость звуковой тревоги"
+      },
+      "audio_alarm_times": {
+        "name": "Повторы звуковой тревоги"
+      }
     }
   }
 }

@@ -138,6 +138,14 @@
       "audio_alarm_sound": {
         "name": "Audio Alarm Sound"
       }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Audio Alarm Volume"
+      },
+      "audio_alarm_times": {
+        "name": "Audio Alarm Repeats"
+      }
     }
   }
 }
