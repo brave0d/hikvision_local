@@ -188,3 +188,40 @@ class LoggedEvent:
     channel_id: int | None
     start: datetime.datetime
     end: datetime.datetime | None = None
+
+
+@dataclass
+class AudioAlarmSound:
+    """A built-in sound the device can play as an audio alarm."""
+
+    id: int
+    name: str
+
+
+@dataclass
+class AudioAlarmCapabilities:
+    """Holds audio alarm capabilities."""
+
+    sounds: list[AudioAlarmSound] = field(default_factory=list)
+    volume_min: int = 1
+    volume_max: int = 100
+    alarm_times_min: int = 1
+    alarm_times_max: int = 50
+    support_test: bool = False
+
+
+@dataclass
+class AudioAlarmState:
+    """Represents audio alarm settings."""
+
+    sound_id: int | None
+    volume: int
+    alarm_times: int
+
+
+@dataclass
+class AudioAlarm:
+    """Aggregates audio alarm capabilities and settings."""
+
+    capabilities: AudioAlarmCapabilities
+    state: AudioAlarmState | None = None

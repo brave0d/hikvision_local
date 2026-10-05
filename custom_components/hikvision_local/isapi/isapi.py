@@ -35,6 +35,10 @@ from .models import (
     AlarmServer,
     AlertInfo,
     AnalogCamera,
+    AudioAlarm,
+    AudioAlarmCapabilities,
+    AudioAlarmSound,
+    AudioAlarmState,
     CameraStreamInfo,
     CapabilitiesInfo,
     EventInfo,
@@ -104,6 +108,7 @@ class ISAPIClient:
         self.cameras: list[IPCamera | AnalogCamera] = []
         self.supported_events: list[EventInfo] = []
         self.storage: list[StorageInfo] = []
+        self.audio_alarm: AudioAlarm | None = None
         self.protocols = ProtocolsInfo()
         self.pending_initialization = False
 
@@ -171,6 +176,10 @@ class ISAPIClient:
             self.device_info.is_nvr = True
 
         await self.get_cameras()
+
+        # NVRs expose audio alarm per channel under a different URL
+        if not self.device_info.is_nvr:
+            self.audio_alarm = await self.get_audio_alarm()
 
         self.supported_events = await self.get_supported_events(capabilities)
 
@@ -498,6 +507,121 @@ class ISAPIClient:
         xml = xmltodict.unparse(payload)
         await self.request(PUT, url, present="xml", data=xml)
         return SupplementLightState(mode=mode, brightness=brightness, regulation_mode=regulation_mode)
+
+    async def get_audio_alarm(self) -> AudioAlarm | None:
+        """Fetch audio alarm details if supported."""
+
+        capabilities = await self.get_audio_alarm_capabilities()
+        if not capabilities or not capabilities.sounds:
+            return None
+
+        state = await self.get_audio_alarm_state()
+        if not state:
+            return None
+
+        return AudioAlarm(capabilities=capabilities, state=state)
+
+    async def get_audio_alarm_capabilities(self) -> AudioAlarmCapabilities | None:
+        """Retrieve the sounds, volume and alarm times range the device supports."""
+
+        try:
+            response = await self.request(
+                GET, "Event/triggers/notifications/AudioAlarm/capabilities?format=json", present="json"
+            )
+        except HTTPStatusError, httpx.HTTPError, ISAPIForbiddenError, ISAPIUnauthorizedError:
+            return None
+
+        capabilities = self._parse_json(response).get("AudioAlarmCap")
+        if not capabilities:
+            return None
+
+        # Newer firmware lists the sounds for the alertAudio class separately
+        sounds = [
+            AudioAlarmSound(id=int(sound["alertAudioID"]), name=sound["alertAudioDescription"])
+            for sound in capabilities.get("AlertAudioTypeListCap", [])
+        ] or [
+            AudioAlarmSound(id=int(sound["audioID"]), name=sound["audioDescription"])
+            for sound in capabilities.get("audioTypeListCap", [])
+        ]
+        volume = capabilities.get("audioVolume", {})
+        alarm_times = capabilities.get("alarmTimes", {})
+
+        return AudioAlarmCapabilities(
+            sounds=sounds,
+            volume_min=self._parse_int(volume.get("@min"), 1),
+            volume_max=self._parse_int(volume.get("@max"), 100),
+            alarm_times_min=self._parse_int(alarm_times.get("@min"), 1),
+            alarm_times_max=self._parse_int(alarm_times.get("@max"), 50),
+            support_test=bool(capabilities.get("isSupportAudioTest", False)),
+        )
+
+    async def get_audio_alarm_state(self) -> AudioAlarmState | None:
+        """Get the configured audio alarm sound, volume and alarm times."""
+
+        try:
+            settings = await self._get_audio_alarm_settings()
+        except HTTPStatusError, httpx.HTTPError, ISAPIForbiddenError, ISAPIUnauthorizedError:
+            return None
+        if not settings:
+            return None
+
+        return self._audio_alarm_state(settings)
+
+    async def set_audio_alarm_state(
+        self,
+        sound_id: int | None = None,
+        volume: int | None = None,
+        alarm_times: int | None = None,
+    ) -> AudioAlarmState:
+        """Change audio alarm settings, leaving the schedule and other fields as they are."""
+
+        settings = await self._get_audio_alarm_settings()
+        if sound_id is not None:
+            if "alertAudioID" in settings:
+                settings["audioClass"] = "alertAudio"
+                settings["alertAudioID"] = sound_id
+            else:
+                settings["audioID"] = sound_id
+        if volume is not None:
+            settings["audioVolume"] = volume
+        if alarm_times is not None:
+            settings["alarmTimes"] = alarm_times
+
+        data = json.dumps({"AudioAlarm": settings})
+        await self.request(PUT, "Event/triggers/notifications/AudioAlarm?format=json", present="json", data=data)
+        return self._audio_alarm_state(settings)
+
+    async def test_audio_alarm(self, sound_id: int) -> None:
+        """Play a sound once through the device speaker."""
+
+        await self.request(PUT, f"Event/triggers/notifications/AudioAlarm/{sound_id}/test?format=json", present="json")
+
+    async def _get_audio_alarm_settings(self) -> dict:
+        response = await self.request(GET, "Event/triggers/notifications/AudioAlarm?format=json", present="json")
+        return self._parse_json(response).get("AudioAlarm", {})
+
+    @staticmethod
+    def _audio_alarm_state(settings: dict) -> AudioAlarmState:
+        if "alertAudioID" in settings:
+            sound_id = settings["alertAudioID"] if settings.get("audioClass") == "alertAudio" else None
+        else:
+            sound_id = settings.get("audioID")
+
+        return AudioAlarmState(
+            sound_id=sound_id,
+            volume=settings.get("audioVolume", 0),
+            alarm_times=settings.get("alarmTimes", 0),
+        )
+
+    @staticmethod
+    def _parse_json(response: Any) -> dict:
+        # request() returns {} instead of raising while the integration initializes
+        if not response or not isinstance(response, str):
+            return {}
+        try:
+            return json.loads(response)
+        except ValueError:
+            return {}
 
     def get_event_url(self, event_id: str, channel_id: int, io_port_id: int, is_proxy: bool) -> str | None:
         """Get event ISAPI URL."""
