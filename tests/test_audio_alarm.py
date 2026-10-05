@@ -89,6 +89,7 @@ async def test_audio_alarm_select_sound(
     payload = json.loads(route.calls.last.request.content)["AudioAlarm"]
     assert payload["audioClass"] == "alertAudio"
     assert payload["alertAudioID"] == 11
+    assert payload["audioID"] == 11
     assert payload["audioVolume"] == 98
     assert payload["alarmTimes"] == 5
     assert len(payload["TimeRangeList"]) == 7
