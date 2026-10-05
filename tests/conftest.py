@@ -116,8 +116,10 @@ def mock_device_endpoints(model, device_url=TEST_HOST):
         if status_code := data.get("status_code"):
             respx.get(url).respond(status_code=status_code)
         elif response := data.get("response"):
-            xml = xmltodict.unparse(response)
-            respx.get(url).respond(text=xml)
+            if "format=json" in endpoint:
+                respx.get(url).respond(json=response)
+            else:
+                respx.get(url).respond(text=xmltodict.unparse(response))
 
 
 @pytest.fixture
