@@ -15,6 +15,7 @@ from .const import CONF_ALARM_SERVER_HOST, DOMAIN, HOLIDAY_MODE
 SCAN_INTERVAL_EVENTS = timedelta(seconds=120)
 SCAN_INTERVAL_HOLIDAYS = timedelta(minutes=60)
 SCAN_INTERVAL_LIGHTS = timedelta(seconds=120)
+SCAN_INTERVAL_AUDIO_ALARM = timedelta(minutes=5)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -149,3 +150,30 @@ class SupplementLightCoordinator(DataUpdateCoordinator):
             self.device.auth_token_expired = False
 
         return data
+
+
+class AudioAlarmCoordinator(DataUpdateCoordinator):
+    """Manage fetching audio alarm settings."""
+
+    def __init__(self, hass: HomeAssistant, device) -> None:
+        """Initialize."""
+        self.device = device
+
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=SCAN_INTERVAL_AUDIO_ALARM,
+        )
+
+    async def _async_update_data(self):
+        """Update audio alarm settings via ISAPI."""
+        try:
+            state = await self.device.get_audio_alarm_state()
+        except Exception as ex:  # pylint: disable=broad-except
+            self.device.handle_exception(ex, "Cannot fetch audio alarm settings")
+            return self.data
+
+        if state:
+            self.device.audio_alarm.state = state
+        return self.device.audio_alarm.state

@@ -128,6 +128,11 @@
       "snapshot": {
         "name": "{camera} Snapshot"
       }
+    },
+    "button": {
+      "audio_alarm_test": {
+        "name": "Play Audio Alarm"
+      }
     }
   }
 }

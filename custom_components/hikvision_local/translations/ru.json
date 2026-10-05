@@ -29,6 +29,11 @@
       "supplement_light": {
         "name": "Дополнительный свет"
       }
+    },
+    "button": {
+      "audio_alarm_test": {
+        "name": "Воспроизвести звуковую тревогу"
+      }
     }
   }
 }
