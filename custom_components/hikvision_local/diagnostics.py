@@ -138,6 +138,8 @@ async def _async_get_diagnostics(
         "Event/triggers/scenechangedetection-1",
         "Event/notification/httpHosts",
         "Streaming/channels",
+        "Event/triggers/notifications/AudioAlarm/capabilities?format=json",
+        "Event/triggers/notifications/AudioAlarm?format=json",
     ]
 
     for endpoint in endpoints:
@@ -162,7 +164,10 @@ async def get_isapi_data(isapi, endpoint: str) -> dict:
     """Get data from ISAPI."""
     entry = {}
     try:
-        response = await isapi.request(GET, endpoint)
+        if "format=json" in endpoint:
+            response = json.loads(await isapi.request(GET, endpoint, present="json"))
+        else:
+            response = await isapi.request(GET, endpoint)
         entry["response"] = anonymise_data(response)
     except (HTTPStatusError, ISAPIUnauthorizedError, ISAPIForbiddenError) as ex:
         entry["status_code"] = ex.response.status_code
