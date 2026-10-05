@@ -133,6 +133,11 @@
       "audio_alarm_test": {
         "name": "Play Audio Alarm"
       }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Audio Alarm Sound"
+      }
     }
   }
 }

@@ -34,6 +34,11 @@
       "audio_alarm_test": {
         "name": "Riproduci allarme acustico"
       }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Suono allarme acustico"
+      }
     }
   }
 }

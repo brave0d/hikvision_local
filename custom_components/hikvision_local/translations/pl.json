@@ -133,6 +133,11 @@
       "audio_alarm_test": {
         "name": "Odtwórz alarm dźwiękowy"
       }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Dźwięk alarmu"
+      }
     }
   }
 }

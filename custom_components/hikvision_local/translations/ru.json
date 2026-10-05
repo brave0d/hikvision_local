@@ -34,6 +34,11 @@
       "audio_alarm_test": {
         "name": "Воспроизвести звуковую тревогу"
       }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Звук тревоги"
+      }
     }
   }
 }

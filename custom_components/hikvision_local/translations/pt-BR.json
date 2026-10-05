@@ -34,6 +34,11 @@
       "audio_alarm_test": {
         "name": "Tocar alarme sonoro"
       }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Som do alarme sonoro"
+      }
     }
   }
 }
