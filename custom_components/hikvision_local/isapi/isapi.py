@@ -577,11 +577,11 @@ class ISAPIClient:
 
         settings = await self._get_audio_alarm_settings()
         if sound_id is not None:
+            # The device plays audioID, alertAudioID only records the choice within the alertAudio class
+            settings["audioID"] = sound_id
             if "alertAudioID" in settings:
                 settings["audioClass"] = "alertAudio"
                 settings["alertAudioID"] = sound_id
-            else:
-                settings["audioID"] = sound_id
         if volume is not None:
             settings["audioVolume"] = volume
         if alarm_times is not None:
