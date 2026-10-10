@@ -38,6 +38,23 @@ def search_result(spans: list[tuple[str, str]], status: str = "OK") -> str:
     )
 
 
+def log_result(entries: list[tuple[str, str]], status: str = "OK") -> str:
+    """Build alarm log search XML from (metaId suffix, time) pairs, newest first like devices do."""
+    items = "".join(
+        "<searchMatchItem><logDescriptor>"
+        f"<metaId>log.hikvision.com/Alarm/{meta}</metaId><StartDateTime>{time}</StartDateTime>"
+        "<paraType></paraType><userName></userName><logInfo></logInfo><ipAddress></ipAddress>"
+        "</logDescriptor></searchMatchItem>"
+        for meta, time in entries
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<CMSearchResult version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">'
+        f"<searchID>L</searchID><responseStatus>true</responseStatus><responseStatusStrg>{status}</responseStatusStrg>"
+        f"<numOfMatches>{len(entries)}</numOfMatches><matchList>{items}</matchList></CMSearchResult>"
+    )
+
+
 DAILY_DISTRIBUTION = (
     '<?xml version="1.0" encoding="UTF-8"?>'
     '<trackDailyDistribution version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema"><dayList>'
@@ -112,6 +129,49 @@ async def test_search_recordings_empty(mock_isapi) -> None:
 
 
 @respx.mock
+async def test_search_alarm_log(mock_isapi) -> None:
+    """Test alarm log parsing pairs Start/Stop entries and follows pages."""
+    isapi = mock_isapi
+    route = respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/logSearch").mock(
+        side_effect=[
+            httpx.Response(
+                200,
+                text=log_result(
+                    [
+                        ("motionStop/1", "2024-10-09T10:12:08Z"),
+                        ("fieldDetectionStop/1", "2024-10-09T10:12:06Z"),
+                        ("motionStart/1", "2024-10-09T10:12:00Z"),
+                    ],
+                    "MORE",
+                ),
+            ),
+            httpx.Response(
+                200,
+                text=log_result(
+                    [
+                        ("fieldDetectionStart/1", "2024-10-09T10:12:01Z"),
+                        ("sceneChangeDetection/1", "2024-10-09T09:00:00Z"),
+                        ("motionStart/2", "2024-10-09T08:00:00Z"),
+                        ("motionStop/1", "2024-10-09T07:00:00Z"),
+                    ]
+                ),
+            ),
+        ]
+    )
+    events = await isapi.search_alarm_log(
+        datetime.datetime(2024, 10, 9, tzinfo=UTC), datetime.datetime(2024, 10, 10, tzinfo=UTC)
+    )
+    assert route.call_count == 2
+    assert b"<searchResultPostion>3</searchResultPostion>" in route.calls[1].request.content
+    assert [(e.event_type, e.channel_id, e.start.strftime("%H:%M:%S"), e.end and e.end.strftime("%H:%M:%S")) for e in events] == [
+        ("motion", 2, "08:00:00", None),
+        ("sceneChangeDetection", 1, "09:00:00", "09:00:00"),
+        ("motion", 1, "10:12:00", "10:12:08"),
+        ("fieldDetection", 1, "10:12:01", "10:12:06"),
+    ]
+
+
+@respx.mock
 async def test_recording_days(mock_isapi) -> None:
     """Test daily distribution parsing."""
     isapi = mock_isapi
@@ -167,13 +227,33 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/search").respond(
         text=search_result([(format_isapi_time(seg_start), format_isapi_time(seg_end))])
     )
+    motion_start = day_start + datetime.timedelta(hours=10, minutes=12)
+    respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/logSearch").respond(
+        text=log_result(
+            [
+                ("motionStop/1", format_isapi_time(motion_start + datetime.timedelta(seconds=8))),
+                ("motionStart/1", format_isapi_time(motion_start)),
+            ]
+        )
+    )
     hours = await source.async_browse_media(
         MediaSourceItem(hass, DOMAIN, f"DAY|{entry.entry_id}|{camera.id}|{day.isoformat()}", None)
     )
-    assert [child.title for child in hours.children] == ["10:00 - 11:00"]
+    assert [child.title for child in hours.children] == ["Events (1)", "10:00 - 11:00 · events: 1"]
 
-    clips = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, hours.children[0].identifier, None))
-    assert [child.title.split()[-1] for child in clips.children] == ["10:00", "10:10", "10:20"]
+    events = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, hours.children[0].identifier, None))
+    assert [child.title for child in events.children] == ["10:12:00 Motion (8 s)"]
+    event_id = events.children[0].identifier
+    assert event_id == (
+        f"PLAY|{entry.entry_id}|{camera.id}|{int(motion_start.timestamp()) - 10}|{int(motion_start.timestamp()) + 28}"
+    )
+
+    clips = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, hours.children[1].identifier, None))
+    titles = [child.title for child in clips.children]
+    assert len(titles) == 3
+    assert titles[0].endswith(" 10:00")
+    assert titles[1].endswith(" 10:10 · Motion")
+    assert titles[2].endswith(" 10:20")
     assert all(child.can_play for child in clips.children)
 
     stream = MagicMock()
@@ -187,6 +267,12 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     assert f"starttime={format_isapi_time(clip_start, compact=True)}" in rtsp_url
     assert f"endtime={format_isapi_time(clip_start + datetime.timedelta(hours=1), compact=True)}" in rtsp_url
     stream.add_provider.assert_called_once_with("hls", timeout=600)
+
+    with patch("custom_components.hikvision_next.media_source.create_stream", return_value=stream) as create:
+        await source.async_resolve_media(MediaSourceItem(hass, DOMAIN, event_id, None))
+    rtsp_url = create.call_args.args[1]
+    assert f"starttime={format_isapi_time(motion_start - datetime.timedelta(seconds=10), compact=True)}" in rtsp_url
+    assert f"endtime={format_isapi_time(motion_start + datetime.timedelta(seconds=28), compact=True)}" in rtsp_url
 
     with pytest.raises(Unresolvable):
         await source.async_resolve_media(MediaSourceItem(hass, DOMAIN, "FOO|bar", None))

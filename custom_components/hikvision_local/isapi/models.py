@@ -178,3 +178,13 @@ class RecordingSegment:
     track_id: int
     start: datetime.datetime
     end: datetime.datetime
+
+
+@dataclass
+class LoggedEvent:
+    """Holds an alarm event from the device log, e.g. motion (times in UTC)."""
+
+    event_type: str
+    channel_id: int | None
+    start: datetime.datetime
+    end: datetime.datetime | None = None

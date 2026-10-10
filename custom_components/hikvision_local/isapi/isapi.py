@@ -41,6 +41,7 @@ from .models import (
     IPCamera,
     ISAPIDeviceInfo,
     MutexIssue,
+    LoggedEvent,
     ProtocolsInfo,
     RecordingSegment,
     StorageInfo,
@@ -68,6 +69,7 @@ def clean_int(value, default: int = 0) -> int:
 Node = dict[str, Any]
 
 SEARCH_PAGE_SIZE = 50
+LOG_PAGE_SIZE = 100
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -684,6 +686,60 @@ class ISAPIClient:
             if result.get("responseStatusStrg") != "MORE" or num_matches == 0:
                 break
         return sorted(segments, key=lambda segment: segment.start)
+
+    async def search_alarm_log(
+        self,
+        start: datetime.datetime,
+        end: datetime.datetime,
+        max_pages: int = 20,
+    ) -> list[LoggedEvent]:
+        """Search alarm events (motion, intrusion, ...) in the device log, pairing Start/Stop entries."""
+        entries = []
+        position = 0
+        search_id = str(uuid.uuid4()).upper()
+        for _ in range(max_pages):
+            xml = (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                "<CMSearchDescription>"
+                f"<searchID>{search_id}</searchID>"
+                "<timeSpanList><timeSpan>"
+                f"<startTime>{format_isapi_time(start)}</startTime>"
+                f"<endTime>{format_isapi_time(end)}</endTime>"
+                "</timeSpan></timeSpanList>"
+                f"<maxResults>{LOG_PAGE_SIZE}</maxResults>"
+                f"<searchResultPostion>{position}</searchResultPostion>"
+                "<metaId>log.std-cgi.com/Alarm</metaId>"
+                "</CMSearchDescription>"
+            )
+            result = (await self.request(POST, "ContentMgmt/logSearch", data=xml)).get("CMSearchResult", {})
+            matches = deep_get(result, "matchList.searchMatchItem", [])
+            for item in matches:
+                # metaId format: log.hikvision.com/Alarm/motionStart/1
+                meta_id = str(deep_get(item, "logDescriptor.metaId") or "")
+                time = parse_isapi_time(deep_get(item, "logDescriptor.StartDateTime"))
+                parts = meta_id.split("/")
+                if len(parts) < 3 or parts[1] != "Alarm" or not time:
+                    continue
+                channel_id = int(parts[3]) if len(parts) > 3 and parts[3].isdigit() else None
+                entries.append((time, parts[2], channel_id))
+            position += len(matches)
+            if result.get("responseStatusStrg") != "MORE" or not matches:
+                break
+
+        events: list[LoggedEvent] = []
+        open_events: dict[tuple[str, int | None], LoggedEvent] = {}
+        for time, name, channel_id in sorted(entries, key=lambda entry: entry[0]):
+            if name.endswith("Start"):
+                event = LoggedEvent(event_type=name[:-5], channel_id=channel_id, start=time)
+                open_events[(event.event_type, channel_id)] = event
+                events.append(event)
+            elif name.endswith("Stop"):
+                event = open_events.pop((name[:-4], channel_id), None)
+                if event:
+                    event.end = time
+            else:
+                events.append(LoggedEvent(event_type=name, channel_id=channel_id, start=time, end=time))
+        return events
 
     async def get_recording_days(self, track_id: int, year: int, month: int) -> list[int]:
         """Get days of the month that have recordings (device local time)."""
