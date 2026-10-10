@@ -8,6 +8,7 @@ import pytest
 import respx
 from homeassistant.components.media_source import MediaSourceItem, Unresolvable
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -206,8 +207,13 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     camera = device.cameras[0]
     source = await async_get_media_source(hass)
 
+    device_registry = dr.async_get(hass)
+    device_entry = device_registry.async_get_device(identifiers={(DOMAIN, camera.serial_no)})
     root = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "", None))
-    assert [child.title for child in root.children] == [camera.name]
+    assert [child.title for child in root.children] == [device_entry.name]
+    device_registry.async_update_device(device_entry.id, name_by_user="Front door")
+    root = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "", None))
+    assert [child.title for child in root.children] == ["Front door"]
     cam_id = root.children[0].identifier
     assert cam_id == f"CAM|{entry.entry_id}|{camera.id}"
 
@@ -268,7 +274,7 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     assert f"endtime={format_isapi_time(clip_start + datetime.timedelta(hours=1), compact=True)}" in rtsp_url
     stream.add_provider.assert_called_once_with("hls", timeout=600)
 
-    with patch("custom_components.hikvision_next.media_source.create_stream", return_value=stream) as create:
+    with patch("custom_components.hikvision_local.media_source.create_stream", return_value=stream) as create:
         await source.async_resolve_media(MediaSourceItem(hass, DOMAIN, event_id, None))
     rtsp_url = create.call_args.args[1]
     assert f"starttime={format_isapi_time(motion_start - datetime.timedelta(seconds=10), compact=True)}" in rtsp_url

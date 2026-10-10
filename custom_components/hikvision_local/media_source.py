@@ -17,7 +17,7 @@ from homeassistant.components.media_source import (
 from homeassistant.components.stream import create_stream
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util, slugify
 
 from .const import DOMAIN
@@ -169,6 +169,14 @@ class HikvisionMediaSource(MediaSource):
         entity_id = er.async_get(self.hass).async_get_entity_id("camera", DOMAIN, unique_id)
         return f"/api/camera_proxy/{entity_id}" if entity_id else None
 
+    def _camera_name(self, device: HikvisionDevice, camera: AnalogCamera | IPCamera) -> str:
+        """Return the camera name as shown in Home Assistant, falling back to the device channel name."""
+        registry = dr.async_get(self.hass)
+        for serial_no in (camera.serial_no, device.device_info.serial_no):
+            if serial_no and (device_entry := registry.async_get_device(identifiers={(DOMAIN, serial_no)})):
+                return device_entry.name_by_user or device_entry.name or camera.name
+        return camera.name
+
     def _event_title(self, events: list[LoggedEvent]) -> str:
         """Return comma separated event type labels."""
         types = list(dict.fromkeys(self._label(event.event_type) for event in events))
@@ -182,7 +190,7 @@ class HikvisionMediaSource(MediaSource):
                 identifier=f"CAM|{entry_id}|{camera.id}",
                 media_class=MediaClass.DIRECTORY,
                 media_content_type=MediaType.PLAYLIST,
-                title=camera.name,
+                title=self._camera_name(device, camera),
                 thumbnail=self._camera_thumbnail(device, camera),
                 can_play=False,
                 can_expand=True,
@@ -240,7 +248,7 @@ class HikvisionMediaSource(MediaSource):
             identifier=f"CAM|{entry_id}|{camera_id}",
             media_class=MediaClass.DIRECTORY,
             media_content_type=MediaType.PLAYLIST,
-            title=camera.name,
+            title=self._camera_name(device, camera),
             can_play=False,
             can_expand=True,
             children=children,
@@ -292,7 +300,7 @@ class HikvisionMediaSource(MediaSource):
             identifier=f"DAY|{entry_id}|{camera_id}|{day_str}",
             media_class=MediaClass.DIRECTORY,
             media_content_type=MediaType.PLAYLIST,
-            title=f"{camera.name} {day_str}",
+            title=f"{self._camera_name(device, camera)} {day_str}",
             can_play=False,
             can_expand=True,
             children=children,
@@ -330,7 +338,7 @@ class HikvisionMediaSource(MediaSource):
             identifier=f"EVT|{entry_id}|{camera_id}|{day_str}",
             media_class=MediaClass.DIRECTORY,
             media_content_type=MediaType.PLAYLIST,
-            title=f"{camera.name} {day_str} {self._label('events')}",
+            title=f"{self._camera_name(device, camera)} {day_str} {self._label('events')}",
             can_play=False,
             can_expand=True,
             children=children,
@@ -350,7 +358,7 @@ class HikvisionMediaSource(MediaSource):
         while clip_start < hour_end:
             clip_end = clip_start + CLIP_STEP
             if overlaps(segments, clip_start, clip_end):
-                title = f"{camera.name} {day_str} {clip_start:%H:%M}"
+                title = f"{self._camera_name(device, camera)} {day_str} {clip_start:%H:%M}"
                 if clip_events := events_in(events, clip_start, clip_end):
                     title += f" · {self._event_title(clip_events)}"
                 children.append(
@@ -370,7 +378,7 @@ class HikvisionMediaSource(MediaSource):
             identifier=f"HOUR|{entry_id}|{camera_id}|{day_str}|{hour}",
             media_class=MediaClass.DIRECTORY,
             media_content_type=MediaType.PLAYLIST,
-            title=f"{camera.name} {day_str} {hour_start:%H:%M} - {hour_end:%H:%M}",
+            title=f"{self._camera_name(device, camera)} {day_str} {hour_start:%H:%M} - {hour_end:%H:%M}",
             can_play=False,
             can_expand=True,
             children=children,
