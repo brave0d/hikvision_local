@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import datetime
 
 
 @dataclass
@@ -168,3 +169,12 @@ class SupplementLight:
     channel_id: int
     capabilities: SupplementLightCapabilities
     state: SupplementLightState | None = None
+
+
+@dataclass
+class RecordingSegment:
+    """Holds a video segment recorded on the device storage (times in UTC)."""
+
+    track_id: int
+    start: datetime.datetime
+    end: datetime.datetime

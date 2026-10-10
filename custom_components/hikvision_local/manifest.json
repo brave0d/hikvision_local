@@ -1,7 +1,7 @@
 {
   "domain": "hikvision_local",
   "name": "Hikvision Local (NVR / IP Camera)",
-  "after_dependencies": ["http", "network"],
+  "after_dependencies": ["http", "media_source", "network", "stream"],
   "codeowners": ["@brave0d"],
   "config_flow": true,
   "dependencies": [],
