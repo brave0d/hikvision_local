@@ -23,6 +23,7 @@ ACTION_ISAPI_REQUEST = "isapi_request"
 ACTION_UPDATE_SNAPSHOT = "update_snapshot"
 ACTION_PTZ_MOVE = "ptz_move"
 ACTION_PTZ_STOP = "ptz_stop"
+ACTION_PTZ = "ptz"
 
 HIKVISION_EVENT = f"{DOMAIN}_event"
 

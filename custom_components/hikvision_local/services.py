@@ -18,6 +18,7 @@ import voluptuous as vol
 
 from .const import (
     ACTION_ISAPI_REQUEST,
+    ACTION_PTZ,
     ACTION_PTZ_MOVE,
     ACTION_PTZ_STOP,
     ACTION_REBOOT,
@@ -54,6 +55,19 @@ ACTION_PTZ_MOVE_SCHEMA = vol.Schema(
     }
 )
 ACTION_PTZ_STOP_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_ids})
+# Same fields as the onvif.ptz action, which Advanced Camera Card and other cards call.
+ACTION_PTZ_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Optional("pan"): vol.In(["LEFT", "RIGHT"]),
+        vol.Optional("tilt"): vol.In(["UP", "DOWN"]),
+        vol.Optional("zoom"): vol.In(["ZOOM_IN", "ZOOM_OUT"]),
+        vol.Optional("distance"): vol.Coerce(float),
+        vol.Optional("speed", default=0.5): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+        vol.Optional("continuous_duration", default=0.5): vol.All(vol.Coerce(float), vol.Range(min=0, max=60)),
+        vol.Optional("move_mode", default="ContinuousMove"): vol.In(["ContinuousMove", "Stop"]),
+    }
+)
 
 ACTION_ISAPI_REQUEST_SCHEMA = vol.Schema(
     {
@@ -139,6 +153,18 @@ def setup_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError("Set a direction, or pan, tilt or zoom")
         await _ptz_move(hass, call.data[ATTR_ENTITY_ID], pan, tilt, zoom, call.data["duration"])
 
+    async def handle_ptz(call: ServiceCall):
+        """Handle the ONVIF-style PTZ action call. distance is accepted and ignored."""
+        entity_ids = call.data[ATTR_ENTITY_ID]
+        if call.data["move_mode"] == "Stop":
+            await _ptz_move(hass, entity_ids, 0, 0, 0, 0)
+            return
+        speed = round(call.data["speed"] * 100)
+        pan = {"LEFT": -speed, "RIGHT": speed}.get(call.data.get("pan"), 0)
+        tilt = {"UP": speed, "DOWN": -speed}.get(call.data.get("tilt"), 0)
+        zoom = {"ZOOM_IN": speed, "ZOOM_OUT": -speed}.get(call.data.get("zoom"), 0)
+        await _ptz_move(hass, entity_ids, pan, tilt, zoom, int(call.data["continuous_duration"] * 1000))
+
     async def handle_ptz_stop(call: ServiceCall):
         """Handle the PTZ stop action call."""
         await _ptz_move(hass, call.data[ATTR_ENTITY_ID], 0, 0, 0, 0)
@@ -150,6 +176,7 @@ def setup_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(DOMAIN, ACTION_PTZ_MOVE, handle_ptz_move, schema=ACTION_PTZ_MOVE_SCHEMA)
     hass.services.async_register(DOMAIN, ACTION_PTZ_STOP, handle_ptz_stop, schema=ACTION_PTZ_STOP_SCHEMA)
+    hass.services.async_register(DOMAIN, ACTION_PTZ, handle_ptz, schema=ACTION_PTZ_SCHEMA)
     hass.services.async_register(
         DOMAIN,
         ACTION_ISAPI_REQUEST,

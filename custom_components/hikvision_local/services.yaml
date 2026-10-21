@@ -125,3 +125,67 @@ ptz_stop:
     entity:
       domain: camera
       integration: hikvision_local
+
+ptz:
+  name: PTZ (ONVIF style)
+  description: "Move a PTZ camera with the same fields as the ONVIF PTZ action, as used by Advanced Camera Card."
+  target:
+    entity:
+      domain: camera
+      integration: hikvision_local
+  fields:
+    pan:
+      name: Pan
+      selector:
+        select:
+          options:
+            - LEFT
+            - RIGHT
+    tilt:
+      name: Tilt
+      selector:
+        select:
+          options:
+            - UP
+            - DOWN
+    zoom:
+      name: Zoom
+      selector:
+        select:
+          options:
+            - ZOOM_IN
+            - ZOOM_OUT
+    distance:
+      name: Distance
+      description: "Accepted for compatibility and ignored: Hikvision continuous moves have no distance."
+      selector:
+        number:
+          min: 0
+          max: 1
+          step: 0.01
+    speed:
+      name: Speed
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 1
+          step: 0.01
+    continuous_duration:
+      name: Duration
+      description: "Seconds to move before stopping. 0 keeps moving until move mode Stop."
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 0.1
+          unit_of_measurement: s
+    move_mode:
+      name: Move mode
+      default: ContinuousMove
+      selector:
+        select:
+          options:
+            - ContinuousMove
+            - Stop
