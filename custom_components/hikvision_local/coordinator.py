@@ -14,7 +14,7 @@ from .const import CONF_ALARM_SERVER_HOST, DOMAIN, HOLIDAY_MODE
 
 SCAN_INTERVAL_EVENTS = timedelta(seconds=120)
 SCAN_INTERVAL_HOLIDAYS = timedelta(minutes=60)
-SCAN_INTERVAL_LIGHTS = timedelta(seconds=30)
+SCAN_INTERVAL_LIGHTS = timedelta(seconds=120)
 
 _LOGGER = logging.getLogger(__name__)
 
