@@ -85,3 +85,23 @@ async def test_supplement_lights_through_an_nvr(hass: HomeAssistant, init_integr
 
     assert len(lights) == 4
     assert all(light.state == STATE_ON for light in lights)
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_supplement_light_turns_on_in_last_mode_and_with_light(
+    hass: HomeAssistant, respx_mock: respx.Router, init_integration: MockConfigEntry
+) -> None:
+    """After turning off, turn_on restores the previous mode and a usable brightness."""
+    url = f"{TEST_HOST}/ISAPI/Image/channels/1/supplementLight"
+    respx_mock.get(url).respond(
+        text="<SupplementLight><supplementLightMode>close</supplementLightMode>"
+        "<mixedLightBrightnessRegulatMode>auto</mixedLightBrightnessRegulatMode></SupplementLight>"
+    )
+    put = respx_mock.put(url).respond(200)
+
+    await hass.services.async_call(LIGHT_DOMAIN, SERVICE_TURN_OFF, {ATTR_ENTITY_ID: ENTITY_ID}, blocking=True)
+    await hass.services.async_call(LIGHT_DOMAIN, SERVICE_TURN_ON, {ATTR_ENTITY_ID: ENTITY_ID}, blocking=True)
+
+    sent = xmltodict.parse(put.calls.last.request.content)["SupplementLight"]
+    assert sent["supplementLightMode"] == "colorVuWhiteLight"
+    assert int(sent["whiteLightBrightness"]) > 0
