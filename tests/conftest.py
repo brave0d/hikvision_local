@@ -42,6 +42,22 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     yield
 
 
+# Home Assistant logs these instead of failing the test, which hid the HA 2026.9 via_device breakage.
+FAIL_ON_LOGS = (
+    "Error adding entity",
+    "Detected that custom integration 'hikvision_local'",
+    "Detected code that calls",
+)
+
+
+@pytest.fixture(autouse=True)
+def fail_on_home_assistant_reports(caplog):
+    """Fail a test when Home Assistant logs an entity error or a deprecation report."""
+    yield
+    reports = [r.getMessage() for r in caplog.records if r.getMessage().startswith(FAIL_ON_LOGS)]
+    assert not reports, "Home Assistant reported:\n" + "\n".join(reports)
+
+
 def legacy_entity_id(entry: er.RegistryEntry) -> str:
     """Return the entity ID the integration used to force before 2.0, derived from the unique ID."""
     object_id = entry.unique_id.removeprefix(f"{entry.domain}.")
