@@ -744,6 +744,16 @@ class ISAPIClient:
         xml = xmltodict.unparse(data)
         await self.request(PUT, "Event/notification/httpHosts", present="xml", data=xml)
 
+    async def ptz_continuous(self, channel_id: int, pan: int = 0, tilt: int = 0, zoom: int = 0) -> None:
+        """Start or stop a continuous PTZ movement; all zeros stop it.
+
+        Values go from -100 to 100. Positive pan turns right, positive tilt goes up and positive
+        zoom zooms in. Hikvision applies zoom and pan/tilt as separate commands.
+        """
+        data = {"PTZData": {"zoom": zoom} if zoom else {"pan": pan, "tilt": tilt}}
+        xml = xmltodict.unparse(data, full_document=False)
+        await self.request(PUT, f"PTZCtrl/channels/{channel_id}/continuous", present="xml", data=xml)
+
     async def reboot(self):
         """Reboot device."""
         await self.request(PUT, "System/reboot", present="xml")
