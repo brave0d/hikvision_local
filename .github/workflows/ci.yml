@@ -55,6 +55,16 @@ jobs:
             sed -i "s/^pytest-homeassistant-custom-component==.*/${{ matrix.harness }}/" requirements.test.txt
           fi
           pip install -r requirements.test.txt
+      - name: Check the minimum job runs the version hacs.json declares
+        if: matrix.name == 'min'
+        run: |
+          python - <<'PY'
+          import json
+          from homeassistant.const import __version__
+          declared = json.load(open("hacs.json"))["homeassistant"]
+          assert __version__ == declared, f"min job runs {__version__}, hacs.json declares {declared}"
+          print("Home Assistant", __version__, "matches hacs.json")
+          PY
       - name: Run pytest
         run: pytest --cov=custom_components/hikvision_local --cov-report=term-missing --cov-fail-under=83
 
