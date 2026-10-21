@@ -11,6 +11,7 @@ import json
 import logging
 from typing import Any
 from urllib.parse import quote, urljoin, urlparse
+import uuid
 
 import httpx
 from httpx import HTTPStatusError
@@ -39,14 +40,16 @@ from .models import (
     EventInfo,
     IPCamera,
     ISAPIDeviceInfo,
+    LoggedEvent,
     MutexIssue,
     ProtocolsInfo,
+    RecordingSegment,
     StorageInfo,
     SupplementLight,
     SupplementLightCapabilities,
     SupplementLightState,
 )
-from .utils import bool_to_str, deep_get, parse_isapi_response, str_to_bool
+from .utils import bool_to_str, deep_get, format_isapi_time, parse_isapi_response, parse_isapi_time, str_to_bool
 
 
 # Helper to sanitize channel IDs (e.g. converting "I-1" to 1)
@@ -64,6 +67,9 @@ def clean_int(value, default: int = 0) -> int:
 
 
 Node = dict[str, Any]
+
+SEARCH_PAGE_SIZE = 50
+LOG_PAGE_SIZE = 100
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -641,6 +647,123 @@ class ISAPIClient:
         except IndexError:
             # Storage id does not exist
             return None
+
+    async def search_recordings(
+        self,
+        track_id: int,
+        start: datetime.datetime,
+        end: datetime.datetime,
+        max_pages: int = 20,
+    ) -> list[RecordingSegment]:
+        """Search video segments recorded on the device storage within a time span."""
+        segments = []
+        position = 0
+        search_id = str(uuid.uuid4()).upper()
+        for _ in range(max_pages):
+            xml = (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                "<CMSearchDescription>"
+                f"<searchID>{search_id}</searchID>"
+                f"<trackList><trackID>{track_id}</trackID></trackList>"
+                "<timeSpanList><timeSpan>"
+                f"<startTime>{format_isapi_time(start)}</startTime>"
+                f"<endTime>{format_isapi_time(end)}</endTime>"
+                "</timeSpan></timeSpanList>"
+                f"<maxResults>{SEARCH_PAGE_SIZE}</maxResults>"
+                f"<searchResultPostion>{position}</searchResultPostion>"
+                "<metadataList><metadataDescriptor>//recordType.meta.std-cgi.com</metadataDescriptor></metadataList>"
+                "</CMSearchDescription>"
+            )
+            result = (await self.request(POST, "ContentMgmt/search", data=xml)).get("CMSearchResult", {})
+            matches = deep_get(result, "matchList.searchMatchItem", [])
+            for item in matches:
+                seg_start = parse_isapi_time(deep_get(item, "timeSpan.startTime"))
+                seg_end = parse_isapi_time(deep_get(item, "timeSpan.endTime"))
+                if seg_start and seg_end:
+                    segments.append(RecordingSegment(track_id=track_id, start=seg_start, end=seg_end))
+            num_matches = int(result.get("numOfMatches") or 0)
+            position += num_matches
+            if result.get("responseStatusStrg") != "MORE" or num_matches == 0:
+                break
+        else:
+            _LOGGER.warning(
+                "Recording search of track %s stopped after %s pages; later recordings are missing", track_id, max_pages
+            )
+        return sorted(segments, key=lambda segment: segment.start)
+
+    async def search_alarm_log(
+        self,
+        start: datetime.datetime,
+        end: datetime.datetime,
+        max_pages: int = 20,
+    ) -> list[LoggedEvent]:
+        """Search alarm events (motion, intrusion, ...) in the device log, pairing Start/Stop entries."""
+        entries = []
+        position = 0
+        search_id = str(uuid.uuid4()).upper()
+        for _ in range(max_pages):
+            xml = (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                "<CMSearchDescription>"
+                f"<searchID>{search_id}</searchID>"
+                "<timeSpanList><timeSpan>"
+                f"<startTime>{format_isapi_time(start)}</startTime>"
+                f"<endTime>{format_isapi_time(end)}</endTime>"
+                "</timeSpan></timeSpanList>"
+                f"<maxResults>{LOG_PAGE_SIZE}</maxResults>"
+                f"<searchResultPostion>{position}</searchResultPostion>"
+                "<metaId>log.std-cgi.com/Alarm</metaId>"
+                "</CMSearchDescription>"
+            )
+            result = (await self.request(POST, "ContentMgmt/logSearch", data=xml)).get("CMSearchResult", {})
+            matches = deep_get(result, "matchList.searchMatchItem", [])
+            for item in matches:
+                # metaId format: log.hikvision.com/Alarm/motionStart/1
+                meta_id = str(deep_get(item, "logDescriptor.metaId") or "")
+                time = parse_isapi_time(deep_get(item, "logDescriptor.StartDateTime"))
+                parts = meta_id.split("/")
+                if len(parts) < 3 or parts[1] != "Alarm" or not time:
+                    continue
+                channel_id = int(parts[3]) if len(parts) > 3 and parts[3].isdigit() else None
+                entries.append((time, parts[2], channel_id))
+            position += len(matches)
+            if result.get("responseStatusStrg") != "MORE" or not matches:
+                break
+        else:
+            _LOGGER.warning("Alarm log search stopped after %s pages; later events are missing", max_pages)
+
+        events: list[LoggedEvent] = []
+        open_events: dict[tuple[str, int | None], LoggedEvent] = {}
+        for time, name, channel_id in sorted(entries, key=lambda entry: entry[0]):
+            if name.endswith("Start"):
+                event = LoggedEvent(event_type=name[:-5], channel_id=channel_id, start=time)
+                open_events[(event.event_type, channel_id)] = event
+                events.append(event)
+            elif name.endswith("Stop"):
+                event = open_events.pop((name[:-4], channel_id), None)
+                if event:
+                    event.end = time
+            else:
+                events.append(LoggedEvent(event_type=name, channel_id=channel_id, start=time, end=time))
+        return events
+
+    async def get_recording_days(self, track_id: int, year: int, month: int) -> list[int]:
+        """Get days of the month that have recordings (device local time)."""
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            f"<trackDailyParam><year>{year}</year><monthOfYear>{month}</monthOfYear></trackDailyParam>"
+        )
+        response = await self.request(POST, f"ContentMgmt/record/tracks/{track_id}/dailyDistribution", data=xml)
+        days = deep_get(response, "trackDailyDistribution.dayList.day", [])
+        return sorted(int(day["dayOfMonth"]) for day in days if str_to_bool(day.get("record")))
+
+    def get_playback_source(self, track_id: int, start: datetime.datetime, end: datetime.datetime) -> str:
+        """Get RTSP source playing back a recorded track from the given time."""
+        u = quote(self.username, safe="")
+        p = quote(self.password, safe="")
+        url = f"{self.device_info.ip_address}:{self.protocols.rtsp_port}/Streaming/tracks/{track_id}/"
+        times = f"starttime={format_isapi_time(start, compact=True)}&endtime={format_isapi_time(end, compact=True)}"
+        return f"rtsp://{u}:{p}@{url}?{times}"
 
     def _get_event_state_node(self, event: EventInfo) -> str:
         """Get xml key for event state."""
