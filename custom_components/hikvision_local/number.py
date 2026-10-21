@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.number import ENTITY_ID_FORMAT, NumberEntity, NumberMode
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,7 +40,6 @@ class AudioAlarmNumber(CoordinatorEntity, NumberEntity):
         super().__init__(coordinator)
         device = coordinator.device
         self._attr_unique_id = device.build_audio_alarm_unique_id(self._key)
-        self.entity_id = ENTITY_ID_FORMAT.format(self.unique_id)
         self._attr_device_info = device.hass_device_info()
 
     @property

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.select import ENTITY_ID_FORMAT, SelectEntity
+from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,7 +40,6 @@ class AudioAlarmSoundSelect(CoordinatorEntity, SelectEntity):
         super().__init__(coordinator)
         device = coordinator.device
         self._attr_unique_id = device.build_audio_alarm_unique_id("sound")
-        self.entity_id = ENTITY_ID_FORMAT.format(self.unique_id)
         self._attr_device_info = device.hass_device_info()
         self._sounds = device.audio_alarm.capabilities.sounds
         self._attr_options = [sound.name for sound in self._sounds]
