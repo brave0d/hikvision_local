@@ -62,3 +62,138 @@ isapi_request:
       selector:
         text:
           multiline: true
+
+ptz_move:
+  name: PTZ move
+  description: "Move a PTZ camera. Permission needed - Remote: PTZ Control"
+  target:
+    entity:
+      domain: camera
+      integration: hikvision_local
+  fields:
+    direction:
+      name: Direction
+      description: "Move in a direction at half speed. Ignored when pan, tilt or zoom is set."
+      selector:
+        select:
+          options:
+            - up
+            - down
+            - left
+            - right
+            - up_left
+            - up_right
+            - down_left
+            - down_right
+            - zoom_in
+            - zoom_out
+    pan:
+      name: Pan speed
+      description: "-100 (left) to 100 (right)."
+      selector:
+        number:
+          min: -100
+          max: 100
+    tilt:
+      name: Tilt speed
+      description: "-100 (down) to 100 (up)."
+      selector:
+        number:
+          min: -100
+          max: 100
+    zoom:
+      name: Zoom speed
+      description: "-100 (zoom out) to 100 (zoom in). Zoom and pan/tilt are separate movements."
+      selector:
+        number:
+          min: -100
+          max: 100
+    duration:
+      name: Duration
+      description: "Milliseconds to move before stopping. 0 keeps moving until PTZ stop."
+      default: 1000
+      selector:
+        number:
+          min: 0
+          max: 60000
+          unit_of_measurement: ms
+
+ptz_stop:
+  name: PTZ stop
+  description: "Stop a PTZ camera's movement."
+  target:
+    entity:
+      domain: camera
+      integration: hikvision_local
+
+ptz:
+  name: PTZ (ONVIF style)
+  description: "Move a PTZ camera with the same fields as the ONVIF PTZ action, as used by Advanced Camera Card."
+  target:
+    entity:
+      domain: camera
+      integration: hikvision_local
+  fields:
+    pan:
+      name: Pan
+      selector:
+        select:
+          options:
+            - LEFT
+            - RIGHT
+    tilt:
+      name: Tilt
+      selector:
+        select:
+          options:
+            - UP
+            - DOWN
+    zoom:
+      name: Zoom
+      selector:
+        select:
+          options:
+            - ZOOM_IN
+            - ZOOM_OUT
+    distance:
+      name: Distance
+      description: "Accepted for compatibility and ignored: Hikvision continuous moves have no distance."
+      selector:
+        number:
+          min: 0
+          max: 1
+          step: 0.01
+    speed:
+      name: Speed
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 1
+          step: 0.01
+    continuous_duration:
+      name: Duration
+      description: "Seconds to move before stopping. 0 keeps moving until move mode Stop."
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 0.1
+          unit_of_measurement: s
+    preset:
+      name: Preset
+      description: "Preset number for move mode GotoPreset."
+      selector:
+        number:
+          min: 1
+          max: 300
+    move_mode:
+      name: Move mode
+      default: ContinuousMove
+      selector:
+        select:
+          options:
+            - ContinuousMove
+            - GotoPreset
+            - Stop

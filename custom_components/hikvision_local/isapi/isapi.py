@@ -744,6 +744,20 @@ class ISAPIClient:
         xml = xmltodict.unparse(data)
         await self.request(PUT, "Event/notification/httpHosts", present="xml", data=xml)
 
+    async def ptz_continuous(self, channel_id: int, pan: int = 0, tilt: int = 0, zoom: int = 0) -> None:
+        """Start or stop a continuous PTZ movement; all zeros stop it.
+
+        Values go from -100 to 100. Positive pan turns right, positive tilt goes up and positive
+        zoom zooms in.
+        """
+        data = {"PTZData": {"pan": pan, "tilt": tilt, "zoom": zoom}}
+        xml = xmltodict.unparse(data, full_document=False)
+        await self.request(PUT, f"PTZCtrl/channels/{channel_id}/continuous", present="xml", data=xml)
+
+    async def ptz_goto_preset(self, channel_id: int, preset: int) -> None:
+        """Move a PTZ camera to a stored preset."""
+        await self.request(PUT, f"PTZCtrl/channels/{channel_id}/presets/{preset}/goto", present="xml")
+
     async def reboot(self):
         """Reboot device."""
         await self.request(PUT, "System/reboot", present="xml")
