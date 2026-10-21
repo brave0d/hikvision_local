@@ -183,3 +183,37 @@ async def test_event_fallback_ignores_capabilities_without_event_type(mock_isapi
     mock_isapi.request = AsyncMock(side_effect=lambda _, endpoint: responses.get(endpoint, {}))
 
     assert await mock_isapi.get_supported_events({}) == []
+
+
+async def test_camera_streams_skip_incomplete_details(mock_isapi):
+    """A stream without channelName is skipped; the other streams still load."""
+    responses = {
+        "Streaming/channels/101": {"StreamingChannel": {"id": "101", "channelName": "Main", "enabled": "true"}},
+        "Streaming/channels/102": {"StreamingChannel": {"id": "102", "enabled": "true"}},
+    }
+    mock_isapi.request = AsyncMock(side_effect=lambda _, endpoint: responses.get(endpoint, {}))
+
+    streams = await mock_isapi.get_camera_streams(1)
+
+    assert [stream.id for stream in streams] == [101]
+
+
+async def test_camera_streams_defaults_for_hidden_streams(mock_isapi):
+    """Hidden stream details give default main and sub streams only when asked for."""
+    mock_isapi.request = AsyncMock(return_value={})
+
+    assert await mock_isapi.get_camera_streams(3) == []
+    streams = await mock_isapi.get_camera_streams(3, default_streams=True)
+    assert [(stream.id, stream.type_id) for stream in streams] == [(301, 1), (302, 2)]
+
+
+async def test_camera_streams_no_defaults_when_some_details_exist(mock_isapi):
+    """A channel with real details for one stream gets no made-up streams."""
+    responses = {
+        "Streaming/channels/301": {"StreamingChannel": {"id": "301", "channelName": "Main", "enabled": "true"}}
+    }
+    mock_isapi.request = AsyncMock(side_effect=lambda _, endpoint: responses.get(endpoint, {}))
+
+    streams = await mock_isapi.get_camera_streams(3, default_streams=True)
+
+    assert [stream.id for stream in streams] == [301]

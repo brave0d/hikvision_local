@@ -228,7 +228,9 @@ class ISAPIClient:
                             connection_type=CONNECTION_TYPE_PROXIED,
                             ip_addr=source.get("ipAddress"),
                             ip_port=source.get("managePortNo"),
-                            streams=await self.get_camera_streams(camera_id),
+                            streams=await self.get_camera_streams(
+                                camera_id, default_streams=source.get("proxyProtocol") != "HIKVISION"
+                            ),
                         )
                     )
 
@@ -391,27 +393,52 @@ class ISAPIClient:
             url = f"Smart/{slug}/{channel_id}"
         return url
 
-    async def get_camera_streams(self, channel_id: int) -> list[CameraStreamInfo]:
-        """Get stream info for all cameras."""
+    async def get_camera_streams(self, channel_id: int, default_streams: bool = False) -> list[CameraStreamInfo]:
+        """Get stream info for all cameras.
+
+        default_streams: when the device hides the details of the main and sub stream, assume
+        they exist (NVRs answer 403 for IP channels added with ONVIF or other protocols).
+        """
         streams = []
         for stream_type_id, stream_type in STREAM_TYPE.items():
             stream_id = f"{channel_id}0{stream_type_id}"
             stream_info = (await self.request(GET, f"Streaming/channels/{stream_id}")).get("StreamingChannel")
             if not stream_info:
                 continue
-            streams.append(
-                CameraStreamInfo(
-                    id=int(stream_info["id"]),
-                    name=stream_info["channelName"],
-                    type_id=stream_type_id,
-                    type=stream_type,
-                    enabled=stream_info["enabled"],
-                    codec=deep_get(stream_info, "Video.videoCodecType"),
-                    width=deep_get(stream_info, "Video.videoResolutionWidth", 0),
-                    height=deep_get(stream_info, "Video.videoResolutionHeight", 0),
-                    audio=str_to_bool(deep_get(stream_info, "Audio.enabled", "false")),
+            try:
+                streams.append(
+                    CameraStreamInfo(
+                        id=int(stream_info["id"]),
+                        name=stream_info["channelName"],
+                        type_id=stream_type_id,
+                        type=stream_type,
+                        enabled=stream_info["enabled"],
+                        codec=deep_get(stream_info, "Video.videoCodecType"),
+                        width=deep_get(stream_info, "Video.videoResolutionWidth", 0),
+                        height=deep_get(stream_info, "Video.videoResolutionHeight", 0),
+                        audio=str_to_bool(deep_get(stream_info, "Audio.enabled", "false")),
+                    )
                 )
-            )
+            except (KeyError, TypeError, ValueError) as ex:
+                # Incomplete stream details shouldn't stop the rest of the device from loading.
+                _LOGGER.debug("Stream %s not available: %s", stream_id, ex)
+        if default_streams and not streams:
+            # RTSP still works for these channels; only the stream details are hidden. The size is
+            # unknown (0), so snapshots are requested without a resolution.
+            for stream_type_id in (1, 2):
+                streams.append(
+                    CameraStreamInfo(
+                        id=int(f"{channel_id}0{stream_type_id}"),
+                        name=f"{channel_id}0{stream_type_id}",
+                        type_id=stream_type_id,
+                        type=STREAM_TYPE[stream_type_id],
+                        enabled=True,
+                        codec=None,
+                        width=0,
+                        height=0,
+                        audio=False,
+                    )
+                )
         return streams
 
     def get_camera_by_id(self, camera_id: int) -> IPCamera | AnalogCamera | None:
@@ -770,7 +797,7 @@ class ISAPIClient:
     ):
         """Get camera snapshot."""
         params = {}
-        if not width or width > 100:
+        if (not width or width > 100) and stream.width and stream.height:
             params = {
                 "videoResolutionWidth": stream.width,
                 "videoResolutionHeight": stream.height,
