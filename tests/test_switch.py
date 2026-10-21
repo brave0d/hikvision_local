@@ -1,16 +1,17 @@
 """Tests for switch platform."""
 
-import respx
-import pytest
-import httpx
-from homeassistant.core import HomeAssistant
-from custom_components.hikvision_local.isapi.const import EVENT_IO
-from custom_components.hikvision_local.hikvision_device import HikvisionDevice
-from tests.conftest import TEST_HOST
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_ON, STATE_OFF
+import httpx
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.isapi.const import EVENT_IO
+from tests.conftest import TEST_HOST
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)

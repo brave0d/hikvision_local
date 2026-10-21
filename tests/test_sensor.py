@@ -1,9 +1,9 @@
 """Tests for sensor platform."""
 
-import pytest
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 import homeassistant.helpers.entity_registry as er
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)

@@ -1,19 +1,21 @@
 """Fixtures for testing."""
 
 import json
+
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
+from homeassistant.core import HomeAssistant
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
 import xmltodict
+
 from custom_components.hikvision_local.const import (
-    DOMAIN,
-    CONF_SET_ALARM_SERVER,
     CONF_ALARM_SERVER_HOST,
+    CONF_SET_ALARM_SERVER,
+    DOMAIN,
     RTSP_PORT_FORCED,
 )
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.hikvision_local.isapi import ISAPIClient
-from homeassistant.core import HomeAssistant
 
 TEST_HOST_IP = "1.0.0.255"
 TEST_HOST = f"http://{TEST_HOST_IP}"
@@ -47,7 +49,7 @@ def mock_config_entry(request) -> MockConfigEntry:
 
 
 def load_fixture(path, file):
-    with open(f"tests/fixtures/{path}/{file}.xml", "r") as f:
+    with open(f"tests/fixtures/{path}/{file}.xml") as f:
         return f.read()
 
 
@@ -64,7 +66,7 @@ def mock_endpoint(endpoint, file=None, status_code=200):
 def mock_device_endpoints(model, device_url=TEST_HOST):
     """Mock all ISAPI requests used for device initialization."""
 
-    f = open(f"tests/fixtures/devices/{model}.json", "r")
+    f = open(f"tests/fixtures/devices/{model}.json")
     diagnostics = json.load(f)
     f.close()
     for endpoint, data in diagnostics["data"]["ISAPI"].items():

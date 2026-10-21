@@ -1,17 +1,17 @@
 """Tests for camera platform."""
 
-import pytest
-import respx
-import httpx
-from homeassistant.core import HomeAssistant
-from homeassistant.const import STATE_IDLE
-from homeassistant.components.camera.helper import get_camera_from_entity_id
 from homeassistant.components.camera import DOMAIN as CAMERA_DOMAIN
-from custom_components.hikvision_local.hikvision_device import HikvisionDevice
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from tests.conftest import load_fixture
-from tests.conftest import TEST_HOST
+from homeassistant.components.camera.helper import get_camera_from_entity_id
+from homeassistant.const import STATE_IDLE
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
+import httpx
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
+from tests.conftest import TEST_HOST, load_fixture
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)

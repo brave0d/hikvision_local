@@ -1,14 +1,16 @@
 """Test event notifications."""
 
-import pytest
 from http import HTTPStatus
-from homeassistant.core import HomeAssistant, Event
-from custom_components.hikvision_local.notifications import EventNotificationsView
-from custom_components.hikvision_local.const import HIKVISION_EVENT, RTSP_PORT_FORCED
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 from unittest.mock import MagicMock
-from tests.conftest import load_fixture, TEST_HOST_IP, TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK
-from homeassistant.const import STATE_ON, STATE_OFF
+
+from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.core import Event, HomeAssistant
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.hikvision_local.const import HIKVISION_EVENT, RTSP_PORT_FORCED
+from custom_components.hikvision_local.notifications import EventNotificationsView
+from tests.conftest import TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK, TEST_HOST_IP, load_fixture
 
 
 def mock_event_notification(file) -> MagicMock:

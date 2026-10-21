@@ -1,9 +1,10 @@
 """Tests for actions."""
 
-import pytest
-import respx
 from homeassistant.core import HomeAssistant
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
 from custom_components.hikvision_local.const import (
     ACTION_REBOOT,
     ATTR_CONFIG_ENTRY_ID,

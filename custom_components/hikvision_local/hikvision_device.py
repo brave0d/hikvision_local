@@ -3,8 +3,6 @@
 import logging
 from typing import Any
 
-import httpx
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
@@ -12,6 +10,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.util import slugify
+import httpx
 
 from .const import (
     ALARM_SERVER_PATH,

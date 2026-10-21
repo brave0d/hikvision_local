@@ -7,10 +7,9 @@ import json
 import random
 from typing import Any
 
-from httpx import HTTPStatusError
-
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntry
+from httpx import HTTPStatusError
 
 from . import HikvisionConfigEntry
 from .isapi import ISAPIForbiddenError, ISAPIUnauthorizedError

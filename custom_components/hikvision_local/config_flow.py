@@ -6,8 +6,6 @@ from collections.abc import Mapping
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.components.network import async_get_source_ip
 from homeassistant.config_entries import (
     SOURCE_REAUTH,
@@ -16,6 +14,7 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
 )
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
+import voluptuous as vol
 
 from . import HikvisionConfigEntry
 from .const import (

@@ -1,18 +1,20 @@
 """Tests for PIR sensor."""
 
-import respx
-import pytest
 from http import HTTPStatus
-from homeassistant.core import HomeAssistant
-from custom_components.hikvision_local.isapi.const import EVENT_PIR
+
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
 from custom_components.hikvision_local.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.isapi.const import EVENT_PIR
 from custom_components.hikvision_local.notifications import EventNotificationsView
-from tests.test_notifications import mock_event_notification
 from tests.conftest import TEST_HOST
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_ON, STATE_OFF
+from tests.test_notifications import mock_event_notification
 
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2443G0-IW"], indirect=True)

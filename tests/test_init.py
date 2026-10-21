@@ -1,14 +1,15 @@
 """Tests for the hikvision_local integration."""
 
-import pytest
 from unittest.mock import patch
+
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
 from custom_components.hikvision_local.const import DOMAIN
 from custom_components.hikvision_local.hikvision_device import HikvisionDevice
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from homeassistant.config_entries import ConfigEntryState
-
-from tests.conftest import TEST_CONFIG, TEST_CONFIG_WITH_ALARM_SERVER, TEST_CONFIG_OUTSIDE_NETWORK
+from tests.conftest import TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK, TEST_CONFIG_WITH_ALARM_SERVER
 
 
 @pytest.mark.parametrize(

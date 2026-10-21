@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import suppress
 import datetime
 from http import HTTPStatus
 import ipaddress
 import json
 import logging
-from typing import Any, AsyncIterator
+from typing import Any
 from urllib.parse import quote, urljoin, urlparse
 
 import httpx

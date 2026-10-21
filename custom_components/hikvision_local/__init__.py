@@ -6,7 +6,7 @@ import asyncio
 from contextlib import suppress
 import logging
 import traceback
-from homeassistant.util import slugify
+
 from homeassistant.components.binary_sensor import (
     ENTITY_ID_FORMAT as BINARY_SENSOR_ENTITY_ID_FORMAT,
 )
@@ -17,6 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .hikvision_device import HikvisionDevice

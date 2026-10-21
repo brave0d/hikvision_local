@@ -3,8 +3,6 @@
 from datetime import datetime
 import logging
 
-import voluptuous as vol
-
 from homeassistant.components.camera import Camera
 from homeassistant.components.image import ImageEntity
 from homeassistant.const import ATTR_ENTITY_ID, CONF_FILENAME
@@ -13,6 +11,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.template import Template
 from homeassistant.util import slugify
+import voluptuous as vol
 
 from . import HikvisionConfigEntry
 from .const import ACTION_UPDATE_SNAPSHOT
