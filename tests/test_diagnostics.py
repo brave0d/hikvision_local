@@ -68,7 +68,7 @@ def test_anonymise_data_handles_lists_and_addresses() -> None:
                 {"id": "2", "name": "Garden", "sourceInputPortDescriptor": {"userName": ""}},
             ]
         },
-        "nasList": {"nas": {"path": "/volume2/Cameras", "nasName": "home-nas", "hddSerialNumber": "WSC1Q7P5"}},
+        "nasList": {"nas": {"path": "/volume2/Cameras", "nasName": "home-nas", "hddSerialNumber": "ABC1D2E3"}},
         "IPAddress": {"ipv6Address": "fe80::4219:b6ff:fe12:3456", "ipAddress": "192.168.1.10"},
     }
 
@@ -78,6 +78,6 @@ def test_anonymise_data_handles_lists_and_addresses() -> None:
     assert [channel["name"] for channel in channels] == ["Camera", "Camera"]
     assert channels[0]["sourceInputPortDescriptor"]["userName"] == "user"
     assert channels[1]["sourceInputPortDescriptor"]["userName"] == ""
-    assert result["nasList"]["nas"] == {"path": "/share", "nasName": "nas1", "hddSerialNumber": "WSC0Q0P0"}
+    assert result["nasList"]["nas"] == {"path": "/share", "nasName": "nas1", "hddSerialNumber": "ABC0D0E0"}
     assert result["IPAddress"]["ipv6Address"] == "fd00::1"
     assert result["IPAddress"]["ipAddress"].startswith("1.0.0.")
