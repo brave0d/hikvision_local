@@ -137,7 +137,7 @@ async def test_async_setup_entry_nvr_with_alarm_server(hass: HomeAssistant, init
         await hass.async_block_till_done()
 
         assert entry.state == ConfigEntryState.LOADED
-        assert set_alarm_server_mock.call_args[0] == ("http://1.0.0.11:8123", "/api/hikvision")
+        assert set_alarm_server_mock.call_args[0] == ("http://1.0.0.11:8123", "/api/hikvision_local")
 
         # test successful unload
         await hass.config_entries.async_unload(entry.entry_id)

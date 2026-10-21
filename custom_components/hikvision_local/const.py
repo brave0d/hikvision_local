@@ -11,7 +11,7 @@ DOMAIN: Final = "hikvision_local"
 RTSP_PORT_FORCED: Final = "rtsp_port_forced"
 CONF_SET_ALARM_SERVER: Final = "set_alarm_server"
 CONF_ALARM_SERVER_HOST: Final = "alarm_server"
-ALARM_SERVER_PATH = "/api/hikvision"
+ALARM_SERVER_PATH = "/api/hikvision_local"
 
 EVENTS_COORDINATOR: Final = "events"
 SECONDARY_COORDINATOR: Final = "secondary"
