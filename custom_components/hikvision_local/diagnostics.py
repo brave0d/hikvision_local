@@ -91,6 +91,9 @@ ANON_KEYS = {
     "nasName": anonymise_text("nas1"),
     "path": anonymise_text("/share"),
     "hddSerialNumber": anonymise_digits,
+    # A custom audio alarm URL can contain a host and credentials.
+    "customAudioURL": anonymise_text("https://example.com/audio.wav"),
+    "customAudioName": anonymise_text("custom"),
 }
 
 # Channel names are user-entered, so they are replaced inside these elements only.
