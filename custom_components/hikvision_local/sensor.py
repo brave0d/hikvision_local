@@ -60,8 +60,8 @@ class AlarmServerSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the state of the sensor."""
-        host = self.coordinator.data.get(CONF_ALARM_SERVER_HOST)
-        return host.get(self.key)
+        host = (self.coordinator.data or {}).get(CONF_ALARM_SERVER_HOST)
+        return host.get(self.key) if host else None  # device unreachable: no data
 
 
 class StorageSensor(CoordinatorEntity, SensorEntity):

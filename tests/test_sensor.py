@@ -5,6 +5,8 @@ import homeassistant.helpers.entity_registry as er
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.hikvision_local.const import SECONDARY_COORDINATOR
+
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
 async def test_sensor_value(
@@ -70,3 +72,18 @@ async def test_scenechange_support(
     for entity_id in entities:
         assert (entity := entity_registry.async_get(entity_id))
         assert entity.disabled == data["disabled"]
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_alarm_server_sensor_without_coordinator_data(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """The alarm server sensors report no value instead of crashing when the device is unreachable."""
+
+    coordinator = init_integration.runtime_data.coordinators[SECONDARY_COORDINATOR]
+    coordinator.async_set_updated_data(None)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_alarm_server_address")
+    assert state.state == "unknown"
