@@ -153,14 +153,16 @@ class ISAPIClient:
         videoInputPortNums=0 in capabilities while having analog inputs.
         IP-only NVRs answer this endpoint with 403, so they keep 0.
         """
-        channels = deep_get(
-            await self.request(GET, "System/Video/inputs/channels"),
-            "VideoInputChannelList.VideoInputChannel",
-            [],
-        )
+        try:
+            response = await self.request(GET, "System/Video/inputs/channels")
+        except Exception:  # noqa: BLE001
+            # A count we can't read is no worse than the 0 the capabilities reported.
+            return 0
+        channels = deep_get(response, "VideoInputChannelList.VideoInputChannel", [])
         if isinstance(channels, dict):
             channels = [channels]
-        return len(channels)
+        # Analog inputs have a physical input port; anything else in the list isn't one.
+        return len([channel for channel in channels if channel.get("inputPort")])
 
     async def get_cameras(self):
         """Get camera objects for all connected cameras."""
