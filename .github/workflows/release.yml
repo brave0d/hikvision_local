@@ -47,7 +47,13 @@ jobs:
           if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
             flags="$flags --prerelease"
           fi
-          # The annotated tag's message opens the notes; the list of merged PRs follows.
-          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > tag-notes.md
+          # The annotated tag's message opens the notes; the list of merged PRs follows. A
+          # lightweight tag has no message (its contents would be the commit message), and
+          # subject plus body leave out a signature block.
+          git fetch --force --tags origin
+          : > tag-notes.md
+          if [ "$(git cat-file -t "$GITHUB_REF_NAME")" = "tag" ]; then
+            git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' "$GITHUB_REF_NAME" > tag-notes.md
+          fi
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" \
             --notes-file tag-notes.md $flags
