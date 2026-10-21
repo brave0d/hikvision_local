@@ -1,1 +1,4 @@
-__pycache__
+__pycache__/
+.coverage
+coverage.xml
+.pytest_cache/
