@@ -54,7 +54,6 @@ class HikvisionSupplementLight(CoordinatorEntity, LightEntity):
         self._camera = camera
         self._light = camera.supplement_light
         self._attr_unique_id = device.build_camera_light_unique_id(camera)
-        self.entity_id = f"light.{self.unique_id}"
         self._attr_device_info = device.hass_device_info(camera.id)
         self._on_mode = self._determine_on_mode()
 
