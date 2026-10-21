@@ -679,8 +679,8 @@ class ISAPIClient:
         if EVENTS_ALTERNATE_ID.get(event_id):
             event_id = EVENTS_ALTERNATE_ID[event_id]
 
-        channel_id = int(alert.get("channelID", alert.get("dynChannelID", 0)))
-        io_port_id = int(alert.get("inputIOPortID", 0))
+        channel_id = clean_int(alert.get("channelID", alert.get("dynChannelID", 0)))
+        io_port_id = clean_int(alert.get("inputIOPortID", 0))
         # <EventNotificationAlert version="1.0"
         device_serial = deep_get(alert, "Extensions.serialNumber.#text")
         # <EventNotificationAlert version="2.0"
