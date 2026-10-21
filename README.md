@@ -24,6 +24,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Switches for NVR Outputs and PIR sensor
 - Holiday mode switch (allows to switch continuous recording with appropriate NVR setup)
 - Image entities for the latest snapshots
+- PTZ actions: `ptz_move`, `ptz_stop`, and an ONVIF-style `ptz` action for cards such as Advanced Camera Card
 - Supplement light (ColorVu white light, IR) as light entities, also for cameras connected to an NVR. Turning the light off sets the camera's supplement light mode to off (`close`) until it's turned on again, so the camera has no light at night meanwhile.
 - Tracking HDD and NAS status
 - Tracking Notifications Host settings for diagnostic purposes
