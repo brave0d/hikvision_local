@@ -4,6 +4,8 @@ import json
 
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import slugify
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
@@ -38,6 +40,47 @@ TEST_CONFIG_OUTSIDE_NETWORK = {
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     yield
+
+
+# Home Assistant logs these instead of failing the test, which hid the HA 2026.9 via_device breakage.
+FAIL_ON_LOGS = (
+    "Error adding entity",
+    "Error setting up entity",
+    "Entity id already exists",
+    "Platform hikvision_local does not generate unique IDs",
+    "Detected that custom integration 'hikvision_local'",
+    "Detected that integration",
+    "Detected code that calls",
+)
+
+
+@pytest.fixture(autouse=True)
+def fail_on_home_assistant_reports(caplog):
+    """Fail a test when Home Assistant logs an entity error or a deprecation report."""
+    yield
+    # caplog.records only holds the current phase (teardown here), so read setup and call too.
+    records = caplog.get_records("setup") + caplog.get_records("call") + caplog.records
+    reports = [r.getMessage() for r in records if r.getMessage().startswith(FAIL_ON_LOGS)]
+    assert not reports, "Home Assistant reported:\n" + "\n".join(reports)
+
+
+def legacy_entity_id(entry: er.RegistryEntry) -> str:
+    """Return the entity ID the integration used to force before 2.0, derived from the unique ID."""
+    object_id = entry.unique_id.removeprefix(f"{entry.domain}.")
+    return f"{entry.domain}.{slugify(object_id.lower())}"
+
+
+def use_legacy_entity_ids(hass: HomeAssistant, config_entry: MockConfigEntry) -> None:
+    """Rename entities to their pre-2.0 IDs so tests can keep readable, stable IDs.
+
+    Home Assistant generates entity IDs from device and entity names now; test_entity_ids.py
+    covers the generated IDs.
+    """
+    entity_registry = er.async_get(hass)
+    for entry in er.async_entries_for_config_entry(entity_registry, config_entry.entry_id):
+        legacy = legacy_entity_id(entry)
+        if entry.entity_id != legacy:
+            entity_registry.async_update_entity(entry.entity_id, new_entity_id=legacy)
 
 
 @pytest.fixture
@@ -126,6 +169,9 @@ async def init_integration(respx_mock, request, mock_isapi, hass: HomeAssistant,
     if not skip_setup:
         await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
+        if not request.node.get_closest_marker("generated_entity_ids"):
+            use_legacy_entity_ids(hass, mock_config_entry)
+            await hass.async_block_till_done()
         unique_id = None
         if mock_config_entry.state.value == "loaded":
             unique_id = mock_config_entry.runtime_data.device_info.serial_no
@@ -151,6 +197,8 @@ async def init_multi_device_integration(respx_mock, request, mock_isapi, hass: H
         config_entry.add_to_hass(hass)
 
         await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+        use_legacy_entity_ids(hass, config_entry)
         await hass.async_block_till_done()
 
         unique_id = None

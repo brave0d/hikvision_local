@@ -50,7 +50,6 @@ class HikvisionCamera(Camera):
         else:
             # for the main stream use just its name
             self._attr_name = camera.name
-        self.entity_id = f"camera.{self.unique_id}"
         self.device = device
         self.stream_info = stream_info
 

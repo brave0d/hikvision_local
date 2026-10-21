@@ -104,14 +104,26 @@ class HikvisionDevice(ISAPIClient):
             camera_info = self.get_camera_by_id(camera_id)
             is_ip_camera = isinstance(camera_info, IPCamera)
 
-            return DeviceInfo(
+            device_info = DeviceInfo(
                 manufacturer=self.device_info.manufacturer,
                 identifiers={(DOMAIN, camera_info.serial_no)},
                 model=camera_info.model,
                 name=camera_info.name,
                 sw_version=camera_info.firmware if is_ip_camera else "Unknown",
-                via_device=(DOMAIN, self.device_info.serial_no) if self.device_info.is_nvr else None,
             )
+            if self.device_info.is_nvr:
+                device_info.update(self._via_nvr_device_info())
+            return device_info
+
+    def _via_nvr_device_info(self) -> DeviceInfo:
+        """Return device info linking a camera to its parent NVR device."""
+        nvr_identifier = (DOMAIN, self.device_info.serial_no)
+        device_registry = dr.async_get(self.hass)
+        nvr_device = device_registry.async_get_device_by_identifier(nvr_identifier, self.entry.entry_id)
+        if nvr_device is None:
+            _LOGGER.warning("NVR device %s is not registered yet, camera is added without a parent link", self.host)
+            return DeviceInfo()
+        return DeviceInfo(via_device_id=nvr_device.id)
 
     def get_device_event_capabilities(
         self,
