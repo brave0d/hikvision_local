@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: pip install ruff==0.17.1
+      - run: ruff check custom_components tests
+      - run: ruff format --check custom_components tests
+
+  tests:
+    name: tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Minimum supported Home Assistant, as declared in hacs.json.
+          - name: min
+            harness: "pytest-homeassistant-custom-component==0.13.371"
+          # Latest stable: the pin in requirements.test.txt, kept current by Dependabot.
+          - name: latest
+            harness: ""
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.test.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -n "${{ matrix.harness }}" ]; then
+            sed -i "s/^pytest-homeassistant-custom-component==.*/${{ matrix.harness }}/" requirements.test.txt
+          fi
+          pip install -r requirements.test.txt
+      - name: Run pytest
+        run: pytest --cov=custom_components/hikvision_local --cov-report=term-missing --cov-fail-under=83
+
+  upcoming:
+    name: tests (${{ matrix.name }}, non-blocking)
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Newest harness, including beta releases of Home Assistant.
+          - name: beta
+          # Home Assistant from the dev branch, on top of the newest harness.
+          - name: dev
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          sed -i "/^pytest-homeassistant-custom-component==/d" requirements.test.txt
+          pip install -r requirements.test.txt
+          pip install --pre --upgrade pytest-homeassistant-custom-component
+          if [ "${{ matrix.name }}" = "dev" ]; then
+            pip install --no-deps --upgrade "git+https://github.com/home-assistant/core@dev"
+          fi
+          python -c "from homeassistant.const import __version__; print('Home Assistant', __version__)"
+      - name: Run pytest
+        run: pytest
+      - name: Report a scheduled failure
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Tests fail on Home Assistant ${{ matrix.name }}"
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number')
+          body="Nightly run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
+    permissions:
+      contents: read
+      issues: write
