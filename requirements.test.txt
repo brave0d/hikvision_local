@@ -7,8 +7,8 @@ xmltodict>=0.13.0
 requests-toolbelt==1.0.0
 
 # Test helpers
-pytest-cov
-respx
+pytest-cov==7.1.0
+respx==0.23.1
 
 # Needed by Home Assistant components the tests load
-PyTurboJPEG
+PyTurboJPEG==2.5.0
