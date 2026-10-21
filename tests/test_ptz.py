@@ -7,7 +7,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
 import xmltodict
 
-from custom_components.hikvision_local.const import ACTION_PTZ_MOVE, ACTION_PTZ_STOP, DOMAIN
+from custom_components.hikvision_local.const import ACTION_PTZ, ACTION_PTZ_MOVE, ACTION_PTZ_STOP, DOMAIN
 from tests.conftest import TEST_HOST
 
 CAMERA = "camera.ds_2se4c425mwg_e_0000000000aawrfc0000000_101"
@@ -61,3 +61,23 @@ async def test_ptz_rejects_other_entities(hass: HomeAssistant, init_integration:
         await hass.services.async_call(
             DOMAIN, ACTION_PTZ_MOVE, {"entity_id": "camera.unknown", "direction": "up"}, blocking=True
         )
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2SE4C425MWG-E-26"], indirect=True)
+async def test_onvif_style_ptz(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """The ONVIF-style action maps directions and speed, and Stop stops."""
+    route = respx.put(PTZ_URL).respond(200)
+
+    await hass.services.async_call(
+        DOMAIN,
+        ACTION_PTZ,
+        {"entity_id": CAMERA, "pan": "RIGHT", "tilt": "DOWN", "speed": 0.7, "continuous_duration": 0},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        DOMAIN, ACTION_PTZ, {"entity_id": CAMERA, "zoom": "ZOOM_IN", "continuous_duration": 0}, blocking=True
+    )
+    await hass.services.async_call(DOMAIN, ACTION_PTZ, {"entity_id": CAMERA, "move_mode": "Stop"}, blocking=True)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert sent_commands(route) == [{"pan": "70", "tilt": "-70"}, {"zoom": "50"}, {"pan": "0", "tilt": "0"}]
