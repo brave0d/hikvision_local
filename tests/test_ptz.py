@@ -85,3 +85,19 @@ async def test_onvif_style_ptz(hass: HomeAssistant, init_integration: MockConfig
         {"pan": "0", "tilt": "0", "zoom": "50"},
         {"pan": "0", "tilt": "0", "zoom": "0"},
     ]
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2SE4C425MWG-E-26"], indirect=True)
+async def test_newer_move_cancels_the_pending_stop(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A move without a duration isn't stopped by the timer of an earlier move."""
+    route = respx.put(PTZ_URL).respond(200)
+
+    await hass.services.async_call(
+        DOMAIN, ACTION_PTZ_MOVE, {"entity_id": CAMERA, "direction": "left", "duration": 20}, blocking=True
+    )
+    await hass.services.async_call(
+        DOMAIN, ACTION_PTZ_MOVE, {"entity_id": CAMERA, "direction": "right", "duration": 0}, blocking=True
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert sent_commands(route) == [{"pan": "-50", "tilt": "0", "zoom": "0"}, {"pan": "50", "tilt": "0", "zoom": "0"}]
