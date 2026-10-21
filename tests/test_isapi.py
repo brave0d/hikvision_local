@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 import respx
+import xmltodict
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
 from custom_components.hikvision_local.isapi import ISAPIClient, StorageInfo
@@ -217,3 +218,27 @@ async def test_camera_streams_no_defaults_when_some_details_exist(mock_isapi):
     streams = await mock_isapi.get_camera_streams(3, default_streams=True)
 
     assert [stream.id for stream in streams] == [301]
+
+
+@respx.mock
+async def test_set_supplement_light_keeps_other_settings(mock_isapi):
+    """Changing the light sends the current document back with only mode and brightness changed."""
+    url = f"{mock_isapi.host}/ISAPI/Image/channels/1/supplementLight"
+    respx.get(url).respond(
+        text="""<SupplementLight version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+        <supplementLightMode>colorVuWhiteLight</supplementLightMode>
+        <whiteLightBrightness>25</whiteLightBrightness>
+        <irLightBrightness>80</irLightBrightness>
+        <mixedLightBrightnessRegulatMode>auto</mixedLightBrightnessRegulatMode>
+        <EventIntelligenceModeCfg><brightnessRegulatMode>auto</brightnessRegulatMode></EventIntelligenceModeCfg>
+        </SupplementLight>"""
+    )
+    put = respx.put(url).respond(200)
+
+    await mock_isapi.set_supplement_light_state(1, "close", 25)
+
+    sent = xmltodict.parse(put.calls.last.request.content)["SupplementLight"]
+    assert sent["supplementLightMode"] == "close"
+    assert sent["irLightBrightness"] == "80"
+    assert sent["EventIntelligenceModeCfg"] == {"brightnessRegulatMode": "auto"}
+    assert sent["@xmlns"] == "http://www.hikvision.com/ver20/XMLSchema"

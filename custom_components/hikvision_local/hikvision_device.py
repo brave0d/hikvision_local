@@ -19,11 +19,13 @@ from .const import (
     DOMAIN,
     EVENTS,
     EVENTS_COORDINATOR,
+    LIGHTS_COORDINATOR,
     RTSP_PORT_FORCED,
     SECONDARY_COORDINATOR,
 )
-from .coordinator import EventsCoordinator, SecondaryCoordinator
+from .coordinator import EventsCoordinator, SecondaryCoordinator, SupplementLightCoordinator
 from .isapi import (
+    AnalogCamera,
     EventInfo,
     IPCamera,
     ISAPIClient,
@@ -81,6 +83,9 @@ class HikvisionDevice(ISAPIClient):
             or self.capabilities.storage
         ):
             self.coordinators[SECONDARY_COORDINATOR] = SecondaryCoordinator(self.hass, self)
+
+        if any(camera.supplement_light for camera in self.cameras):
+            self.coordinators[LIGHTS_COORDINATOR] = SupplementLightCoordinator(self.hass, self)
 
         if self.control_alarm_server_host and self.capabilities.support_alarm_server:
             await self.set_alarm_server(self.alarm_server_host, ALARM_SERVER_PATH)
@@ -177,3 +182,8 @@ class HikvisionDevice(ISAPIClient):
             error = "Connection error"
 
         _LOGGER.warning("%s | %s | %s | %s", error, self.host, details, ex)
+
+    def build_camera_light_unique_id(self, camera: AnalogCamera) -> str:
+        """Build unique_id for supplement light entity."""
+
+        return slugify(f"{camera.serial_no.lower()}_{camera.id}_supplement_light")

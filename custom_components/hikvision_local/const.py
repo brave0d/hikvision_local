@@ -15,7 +15,10 @@ ALARM_SERVER_PATH = "/api/hikvision_local"
 
 EVENTS_COORDINATOR: Final = "events"
 SECONDARY_COORDINATOR: Final = "secondary"
+LIGHTS_COORDINATOR: Final = "lights"
 HOLIDAY_MODE = "holiday_mode"
+
+SUPPLEMENT_LIGHT_OFF_MODE: Final = "close"
 
 ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 ACTION_REBOOT = "reboot"

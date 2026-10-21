@@ -1823,6 +1823,42 @@
             ]
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "response": {
+          "ImageChannel": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "id": "1",
+            "SupplementLight": {
+              "supplementLightMode": {
+                "@opt": "colorVuWhiteLight,close",
+                "#text": "colorVuWhiteLight"
+              },
+              "mixedLightBrightnessRegulatMode": {
+                "@opt": "auto,manual",
+                "#text": "auto"
+              },
+              "whiteLightBrightness": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "25"
+              },
+              "isAutoModeBrightnessCfg": "true"
+            }
+          }
+        }
+      },
+      "Image/channels/1/supplementLight": {
+        "response": {
+          "SupplementLight": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "supplementLightMode": "colorVuWhiteLight",
+            "whiteLightBrightness": "25",
+            "mixedLightBrightnessRegulatMode": "auto"
+          }
+        }
       }
     }
   }

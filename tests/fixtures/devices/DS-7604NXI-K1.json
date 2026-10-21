@@ -4402,6 +4402,858 @@
             "sensitivityLevel": "50"
           }
         }
+      },
+      "Image/channels/1/capabilities": {
+        "response": {
+          "ImageChannel": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "id": "1",
+            "enabled": "true",
+            "videoInputID": "1",
+            "ImageFlip": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "ImageFlipStyle": {
+                "@opt": "LEFTRIGHT,UPDOWN,CENTER"
+              }
+            },
+            "WDR": {
+              "mode": {
+                "@opt": "close,open,auto",
+                "#text": "auto"
+              },
+              "WDRLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "BLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "BLCMode": {
+                "@opt": "CLOSE,UP,DOWN,LEFT,RIGHT,CENTER,Region,AUTO",
+                "#text": "CLOSE"
+              }
+            },
+            "IrcutFilter": {
+              "IrcutFilterType": {
+                "@opt": "day,night,auto,schedule",
+                "#text": "auto"
+              },
+              "nightToDayFilterLevel": {
+                "@opt": "0,1,2,3,4,5,6,7",
+                "#text": "7"
+              },
+              "nightToDayFilterTime": {
+                "@min": "5",
+                "@max": "120",
+                "#text": "5"
+              },
+              "Schedule": {
+                "scheduleType": {
+                  "@opt": "day,night",
+                  "#text": "day"
+                },
+                "TimeRange": {
+                  "beginTime": "17:00:00",
+                  "endTime": "08:00:00"
+                }
+              }
+            },
+            "WhiteBalance": {
+              "WhiteBalanceStyle": {
+                "@opt": "manual,auto1,auto2,locked,daylightLamp,incandescentlight,warmlight,naturallight",
+                "#text": "auto1"
+              },
+              "WhiteBalanceRed": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "WhiteBalanceBlue": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Exposure": {
+              "ExposureType": {
+                "@opt": "manual",
+                "#text": "manual"
+              },
+              "OverexposeSuppress": {
+                "enabled": {
+                  "@opt": "true,false",
+                  "#text": "true"
+                }
+              }
+            },
+            "Sharpness": {
+              "SharpnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Shutter": {
+              "ShutterLevel": {
+                "@opt": "1/25,1/50,1/75,1/100,1/125,1/150,1/175,1/200,1/225,1/250,1/300,1/400,1/500,1/750,1/1000,1/2000,1/4000,1/10000,1/100000",
+                "#text": "1/50"
+              }
+            },
+            "powerLineFrequency": {
+              "powerLineFrequencyMode": {
+                "@opt": "50hz,60hz",
+                "#text": "50hz"
+              }
+            },
+            "Color": {
+              "brightnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "contrastLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "saturationLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "grayScale": {
+                "grayScaleMode": {
+                  "@opt": "outdoor,indoor",
+                  "#text": "indoor"
+                }
+              }
+            },
+            "NoiseReduce": {
+              "mode": {
+                "@opt": "close,general,advanced",
+                "#text": "general"
+              },
+              "GeneralMode": {
+                "generalLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              },
+              "AdvancedMode": {
+                "FrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                },
+                "InterFrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              }
+            },
+            "Dehaze": {
+              "DehazeMode": {
+                "@opt": "close,auto,open",
+                "#text": "close"
+              },
+              "DehazeLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "HLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "HLCLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "SupplementLight": {
+              "supplementLightMode": {
+                "@opt": "colorVuWhiteLight,close",
+                "#text": "colorVuWhiteLight"
+              },
+              "mixedLightBrightnessRegulatMode": {
+                "@opt": "auto,manual",
+                "#text": "manual"
+              },
+              "whiteLightBrightness": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "1"
+              },
+              "isAutoModeBrightnessCfg": "true"
+            },
+            "isSupportLaserSpotManual": "false",
+            "isSupportDOFAdjust": "false",
+            "isSupportAntiBandingParams": "true"
+          }
+        }
+      },
+      "Image/channels/1/supplementLight": {
+        "response": {
+          "SupplementLight": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "supplementLightMode": "colorVuWhiteLight",
+            "whiteLightBrightness": "1",
+            "mixedLightBrightnessRegulatMode": "manual"
+          }
+        }
+      },
+      "Image/channels/2/capabilities": {
+        "response": {
+          "ImageChannel": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "id": "1",
+            "enabled": "true",
+            "videoInputID": "1",
+            "ImageFlip": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "ImageFlipStyle": {
+                "@opt": "LEFTRIGHT,UPDOWN,CENTER"
+              }
+            },
+            "WDR": {
+              "mode": {
+                "@opt": "close,open,auto",
+                "#text": "auto"
+              },
+              "WDRLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "BLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "BLCMode": {
+                "@opt": "CLOSE,UP,DOWN,LEFT,RIGHT,CENTER,Region,AUTO",
+                "#text": "CLOSE"
+              }
+            },
+            "IrcutFilter": {
+              "IrcutFilterType": {
+                "@opt": "day,night,auto,schedule",
+                "#text": "auto"
+              },
+              "nightToDayFilterLevel": {
+                "@opt": "0,1,2,3,4,5,6,7",
+                "#text": "7"
+              },
+              "nightToDayFilterTime": {
+                "@min": "5",
+                "@max": "120",
+                "#text": "5"
+              },
+              "Schedule": {
+                "scheduleType": {
+                  "@opt": "day,night",
+                  "#text": "day"
+                },
+                "TimeRange": {
+                  "beginTime": "17:00:00",
+                  "endTime": "08:00:00"
+                }
+              }
+            },
+            "WhiteBalance": {
+              "WhiteBalanceStyle": {
+                "@opt": "manual,auto1,auto2,locked,daylightLamp,incandescentlight,warmlight,naturallight",
+                "#text": "auto1"
+              },
+              "WhiteBalanceRed": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "WhiteBalanceBlue": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Exposure": {
+              "ExposureType": {
+                "@opt": "manual",
+                "#text": "manual"
+              },
+              "OverexposeSuppress": {
+                "enabled": {
+                  "@opt": "true,false",
+                  "#text": "true"
+                }
+              }
+            },
+            "Sharpness": {
+              "SharpnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Shutter": {
+              "ShutterLevel": {
+                "@opt": "1/25,1/50,1/75,1/100,1/125,1/150,1/175,1/200,1/225,1/250,1/300,1/400,1/500,1/750,1/1000,1/2000,1/4000,1/10000,1/100000",
+                "#text": "1/50"
+              }
+            },
+            "powerLineFrequency": {
+              "powerLineFrequencyMode": {
+                "@opt": "50hz,60hz",
+                "#text": "50hz"
+              }
+            },
+            "Color": {
+              "brightnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "contrastLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "saturationLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "grayScale": {
+                "grayScaleMode": {
+                  "@opt": "outdoor,indoor",
+                  "#text": "indoor"
+                }
+              }
+            },
+            "NoiseReduce": {
+              "mode": {
+                "@opt": "close,general,advanced",
+                "#text": "general"
+              },
+              "GeneralMode": {
+                "generalLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              },
+              "AdvancedMode": {
+                "FrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                },
+                "InterFrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              }
+            },
+            "Dehaze": {
+              "DehazeMode": {
+                "@opt": "close,auto,open",
+                "#text": "close"
+              },
+              "DehazeLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "HLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "HLCLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "SupplementLight": {
+              "supplementLightMode": {
+                "@opt": "colorVuWhiteLight,close",
+                "#text": "colorVuWhiteLight"
+              },
+              "mixedLightBrightnessRegulatMode": {
+                "@opt": "auto,manual",
+                "#text": "manual"
+              },
+              "whiteLightBrightness": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "1"
+              },
+              "isAutoModeBrightnessCfg": "true"
+            },
+            "isSupportLaserSpotManual": "false",
+            "isSupportDOFAdjust": "false",
+            "isSupportAntiBandingParams": "true"
+          }
+        }
+      },
+      "Image/channels/2/supplementLight": {
+        "response": {
+          "SupplementLight": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "supplementLightMode": "colorVuWhiteLight",
+            "whiteLightBrightness": "1",
+            "mixedLightBrightnessRegulatMode": "manual"
+          }
+        }
+      },
+      "Image/channels/3/capabilities": {
+        "response": {
+          "ImageChannel": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "id": "1",
+            "enabled": "true",
+            "videoInputID": "1",
+            "ImageFlip": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "ImageFlipStyle": {
+                "@opt": "LEFTRIGHT,UPDOWN,CENTER"
+              }
+            },
+            "WDR": {
+              "mode": {
+                "@opt": "close,open,auto",
+                "#text": "close"
+              },
+              "WDRLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "BLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "BLCMode": {
+                "@opt": "CLOSE,UP,DOWN,LEFT,RIGHT,CENTER,Region,AUTO",
+                "#text": "CLOSE"
+              }
+            },
+            "IrcutFilter": {
+              "IrcutFilterType": {
+                "@opt": "day,night,auto,schedule",
+                "#text": "auto"
+              },
+              "nightToDayFilterLevel": {
+                "@opt": "0,1,2,3,4,5,6,7",
+                "#text": "7"
+              },
+              "nightToDayFilterTime": {
+                "@min": "5",
+                "@max": "120",
+                "#text": "5"
+              },
+              "Schedule": {
+                "scheduleType": {
+                  "@opt": "day,night",
+                  "#text": "day"
+                },
+                "TimeRange": {
+                  "beginTime": "17:00:00",
+                  "endTime": "08:00:00"
+                }
+              }
+            },
+            "WhiteBalance": {
+              "WhiteBalanceStyle": {
+                "@opt": "manual,auto1,auto2,locked,daylightLamp,incandescentlight,warmlight,naturallight",
+                "#text": "auto1"
+              },
+              "WhiteBalanceRed": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "WhiteBalanceBlue": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Exposure": {
+              "ExposureType": {
+                "@opt": "manual",
+                "#text": "manual"
+              },
+              "OverexposeSuppress": {
+                "enabled": {
+                  "@opt": "true,false",
+                  "#text": "true"
+                }
+              }
+            },
+            "Sharpness": {
+              "SharpnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Shutter": {
+              "ShutterLevel": {
+                "@opt": "1/12,1/25,1/50,1/75,1/100,1/125,1/150,1/175,1/200,1/225,1/250,1/300,1/400,1/500,1/750,1/1000,1/2000,1/4000,1/10000,1/100000",
+                "#text": "1/25"
+              }
+            },
+            "powerLineFrequency": {
+              "powerLineFrequencyMode": {
+                "@opt": "50hz,60hz",
+                "#text": "50hz"
+              }
+            },
+            "Color": {
+              "brightnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "contrastLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "saturationLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "grayScale": {
+                "grayScaleMode": {
+                  "@opt": "outdoor,indoor",
+                  "#text": "indoor"
+                }
+              }
+            },
+            "NoiseReduce": {
+              "mode": {
+                "@opt": "close,general,advanced",
+                "#text": "general"
+              },
+              "GeneralMode": {
+                "generalLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              },
+              "AdvancedMode": {
+                "FrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                },
+                "InterFrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              }
+            },
+            "Dehaze": {
+              "DehazeMode": {
+                "@opt": "close,auto,open",
+                "#text": "close"
+              },
+              "DehazeLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "HLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "HLCLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "SupplementLight": {
+              "supplementLightMode": {
+                "@opt": "colorVuWhiteLight,close",
+                "#text": "colorVuWhiteLight"
+              },
+              "mixedLightBrightnessRegulatMode": {
+                "@opt": "auto,manual",
+                "#text": "auto"
+              },
+              "whiteLightBrightness": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "15"
+              },
+              "isAutoModeBrightnessCfg": "true"
+            },
+            "isSupportLaserSpotManual": "false",
+            "isSupportDOFAdjust": "false",
+            "isSupportAntiBandingParams": "true"
+          }
+        }
+      },
+      "Image/channels/3/supplementLight": {
+        "response": {
+          "SupplementLight": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "supplementLightMode": "colorVuWhiteLight",
+            "whiteLightBrightness": "15",
+            "mixedLightBrightnessRegulatMode": "auto"
+          }
+        }
+      },
+      "Image/channels/4/capabilities": {
+        "response": {
+          "ImageChannel": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "id": "1",
+            "enabled": "true",
+            "videoInputID": "1",
+            "ImageFlip": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "ImageFlipStyle": {
+                "@opt": "LEFTRIGHT,UPDOWN,CENTER"
+              }
+            },
+            "WDR": {
+              "mode": {
+                "@opt": "close,open,auto",
+                "#text": "open"
+              },
+              "WDRLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "BLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "BLCMode": {
+                "@opt": "CLOSE,UP,DOWN,LEFT,RIGHT,CENTER,Region,AUTO",
+                "#text": "CLOSE"
+              }
+            },
+            "IrcutFilter": {
+              "IrcutFilterType": {
+                "@opt": "day,night,auto,schedule",
+                "#text": "auto"
+              },
+              "nightToDayFilterLevel": {
+                "@opt": "0,1,2,3,4,5,6,7",
+                "#text": "7"
+              },
+              "nightToDayFilterTime": {
+                "@min": "5",
+                "@max": "120",
+                "#text": "5"
+              },
+              "Schedule": {
+                "scheduleType": {
+                  "@opt": "day,night",
+                  "#text": "day"
+                },
+                "TimeRange": {
+                  "beginTime": "17:00:00",
+                  "endTime": "08:00:00"
+                }
+              }
+            },
+            "WhiteBalance": {
+              "WhiteBalanceStyle": {
+                "@opt": "manual,auto1,auto2,locked,daylightLamp,incandescentlight,warmlight,naturallight",
+                "#text": "auto1"
+              },
+              "WhiteBalanceRed": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "WhiteBalanceBlue": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Exposure": {
+              "ExposureType": {
+                "@opt": "manual",
+                "#text": "manual"
+              },
+              "OverexposeSuppress": {
+                "enabled": {
+                  "@opt": "true,false",
+                  "#text": "true"
+                }
+              }
+            },
+            "Sharpness": {
+              "SharpnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "Shutter": {
+              "ShutterLevel": {
+                "@opt": "1/25,1/50,1/75,1/100,1/125,1/150,1/175,1/200,1/225,1/250,1/300,1/400,1/500,1/750,1/1000,1/2000,1/4000,1/10000,1/100000",
+                "#text": "1/50"
+              }
+            },
+            "powerLineFrequency": {
+              "powerLineFrequencyMode": {
+                "@opt": "50hz,60hz",
+                "#text": "50hz"
+              }
+            },
+            "Color": {
+              "brightnessLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "contrastLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "saturationLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              },
+              "grayScale": {
+                "grayScaleMode": {
+                  "@opt": "outdoor,indoor",
+                  "#text": "indoor"
+                }
+              }
+            },
+            "NoiseReduce": {
+              "mode": {
+                "@opt": "close,general,advanced",
+                "#text": "general"
+              },
+              "GeneralMode": {
+                "generalLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              },
+              "AdvancedMode": {
+                "FrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                },
+                "InterFrameNoiseReduceLevel": {
+                  "@min": "0",
+                  "@max": "100",
+                  "#text": "50"
+                }
+              }
+            },
+            "Dehaze": {
+              "DehazeMode": {
+                "@opt": "close,auto,open",
+                "#text": "close"
+              },
+              "DehazeLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "HLC": {
+              "enabled": {
+                "@opt": "true,false",
+                "#text": "false"
+              },
+              "HLCLevel": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "50"
+              }
+            },
+            "SupplementLight": {
+              "supplementLightMode": {
+                "@opt": "colorVuWhiteLight,close",
+                "#text": "colorVuWhiteLight"
+              },
+              "mixedLightBrightnessRegulatMode": {
+                "@opt": "auto,manual",
+                "#text": "auto"
+              },
+              "whiteLightBrightness": {
+                "@min": "0",
+                "@max": "100",
+                "#text": "25"
+              },
+              "isAutoModeBrightnessCfg": "true"
+            },
+            "isSupportLaserSpotManual": "false",
+            "isSupportDOFAdjust": "false",
+            "isSupportAntiBandingParams": "true"
+          }
+        }
+      },
+      "Image/channels/4/supplementLight": {
+        "response": {
+          "SupplementLight": {
+            "@version": "2.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "supplementLightMode": "colorVuWhiteLight",
+            "whiteLightBrightness": "25",
+            "mixedLightBrightnessRegulatMode": "auto"
+          }
+        }
       }
     }
   }

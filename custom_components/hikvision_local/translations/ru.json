@@ -23,5 +23,12 @@
       "insufficient_permission": "Доступ запрещен, проверьте свои права доступа",
       "unknown": "Неизвестная ошибка"
     }
+  },
+  "entity": {
+    "light": {
+      "supplement_light": {
+        "name": "Дополнительный свет"
+      }
+    }
   }
 }
