@@ -344,10 +344,7 @@ class ISAPIClient:
                 url = f"System/Video/inputs/channels/{channel_id}/{slug}"
 
         elif event_type == EVENT_IO:
-            if is_proxy:
-                url = f"ContentMgmt/IOProxy/{slug}/{io_port_id}"
-            else:
-                url = f"System/IO/{slug}/{io_port_id}"
+            url = f"ContentMgmt/IOProxy/{slug}/{io_port_id}" if is_proxy else f"System/IO/{slug}/{io_port_id}"
         elif event_type == EVENT_PIR:
             # ISAPI/WLAlarm/PIR
             url = slug
@@ -608,11 +605,7 @@ class ISAPIClient:
             return
         host = self._get_event_notification_host(data)
 
-        old_address = ""
-        if host.get("addressingFormatType") == "ipaddress":
-            old_address = host.get("ipAddress")
-        else:
-            old_address = host.get("hostname")
+        old_address = host.get("ipAddress") if host.get("addressingFormatType") == "ipaddress" else host.get("hostname")
 
         if (
             host["protocolType"] == address.scheme.upper()

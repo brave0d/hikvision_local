@@ -66,9 +66,8 @@ def mock_endpoint(endpoint, file=None, status_code=200):
 def mock_device_endpoints(model, device_url=TEST_HOST):
     """Mock all ISAPI requests used for device initialization."""
 
-    f = open(f"tests/fixtures/devices/{model}.json")
-    diagnostics = json.load(f)
-    f.close()
+    with open(f"tests/fixtures/devices/{model}.json") as f:
+        diagnostics = json.load(f)
     for endpoint, data in diagnostics["data"]["ISAPI"].items():
         url = f"{device_url}/ISAPI/{endpoint}"
         if status_code := data.get("status_code"):

@@ -20,7 +20,7 @@ def anonymise_mac(orignal: str):
     """Anonymise MAC address."""
 
     mac = [random.randint(0x00, 0xFF) for _ in range(6)]
-    return ":".join("%02x" % x for x in mac)
+    return ":".join(f"{x:02x}" for x in mac)
 
 
 def anonymise_ip(orignal: str):
