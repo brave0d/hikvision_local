@@ -63,7 +63,8 @@ ACTION_PTZ_SCHEMA = cv.make_entity_service_schema(
         vol.Optional("distance"): vol.Coerce(float),
         vol.Optional("speed", default=0.5): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
         vol.Optional("continuous_duration", default=0.5): vol.All(vol.Coerce(float), vol.Range(min=0, max=60)),
-        vol.Optional("move_mode", default="ContinuousMove"): vol.In(["ContinuousMove", "Stop"]),
+        vol.Optional("preset"): vol.All(vol.Coerce(int), vol.Range(min=1)),
+        vol.Optional("move_mode", default="ContinuousMove"): vol.In(["ContinuousMove", "GotoPreset", "Stop"]),
     }
 )
 
@@ -176,6 +177,16 @@ def setup_services(hass: HomeAssistant) -> None:
         entity_ids = await _ptz_targets(call)
         if call.data["move_mode"] == "Stop":
             await _ptz_move(hass, entity_ids, 0, 0, 0, 0)
+            return
+        if call.data["move_mode"] == "GotoPreset":
+            if "preset" not in call.data:
+                raise HomeAssistantError("GotoPreset needs a preset")
+            for entity_id in entity_ids:
+                device, channel_id = _ptz_camera(hass, entity_id)
+                try:
+                    await device.ptz_goto_preset(channel_id, call.data["preset"])
+                except (HTTPStatusError, ISAPIForbiddenError, ISAPIUnauthorizedError) as ex:
+                    raise HomeAssistantError(f"PTZ preset failed for {entity_id}: {ex}") from ex
             return
         speed = round(call.data["speed"] * 100)
         pan = {"LEFT": -speed, "RIGHT": speed}.get(call.data.get("pan"), 0)

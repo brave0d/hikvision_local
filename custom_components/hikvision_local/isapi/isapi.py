@@ -754,6 +754,10 @@ class ISAPIClient:
         xml = xmltodict.unparse(data, full_document=False)
         await self.request(PUT, f"PTZCtrl/channels/{channel_id}/continuous", present="xml", data=xml)
 
+    async def ptz_goto_preset(self, channel_id: int, preset: int) -> None:
+        """Move a PTZ camera to a stored preset."""
+        await self.request(PUT, f"PTZCtrl/channels/{channel_id}/presets/{preset}/goto", present="xml")
+
     async def reboot(self):
         """Reboot device."""
         await self.request(PUT, "System/reboot", present="xml")
