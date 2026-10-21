@@ -686,7 +686,9 @@ class ISAPIClient:
             if result.get("responseStatusStrg") != "MORE" or num_matches == 0:
                 break
         else:
-            _LOGGER.warning("Recording search of track %s stopped after %s pages; later recordings are missing", track_id, max_pages)
+            _LOGGER.warning(
+                "Recording search of track %s stopped after %s pages; later recordings are missing", track_id, max_pages
+            )
         return sorted(segments, key=lambda segment: segment.start)
 
     async def search_alarm_log(
