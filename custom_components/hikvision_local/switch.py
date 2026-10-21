@@ -79,9 +79,7 @@ class EventSwitch(CoordinatorEntity, SwitchEntity):
         try:
             await self.coordinator.device.set_event_enabled_state(self.device_id, self.event, True)
         except ISAPISetEventStateMutexError as ex:
-            raise HomeAssistantError(ex.message)
-        except Exception as ex:
-            raise ex
+            raise HomeAssistantError(ex.message) from ex
         finally:
             await self.coordinator.async_request_refresh()
 
@@ -122,16 +120,12 @@ class NVROutputSwitch(CoordinatorEntity, SwitchEntity):
         """Turn on."""
         try:
             await self.coordinator.device.set_output_port_state(self._port_no, True)
-        except Exception as ex:
-            raise ex
         finally:
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         try:
             await self.coordinator.device.set_output_port_state(self._port_no, False)
-        except Exception as ex:
-            raise ex
         finally:
             await self.coordinator.async_request_refresh()
 
