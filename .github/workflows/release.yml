@@ -47,4 +47,7 @@ jobs:
           if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
             flags="$flags --prerelease"
           fi
-          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" $flags
+          # The annotated tag's message opens the notes; the list of merged PRs follows.
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > tag-notes.md
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" \
+            --notes-file tag-notes.md $flags
