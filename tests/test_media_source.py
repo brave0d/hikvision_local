@@ -1,7 +1,7 @@
 """Tests for recordings media source."""
 
 import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.media_source import MediaSourceItem, Unresolvable
 from homeassistant.core import HomeAssistant
@@ -270,6 +270,7 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     assert all(child.can_play for child in clips.children)
 
     stream = MagicMock()
+    stream.stop = AsyncMock()
     stream.endpoint_url.return_value = "/api/hls/abc/master_playlist.m3u8"
     with patch("custom_components.hikvision_local.media_source.create_stream", return_value=stream) as create:
         play = await source.async_resolve_media(MediaSourceItem(hass, DOMAIN, clips.children[1].identifier, None))
@@ -286,6 +287,8 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     rtsp_url = create.call_args.args[1]
     assert f"starttime={format_isapi_time(motion_start - datetime.timedelta(seconds=10), compact=True)}" in rtsp_url
     assert f"endtime={format_isapi_time(motion_start + datetime.timedelta(seconds=28), compact=True)}" in rtsp_url
+    # The second playback of the same camera stops the first, so playback sessions don't pile up.
+    stream.stop.assert_awaited_once()
 
     with pytest.raises(Unresolvable):
         await source.async_resolve_media(MediaSourceItem(hass, DOMAIN, "FOO|bar", None))
