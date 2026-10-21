@@ -71,7 +71,6 @@ class EventsCoordinator(DataUpdateCoordinator):
         except Exception as ex:  # pylint: disable=broad-except
             self.device.handle_exception(ex, "Cannot fetch storage state")
 
-
         if self.device.auth_token_expired:
             self.device.auth_token_expired = False
 
@@ -108,7 +107,6 @@ class SecondaryCoordinator(DataUpdateCoordinator):
                     "address": alarm_server.ip_address or alarm_server.host_name,
                     "port_no": alarm_server.port_no,
                     "path": alarm_server.url,
-
                 }
         except Exception as ex:  # pylint: disable=broad-except
             self.device.handle_exception(ex, f"Cannot fetch state for {CONF_ALARM_SERVER_HOST}")

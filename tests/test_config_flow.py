@@ -1,15 +1,17 @@
 """Tests for the config flow."""
 
-import respx
-import pytest
 from unittest.mock import patch
-from custom_components.hikvision_local.const import DOMAIN
-from homeassistant.data_entry_flow import FlowResultType
+
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
-from tests.conftest import TEST_CONFIG, TEST_HOST, TEST_CONFIG_OUTSIDE_NETWORK, load_fixture, mock_endpoint
 from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
+from custom_components.hikvision_local.const import DOMAIN
+from tests.conftest import TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK, TEST_HOST, load_fixture, mock_endpoint
 
 
 @pytest.mark.parametrize("mock_isapi_device", ["DS-7608NXI-I2"], indirect=True)
@@ -100,17 +102,14 @@ async def test_user_input_validation(hass, mock_isapi_device):
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
-    user_input = {
-        **TEST_CONFIG,
-        CONF_HOST: TEST_HOST + "/"
-    }
+    user_input = {**TEST_CONFIG, CONF_HOST: TEST_HOST + "/"}
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input=user_input)
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"] == TEST_CONFIG
 
 
-@pytest.mark.parametrize("mock_isapi_device", [("DS-2CD2386G2-IU", TEST_CONFIG_OUTSIDE_NETWORK['host'])], indirect=True)
+@pytest.mark.parametrize("mock_isapi_device", [("DS-2CD2386G2-IU", TEST_CONFIG_OUTSIDE_NETWORK["host"])], indirect=True)
 async def test_user_input_validation_with_rtsp_port(hass, mock_isapi_device):
     """Test a successful config flow."""
 
@@ -147,11 +146,7 @@ async def test_reconfiguration(hass: HomeAssistant, init_integration: MockConfig
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {
-            **TEST_CONFIG,
-            CONF_HOST: TEST_HOST2,
-            CONF_VERIFY_SSL: False
-        },
+        {**TEST_CONFIG, CONF_HOST: TEST_HOST2, CONF_VERIFY_SSL: False},
     )
 
     assert result["type"] is FlowResultType.ABORT
@@ -160,6 +155,7 @@ async def test_reconfiguration(hass: HomeAssistant, init_integration: MockConfig
     assert entry.data[CONF_PASSWORD] == TEST_CONFIG[CONF_PASSWORD]
     assert entry.data[CONF_HOST] == TEST_HOST2
     assert entry.data[CONF_VERIFY_SSL] is False
+
 
 @respx.mock
 async def test_reauth(hass, mock_isapi, mock_config_entry: MockConfigEntry):

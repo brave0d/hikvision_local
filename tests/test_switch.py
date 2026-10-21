@@ -1,16 +1,17 @@
 """Tests for switch platform."""
 
-import respx
-import pytest
-import httpx
-from homeassistant.core import HomeAssistant
-from custom_components.hikvision_local.isapi.const import EVENT_IO
-from custom_components.hikvision_local.hikvision_device import HikvisionDevice
-from tests.conftest import TEST_HOST
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_ON, STATE_OFF
+import httpx
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.isapi.const import EVENT_IO
+from tests.conftest import TEST_HOST
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
@@ -60,7 +61,7 @@ async def test_event_switch_state_of_a_camera(
         ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_fielddetection", STATE_ON),
         ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_scenechangedetection", STATE_ON),
         ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_io", STATE_OFF),
-        ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_alarm_output", STATE_OFF)
+        ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_alarm_output", STATE_OFF),
     ]:
         assert (switch := hass.states.get(entity_id))
         assert switch.state == state
@@ -200,10 +201,10 @@ async def test_ipc_multichannel_event_switch(
     assert len(device.cameras[1].events_info) == 4
 
     switch_entities = [
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_motiondetection',
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_tamperdetection',
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_fielddetection',
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_linedetection',
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_motiondetection",
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_tamperdetection",
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_fielddetection",
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_linedetection",
         # 2 events are diabled
     ]
     for entity_id in switch_entities:

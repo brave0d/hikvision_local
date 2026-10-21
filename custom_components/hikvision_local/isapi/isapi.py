@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import suppress
 import datetime
 from http import HTTPStatus
 import ipaddress
 import json
 import logging
-from typing import Any, AsyncIterator
+from typing import Any
 from urllib.parse import quote, urljoin, urlparse
 
 import httpx
@@ -179,7 +180,7 @@ class ISAPIClient:
                     serial_no = source.get("serialNumber")
                     if not serial_no or self.get_camera_by_serial_no(serial_no):
                         # serial no is not always recognized correcly by NVR
-                        serial_no = f"{self.device_info.serial_no}_{source.get("proxyProtocol")}_{camera_id}"
+                        serial_no = f"{self.device_info.serial_no}_{source.get('proxyProtocol')}_{camera_id}"
 
                     self.cameras.append(
                         IPCamera(
@@ -343,10 +344,7 @@ class ISAPIClient:
                 url = f"System/Video/inputs/channels/{channel_id}/{slug}"
 
         elif event_type == EVENT_IO:
-            if is_proxy:
-                url = f"ContentMgmt/IOProxy/{slug}/{io_port_id}"
-            else:
-                url = f"System/IO/{slug}/{io_port_id}"
+            url = f"ContentMgmt/IOProxy/{slug}/{io_port_id}" if is_proxy else f"System/IO/{slug}/{io_port_id}"
         elif event_type == EVENT_PIR:
             # ISAPI/WLAlarm/PIR
             url = slug
@@ -607,11 +605,7 @@ class ISAPIClient:
             return
         host = self._get_event_notification_host(data)
 
-        old_address = ""
-        if host.get("addressingFormatType") == "ipaddress":
-            old_address = host.get("ipAddress")
-        else:
-            old_address = host.get("hostname")
+        old_address = host.get("ipAddress") if host.get("addressingFormatType") == "ipaddress" else host.get("hostname")
 
         if (
             host["protocolType"] == address.scheme.upper()
@@ -827,8 +821,8 @@ class ISAPISetEventStateMutexError(Exception):
         """Initialize exception."""
         self.event = event
         self.mutex_issues = mutex_issues
-        self.message = f"""You cannot enable {EVENTS[event.id]['label']} events.
-            Please disable {EVENTS[mutex_issues[0].event_id]['label']}
+        self.message = f"""You cannot enable {EVENTS[event.id]["label"]} events.
+            Please disable {EVENTS[mutex_issues[0].event_id]["label"]}
             on channels {mutex_issues[0].channels} first"""
 
 

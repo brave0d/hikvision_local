@@ -1,17 +1,17 @@
 """Tests for camera platform."""
 
-import pytest
-import respx
-import httpx
-from homeassistant.core import HomeAssistant
-from homeassistant.const import STATE_IDLE
-from homeassistant.components.camera.helper import get_camera_from_entity_id
 from homeassistant.components.camera import DOMAIN as CAMERA_DOMAIN
-from custom_components.hikvision_local.hikvision_device import HikvisionDevice
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from tests.conftest import load_fixture
-from tests.conftest import TEST_HOST
+from homeassistant.components.camera.helper import get_camera_from_entity_id
+from homeassistant.const import STATE_IDLE
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
+import httpx
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
+
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
+from tests.conftest import TEST_HOST, load_fixture
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
@@ -110,6 +110,7 @@ device_data = {
     },
 }
 
+
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2", "DS-7616NI-Q2"], indirect=True)
 async def test_camera_stream_info(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
     """Test camera snapshot with alternate url."""
@@ -125,12 +126,13 @@ async def test_camera_stream_info(hass: HomeAssistant, init_integration: MockCon
     stream_url = await camera_entity.stream_source()
     assert stream_url == f"rtsp://u1:%2A%2A%2A@1.0.0.255:{data['rtsp_port']}/Streaming/channels/101"
 
+
 @pytest.mark.parametrize("init_integration", ["DS-2TD1228-2-QA"], indirect=True)
 async def test_camera_multichannel(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
     entry = init_integration
 
     device: HikvisionDevice = entry.runtime_data
-    assert len(device.cameras) == 2 # video channel + thermal channel
+    assert len(device.cameras) == 2  # video channel + thermal channel
     assert device.cameras[0].input_port == 1
     assert device.cameras[1].input_port == 2
 

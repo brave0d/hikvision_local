@@ -1,9 +1,9 @@
 """Tests for sensor platform."""
 
-import pytest
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 import homeassistant.helpers.entity_registry as er
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
@@ -22,6 +22,7 @@ async def test_sensor_value(
     ]:
         assert (sensor := hass.states.get(entity_id))
         assert sensor.state == state
+
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2T86G2-ISU"], indirect=True)
 async def test_sensor_value_outside_network(
@@ -62,7 +63,7 @@ async def test_scenechange_support(
     data = device_data[init_integration.title]
     entities = [
         f"binary_sensor.{data['serial_no']}_1_scenechangedetection",
-        f"switch.{data['serial_no']}_1_scenechangedetection"
+        f"switch.{data['serial_no']}_1_scenechangedetection",
     ]
 
     entity_registry = er.async_get(hass)

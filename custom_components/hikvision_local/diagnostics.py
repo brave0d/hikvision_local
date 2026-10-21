@@ -7,10 +7,9 @@ import json
 import random
 from typing import Any
 
-from httpx import HTTPStatusError
-
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntry
+from httpx import HTTPStatusError
 
 from . import HikvisionConfigEntry
 from .isapi import ISAPIForbiddenError, ISAPIUnauthorizedError
@@ -21,14 +20,14 @@ def anonymise_mac(orignal: str):
     """Anonymise MAC address."""
 
     mac = [random.randint(0x00, 0xFF) for _ in range(6)]
-    return ":".join("%02x" % x for x in mac)
+    return ":".join(f"{x:02x}" for x in mac)
 
 
 def anonymise_ip(orignal: str):
     """Anonymise IP address."""
     if not orignal or orignal[0] == "0":
         return orignal
-    return f"1.0.0.{random.randint(0x00, 0xff)}"
+    return f"1.0.0.{random.randint(0x00, 0xFF)}"
 
 
 def anonymise_serial(orignal: str):

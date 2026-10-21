@@ -14,7 +14,7 @@ from .isapi import StorageInfo
 
 NOTIFICATION_HOST_KEYS = [
     "protocol_type",
-    "address", # ip_address or host_name
+    "address",  # ip_address or host_name
     "port_no",
     "path",
 ]
