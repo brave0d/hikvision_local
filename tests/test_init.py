@@ -30,6 +30,8 @@ from tests.conftest import TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK, TEST_CONFIG
         "DS-7732NI-M4",
         "iDS-7204HUHI-M1",
         "iDS-7208HQHI-M1",
+        "iDS-7208HUHI-M1",
+        "DS-2CD2387G2-LSU",
     ],
     indirect=True,
 )
@@ -191,3 +193,17 @@ async def test_async_setup_entry_nvr_outside_network(hass: HomeAssistant, init_i
     await hass.async_block_till_done()
 
     assert not hass.data.get(DOMAIN)
+
+
+@pytest.mark.parametrize("init_integration", ["iDS-7208HUHI-M1"], indirect=True)
+async def test_dvr_reporting_ipc_device_type(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A DVR that reports deviceType IPC is still treated as a recorder with analog channels."""
+
+    device: HikvisionDevice = init_integration.runtime_data
+
+    assert device.device_info.device_type == "IPC"
+    assert device.device_info.is_nvr
+    assert device.capabilities.analog_cameras_inputs == 8
+    assert device.capabilities.input_ports == 16
+    # Inputs 1 to 4 have cameras connected: main and sub stream each.
+    assert [len(camera.streams) for camera in device.cameras[:4]] == [2, 2, 2, 2]
