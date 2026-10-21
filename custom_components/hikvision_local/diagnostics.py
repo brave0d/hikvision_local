@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import ipaddress
 import json
 import random
 from typing import Any
@@ -24,9 +25,16 @@ def anonymise_mac(orignal: str):
 
 
 def anonymise_ip(orignal: str):
-    """Anonymise IP address."""
-    if not orignal or orignal[0] == "0":
+    """Anonymise IPv4 and IPv6 addresses; a host name in an address field becomes a placeholder."""
+    if not orignal or orignal[0] == "0" or orignal == "::":
         return orignal
+    try:
+        address = ipaddress.ip_address(orignal)
+    except ValueError:
+        return "hostname"
+    if address.version == 6:
+        # Link-local IPv6 addresses embed the MAC address, so every IPv6 address is replaced.
+        return "fd00::1"
     return f"1.0.0.{random.randint(0x00, 0xFF)}"
 
 
@@ -76,6 +84,13 @@ ANON_KEYS = {
     "deviceLocation": anonymise_text("location"),
     "hddName": anonymise_text("hdd1"),
     "hostName": anonymise_text("hostname"),
+    "ipv6Address": anonymise_ip,
+    "ipV6Address": anonymise_ip,
+    "destIPAddress": anonymise_ip,
+    "userName": anonymise_text("user"),
+    "nasName": anonymise_text("nas1"),
+    "path": anonymise_text("/share"),
+    "hddSerialNumber": anonymise_digits,
 }
 
 # Channel names are user-entered, so they are replaced inside these elements only.
