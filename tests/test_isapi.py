@@ -88,3 +88,24 @@ async def test_update_notification_hosts_from_ipaddress_to_hostname(mock_isapi):
     await isapi.set_alarm_server("https://ha.hostname.domain", ALARM_SERVER_PATH)
 
     assert endpoint.called
+
+
+@respx.mock
+async def test_request_retries_once_with_fresh_auth_after_401(mock_isapi):
+    """An expired Digest nonce gives a 401; the request is retried once with new credentials state."""
+    isapi = mock_isapi
+    challenge = {"WWW-Authenticate": 'Digest realm="testrealm", qop="auth", nonce="abc", opaque="799d5"'}
+    route = respx.get(f"{isapi.host}/ISAPI/System/time").mock(
+        side_effect=[
+            httpx.Response(401, headers=challenge),
+            httpx.Response(401, headers=challenge),
+            httpx.Response(401, headers=challenge),
+            httpx.Response(200, text="<Time><timeMode>NTP</timeMode></Time>"),
+        ]
+    )
+
+    result = await isapi.request("GET", "System/time")
+
+    assert result == {"Time": {"timeMode": "NTP"}}
+    assert route.call_count == 4
+    assert isinstance(isapi._auth_method, httpx.DigestAuth)
