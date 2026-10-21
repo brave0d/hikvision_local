@@ -778,9 +778,10 @@ class ISAPIClient:
             )
 
             # Retry once on 401 with fresh auth (handles expired Digest nonce)
-            if response.status_code == HTTPStatus.UNAUTHORIZED:
+            if response.status_code == HTTPStatus.UNAUTHORIZED and self._auth_method:
                 _LOGGER.debug("Got 401 for %s, retrying with fresh auth", full_url)
-                self._auth_method = httpx.DigestAuth(self.username, self.password)
+                # A new auth object of the same type drops the expired nonce; basic auth stays basic.
+                self._auth_method = type(self._auth_method)(self.username, self.password)
                 response = await self._session.request(
                     method,
                     full_url,
