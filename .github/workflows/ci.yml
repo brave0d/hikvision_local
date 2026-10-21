@@ -118,6 +118,16 @@ jobs:
           else
             gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
           fi
+      - name: Close the nightly issue after a passing run
+        if: success() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Tests fail on Home Assistant ${{ matrix.name }}"
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 200 --json number,title --jq "[.[] | select(.title == \"$title\")][0].number // empty")
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "Passing again: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
     permissions:
       contents: read
       issues: write
