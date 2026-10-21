@@ -44,8 +44,7 @@ class EventBinarySensor(BinarySensorEntity):
 
     def __init__(self, device: HikvisionDevice, device_id: int, event: EventInfo) -> None:
         """Initialize."""
-        self.entity_id = ENTITY_ID_FORMAT.format(event.unique_id)
-        self._attr_unique_id = self.entity_id
+        self._attr_unique_id = ENTITY_ID_FORMAT.format(event.unique_id)
         self._attr_translation_key = event.id
         if event.id == EVENT_IO:
             self._attr_translation_placeholders = {"io_port_id": event.io_port_id}
