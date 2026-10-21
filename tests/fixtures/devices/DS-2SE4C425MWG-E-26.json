@@ -575,13 +575,13 @@
                 "portNo": "0",
                 "nasType": "NFS",
                 "nasName": "NAS",
-                "path": "/config/kamera",
+                "path": "/share",
                 "status": "unformatted",
                 "capacity": "119460",
                 "freeSpace": "0",
                 "property": "RW",
                 "mountType": "SMB/CIFS",
-                "userName": "booa",
+                "userName": "user",
                 "Encryption": {
                   "encryptionStatus": {
                     "@opt": "unencrypted,encrypted,verfyFailed",

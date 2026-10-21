@@ -460,13 +460,13 @@
                 "ipAddress": "1.0.0.203",
                 "portNo": "0",
                 "nasType": "NFS",
-                "path": "/pub/hik",
+                "path": "/share",
                 "status": "ok",
                 "capacity": "122346",
                 "freeSpace": "119296",
                 "property": "RW",
                 "mountType": "SMB/CIFS",
-                "userName": "pub",
+                "userName": "user",
                 "Encryption": {
                   "encryptionStatus": {
                     "@opt": "unencrypted,encrypted,verfyFailed",

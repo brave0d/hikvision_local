@@ -488,7 +488,7 @@
                 "ipAddress": "1.0.0.127",
                 "portNo": "0",
                 "nasType": "NFS",
-                "path": "/volume2/Cameras",
+                "path": "/share",
                 "status": "offline",
                 "capacity": "0",
                 "freeSpace": "0",
