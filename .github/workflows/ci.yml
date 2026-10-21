@@ -103,9 +103,10 @@ jobs:
           fi
           python -c "from homeassistant.const import __version__; print('Home Assistant', __version__)"
       - name: Run pytest
+        id: pytest
         run: pytest
       - name: Report a scheduled failure
-        if: failure() && github.event_name == 'schedule'
+        if: failure() && steps.pytest.outcome == 'failure' && github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
