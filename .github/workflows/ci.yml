@@ -93,7 +93,7 @@ jobs:
           pip install -r requirements.test.txt
           pip install --pre --upgrade pytest-homeassistant-custom-component
           if [ "${{ matrix.name }}" = "dev" ]; then
-            pip install --no-deps --upgrade "git+https://github.com/home-assistant/core@dev"
+            pip install --upgrade "https://github.com/home-assistant/core/archive/refs/heads/dev.tar.gz"
           fi
           python -c "from homeassistant.const import __version__; print('Home Assistant', __version__)"
       - name: Run pytest
