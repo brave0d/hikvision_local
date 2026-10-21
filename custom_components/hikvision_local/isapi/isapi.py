@@ -776,6 +776,19 @@ class ISAPIClient:
                 data=data,
                 timeout=self.timeout,
             )
+
+            # Retry once on 401 with fresh auth (handles expired Digest nonce)
+            if response.status_code == HTTPStatus.UNAUTHORIZED:
+                _LOGGER.debug("Got 401 for %s, retrying with fresh auth", full_url)
+                self._auth_method = httpx.DigestAuth(self.username, self.password)
+                response = await self._session.request(
+                    method,
+                    full_url,
+                    auth=self._auth_method,
+                    data=data,
+                    timeout=self.timeout,
+                )
+
             response.raise_for_status()
             result = parse_isapi_response(response, present)
             _LOGGER.debug("--- [%s] %s", method, full_url)
