@@ -45,7 +45,11 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 # Home Assistant logs these instead of failing the test, which hid the HA 2026.9 via_device breakage.
 FAIL_ON_LOGS = (
     "Error adding entity",
+    "Error setting up entity",
+    "Entity id already exists",
+    "Platform hikvision_local does not generate unique IDs",
     "Detected that custom integration 'hikvision_local'",
+    "Detected that integration",
     "Detected code that calls",
 )
 
@@ -54,7 +58,9 @@ FAIL_ON_LOGS = (
 def fail_on_home_assistant_reports(caplog):
     """Fail a test when Home Assistant logs an entity error or a deprecation report."""
     yield
-    reports = [r.getMessage() for r in caplog.records if r.getMessage().startswith(FAIL_ON_LOGS)]
+    # caplog.records only holds the current phase (teardown here), so read setup and call too.
+    records = caplog.get_records("setup") + caplog.get_records("call") + caplog.records
+    reports = [r.getMessage() for r in records if r.getMessage().startswith(FAIL_ON_LOGS)]
     assert not reports, "Home Assistant reported:\n" + "\n".join(reports)
 
 
