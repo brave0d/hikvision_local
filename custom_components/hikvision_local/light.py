@@ -56,6 +56,17 @@ class HikvisionSupplementLight(CoordinatorEntity, LightEntity):
         self._attr_unique_id = device.build_camera_light_unique_id(camera)
         self._attr_device_info = device.hass_device_info(camera.id)
         self._on_mode = self._determine_on_mode()
+        # The mode to restore on turn_on: the last mode the light was on in, if seen.
+        self._last_on_mode: str | None = None
+        self._remember_on_mode(self._light.state if self._light else None)
+
+    def _remember_on_mode(self, state: SupplementLightState | None) -> None:
+        if state and state.mode.lower() != SUPPLEMENT_LIGHT_OFF_MODE:
+            self._last_on_mode = state.mode
+
+    def _handle_coordinator_update(self) -> None:
+        self._remember_on_mode(self._get_state())
+        super()._handle_coordinator_update()
 
     def _determine_on_mode(self) -> str | None:
         if not self._light:
@@ -129,17 +140,20 @@ class HikvisionSupplementLight(CoordinatorEntity, LightEntity):
         if not self._light or not self._on_mode:
             return
         state = self._get_state()
+        caps = self._light.capabilities
         brightness = kwargs.get(ATTR_BRIGHTNESS)
         if brightness is not None:
-            device_brightness = self._ha_brightness_to_device(brightness)
-        elif state:
+            # Any HA brightness above 0 must give some light on the device.
+            device_brightness = max(self._ha_brightness_to_device(brightness), caps.brightness_min, 1)
+        elif state and state.brightness > caps.brightness_min:
             device_brightness = state.brightness
         else:
-            device_brightness = self._light.capabilities.brightness_max
+            # Off or unknown brightness: turning on at 0 would leave the light dark.
+            device_brightness = caps.brightness_max
 
         new_state = await self.coordinator.device.set_supplement_light_state(
             self._camera.id,
-            self._on_mode,
+            self._last_on_mode or self._on_mode,
             device_brightness,
             state.regulation_mode if state else None,
         )
