@@ -2,6 +2,7 @@
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
@@ -101,3 +102,16 @@ async def test_newer_move_cancels_the_pending_stop(hass: HomeAssistant, init_int
     await hass.async_block_till_done(wait_background_tasks=True)
 
     assert sent_commands(route) == [{"pan": "-50", "tilt": "0", "zoom": "0"}, {"pan": "50", "tilt": "0", "zoom": "0"}]
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2SE4C425MWG-E-26"], indirect=True)
+async def test_ptz_targets_a_device(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A device target moves the camera entities of that device (both channels of this camera)."""
+    route = respx.put(PTZ_URL).respond(200)
+    second_channel = respx.put(f"{TEST_HOST}/ISAPI/PTZCtrl/channels/2/continuous").respond(200)
+    device_id = er.async_get(hass).async_get(CAMERA).device_id
+
+    await hass.services.async_call(DOMAIN, ACTION_PTZ_STOP, {"device_id": device_id}, blocking=True)
+
+    assert route.called
+    assert second_channel.called
