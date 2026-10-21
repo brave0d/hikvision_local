@@ -97,6 +97,8 @@ async def _async_get_diagnostics(
     device: DeviceEntry | None = None,
 ) -> dict[str, Any]:
     device = entry.runtime_data
+    # Keep replacements consistent within one diagnostics file only, and don't hold raw values afterwards.
+    anon_map.clear()
 
     # Get info set
     info = {}
@@ -167,11 +169,12 @@ def anonymise_data(data, parent: str = ""):
         result = {}
         for key, value in data.items():
             if key in ANON_KEYS and value is not None:
-                if value in anon_map:
-                    result[key] = anon_map[value]
-                else:
-                    anon_fn = ANON_KEYS[key]
-                    anon_map[value] = result[key] = anon_fn(value)
+                anon_fn = ANON_KEYS[key]
+                # Keyed by anonymiser too: the same text can be a name in one field and a host in another.
+                cache_key = (anon_fn, value)
+                if cache_key not in anon_map:
+                    anon_map[cache_key] = anon_fn(value)
+                result[key] = anon_map[cache_key]
             elif key in CHANNEL_NAME_KEYS and parent in CHANNEL_ELEMENTS and isinstance(value, str):
                 result[key] = value if value.isdigit() else "Camera"
             else:
