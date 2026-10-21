@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import ipaddress
 import json
 import random
 from typing import Any
@@ -17,16 +18,23 @@ from .isapi.const import GET, STREAM_TYPE
 
 
 def anonymise_mac(orignal: str):
-    """Anonymise MAC address."""
+    """Anonymise MAC address with a random, locally administered unicast address."""
 
-    mac = [random.randint(0x00, 0xFF) for _ in range(6)]
+    mac = [0x02, 0x00, 0x00] + [random.randint(0x00, 0xFF) for _ in range(3)]
     return ":".join(f"{x:02x}" for x in mac)
 
 
 def anonymise_ip(orignal: str):
-    """Anonymise IP address."""
-    if not orignal or orignal[0] == "0":
+    """Anonymise IPv4 and IPv6 addresses; a host name in an address field becomes a placeholder."""
+    if not orignal or orignal[0] == "0" or orignal == "::":
         return orignal
+    try:
+        address = ipaddress.ip_address(orignal)
+    except ValueError:
+        return "hostname"
+    if address.version == 6:
+        # Link-local IPv6 addresses embed the MAC address, so every IPv6 address is replaced.
+        return "fd00::1"
     return f"1.0.0.{random.randint(0x00, 0xFF)}"
 
 
@@ -36,6 +44,26 @@ def anonymise_serial(orignal: str):
     if len(orignal) > 32:
         return orignal[:12] + "".join("0" if c.isdigit() else c for c in orignal[12:])
     return "".join("0" if c.isdigit() else c for c in orignal)
+
+
+def anonymise_uuid(orignal: str):
+    """Anonymise a device or channel UUID."""
+    return "00000000-0000-0000-0000-000000000000"
+
+
+def anonymise_digits(orignal: str):
+    """Replace every digit, keeping the format."""
+    return "".join("0" if c.isdigit() else c for c in orignal)
+
+
+def anonymise_secret(orignal: str):
+    """Replace a per-device secret such as a password salt."""
+    return "0" * len(orignal)
+
+
+def anonymise_text(replacement: str):
+    """Replace user-entered text, keeping empty values empty."""
+    return lambda orignal: replacement if orignal else orignal
 
 
 ANON_KEYS = {
@@ -48,8 +76,26 @@ ANON_KEYS = {
     "serialNumber": anonymise_serial,
     "subSerialNumber": anonymise_serial,
     "unique_id": anonymise_serial,
-    "deviceID": anonymise_serial,
+    "deviceID": anonymise_uuid,
+    "devIndex": anonymise_uuid,
+    "shortSerialNumber": anonymise_digits,
+    "salt": anonymise_secret,
+    "deviceName": anonymise_text("Device"),
+    "deviceLocation": anonymise_text("location"),
+    "hddName": anonymise_text("hdd1"),
+    "hostName": anonymise_text("hostname"),
+    "ipv6Address": anonymise_ip,
+    "ipV6Address": anonymise_ip,
+    "destIPAddress": anonymise_ip,
+    "userName": anonymise_text("user"),
+    "nasName": anonymise_text("nas1"),
+    "path": anonymise_text("/share"),
+    "hddSerialNumber": anonymise_digits,
 }
+
+# Channel names are user-entered, so they are replaced inside these elements only.
+CHANNEL_NAME_KEYS = ("name", "channelName")
+CHANNEL_ELEMENTS = ("StreamingChannel", "VideoInputChannel", "InputProxyChannel")
 
 anon_map = {}
 
@@ -66,6 +112,8 @@ async def _async_get_diagnostics(
     device: DeviceEntry | None = None,
 ) -> dict[str, Any]:
     device = entry.runtime_data
+    # Keep replacements consistent within one diagnostics file only, and don't hold raw values afterwards.
+    anon_map.clear()
 
     # Get info set
     info = {}
@@ -130,24 +178,27 @@ def to_json(obj):
     return anonymise_data(result)
 
 
-def anonymise_data(data):
+def anonymise_data(data, parent: str = ""):
     """Anonymise sensitive data."""
     if isinstance(data, dict):
         result = {}
         for key, value in data.items():
             if key in ANON_KEYS and value is not None:
-                if value in anon_map:
-                    result[key] = anon_map[value]
-                else:
-                    anon_fn = ANON_KEYS[key]
-                    anon_map[value] = result[key] = anon_fn(value)
+                anon_fn = ANON_KEYS[key]
+                # Keyed by anonymiser too: the same text can be a name in one field and a host in another.
+                cache_key = (anon_fn, value)
+                if cache_key not in anon_map:
+                    anon_map[cache_key] = anon_fn(value)
+                result[key] = anon_map[cache_key]
+            elif key in CHANNEL_NAME_KEYS and parent in CHANNEL_ELEMENTS and isinstance(value, str):
+                result[key] = value if value.isdigit() else "Camera"
             else:
-                result[key] = anonymise_data(value)
+                result[key] = anonymise_data(value, key)
         return result
     if isinstance(data, list):
         result = []
         for item in data:
-            result.append(anonymise_data(item))
+            result.append(anonymise_data(item, parent))
         return result
     return data
 
