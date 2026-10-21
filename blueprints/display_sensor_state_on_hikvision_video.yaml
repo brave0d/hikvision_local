@@ -9,7 +9,7 @@ blueprint:
       description: "The Hikvision device."
       selector:
         config_entry:
-          integration: hikvision_next
+          integration: hikvision_local
     camera_no:
       name: "Camera"
       description: "The camera number."
@@ -61,7 +61,7 @@ trigger:
   - platform: time_pattern
     minutes: /15
 action:
-  - service: hikvision_next.isapi_request
+  - service: hikvision_local.isapi_request
     data:
       method: PUT
       config_entry_id: !input config_entry_id
