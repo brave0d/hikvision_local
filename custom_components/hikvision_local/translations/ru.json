@@ -29,6 +29,24 @@
       "supplement_light": {
         "name": "Дополнительный свет"
       }
+    },
+    "button": {
+      "audio_alarm_test": {
+        "name": "Воспроизвести звуковую тревогу"
+      }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Звук тревоги"
+      }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Громкость звуковой тревоги"
+      },
+      "audio_alarm_times": {
+        "name": "Повторы звуковой тревоги"
+      }
     }
   }
 }

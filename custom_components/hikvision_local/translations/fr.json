@@ -29,6 +29,24 @@
       "supplement_light": {
         "name": "Lumière auxiliaire"
       }
+    },
+    "button": {
+      "audio_alarm_test": {
+        "name": "Jouer l'alarme sonore"
+      }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Son de l'alarme sonore"
+      }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Volume de l'alarme sonore"
+      },
+      "audio_alarm_times": {
+        "name": "Répétitions de l'alarme sonore"
+      }
     }
   }
 }

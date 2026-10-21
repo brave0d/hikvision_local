@@ -14,6 +14,7 @@ import httpx
 
 from .const import (
     ALARM_SERVER_PATH,
+    AUDIO_ALARM_COORDINATOR,
     CONF_ALARM_SERVER_HOST,
     CONF_SET_ALARM_SERVER,
     DOMAIN,
@@ -23,7 +24,7 @@ from .const import (
     RTSP_PORT_FORCED,
     SECONDARY_COORDINATOR,
 )
-from .coordinator import EventsCoordinator, SecondaryCoordinator, SupplementLightCoordinator
+from .coordinator import AudioAlarmCoordinator, EventsCoordinator, SecondaryCoordinator, SupplementLightCoordinator
 from .isapi import (
     AnalogCamera,
     EventInfo,
@@ -86,6 +87,9 @@ class HikvisionDevice(ISAPIClient):
 
         if any(camera.supplement_light for camera in self.cameras):
             self.coordinators[LIGHTS_COORDINATOR] = SupplementLightCoordinator(self.hass, self)
+
+        if self.audio_alarm:
+            self.coordinators[AUDIO_ALARM_COORDINATOR] = AudioAlarmCoordinator(self.hass, self)
 
         if self.control_alarm_server_host and self.capabilities.support_alarm_server:
             await self.set_alarm_server(self.alarm_server_host, ALARM_SERVER_PATH)
@@ -187,3 +191,8 @@ class HikvisionDevice(ISAPIClient):
         """Build unique_id for supplement light entity."""
 
         return slugify(f"{camera.serial_no.lower()}_{camera.id}_supplement_light")
+
+    def build_audio_alarm_unique_id(self, key: str) -> str:
+        """Build unique_id for an audio alarm entity."""
+
+        return slugify(f"{self.device_info.serial_no.lower()}_audio_alarm_{key}")

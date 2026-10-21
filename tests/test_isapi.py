@@ -1,6 +1,7 @@
 """Tests for specific ISAPI responses."""
 
 from contextlib import suppress
+import json
 from unittest.mock import AsyncMock
 
 import httpx
@@ -242,3 +243,47 @@ async def test_set_supplement_light_keeps_other_settings(mock_isapi):
     assert sent["irLightBrightness"] == "80"
     assert sent["EventIntelligenceModeCfg"] == {"brightnessRegulatMode": "auto"}
     assert sent["@xmlns"] == "http://www.hikvision.com/ver20/XMLSchema"
+
+
+@respx.mock
+async def test_audio_alarm_without_alert_audio_list(mock_isapi):
+    """Use audioID on firmware that has no separate alertAudio sound list."""
+    isapi = mock_isapi
+    url = "http://1.0.0.255/ISAPI/Event/triggers/notifications/AudioAlarm"
+    respx.get(f"{url}/capabilities?format=json").respond(
+        json={
+            "AudioAlarmCap": {
+                "audioTypeListCap": [
+                    {"audioID": 1, "audioDescription": "Siren"},
+                    {"audioID": 2, "audioDescription": "Warning,this is restricted area"},
+                ],
+                "audioVolume": {"@min": 1, "@max": 10, "@def": 5},
+            }
+        }
+    )
+    respx.get(f"{url}?format=json").respond(json={"AudioAlarm": {"audioID": 1, "audioVolume": 5, "alarmTimes": 3}})
+    put = respx.put(f"{url}?format=json").respond(json={"statusCode": 1})
+
+    audio_alarm = await isapi.get_audio_alarm()
+    assert [sound.name for sound in audio_alarm.capabilities.sounds] == ["Siren", "Warning,this is restricted area"]
+    assert audio_alarm.capabilities.volume_max == 10
+    assert audio_alarm.capabilities.alarm_times_max == 50
+    assert not audio_alarm.capabilities.support_test
+    assert audio_alarm.state.sound_id == 1
+
+    state = await isapi.set_audio_alarm_state(sound_id=2)
+    assert state.sound_id == 2
+    payload = json.loads(put.calls.last.request.content)["AudioAlarm"]
+    assert payload == {"audioID": 2, "audioVolume": 5, "alarmTimes": 3}
+
+
+@respx.mock
+async def test_set_audio_alarm_refuses_to_write_unread_settings(mock_isapi):
+    """Unreadable settings are never written back as an empty document."""
+    url = f"{mock_isapi.host}/ISAPI/Event/triggers/notifications/AudioAlarm?format=json"
+    respx.get(url).respond(json={})
+    put = respx.put(url).respond(200)
+
+    with pytest.raises(ValueError):
+        await mock_isapi.set_audio_alarm_state(volume=50)
+    assert not put.called

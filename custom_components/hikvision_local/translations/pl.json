@@ -128,6 +128,24 @@
       "snapshot": {
         "name": "{camera} zdjęcie"
       }
+    },
+    "button": {
+      "audio_alarm_test": {
+        "name": "Odtwórz alarm dźwiękowy"
+      }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Dźwięk alarmu"
+      }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Głośność alarmu dźwiękowego"
+      },
+      "audio_alarm_times": {
+        "name": "Powtórzenia alarmu dźwiękowego"
+      }
     }
   }
 }

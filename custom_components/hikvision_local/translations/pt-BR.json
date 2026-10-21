@@ -29,6 +29,24 @@
       "supplement_light": {
         "name": "Luz suplementar"
       }
+    },
+    "button": {
+      "audio_alarm_test": {
+        "name": "Tocar alarme sonoro"
+      }
+    },
+    "select": {
+      "audio_alarm_sound": {
+        "name": "Som do alarme sonoro"
+      }
+    },
+    "number": {
+      "audio_alarm_volume": {
+        "name": "Volume do alarme sonoro"
+      },
+      "audio_alarm_times": {
+        "name": "Repetições do alarme sonoro"
+      }
     }
   }
 }

@@ -1931,6 +1931,9 @@
       },
       "Image/channels/1/capabilities": {
         "status_code": 403
+      },
+      "Event/triggers/notifications/AudioAlarm/capabilities?format=json": {
+        "status_code": 404
       }
     }
   }
