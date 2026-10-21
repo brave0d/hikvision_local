@@ -13,3 +13,4 @@ combine-as-imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = ["generated_entity_ids: keep the entity IDs Home Assistant generates instead of the pre-2.0 IDs"]
