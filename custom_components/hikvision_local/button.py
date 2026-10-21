@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -42,9 +43,8 @@ class AudioAlarmTestButton(CoordinatorEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Play the sound."""
-        audio_alarm = self.coordinator.device.audio_alarm
         sound_id = self.coordinator.data.sound_id if self.coordinator.data else None
         if sound_id is None:
-            # the device is set to a prompt or custom sound, which has no test ID here
-            sound_id = audio_alarm.capabilities.sounds[0].id
+            # A custom or prompt sound has no test ID; playing another sound instead would surprise.
+            raise HomeAssistantError("The camera uses a custom sound, which can't be tested from Home Assistant")
         await self.coordinator.device.test_audio_alarm(sound_id)
