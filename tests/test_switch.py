@@ -209,3 +209,48 @@ async def test_ipc_multichannel_event_switch(
     ]
     for entity_id in switch_entities:
         assert hass.states.get(entity_id)
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_motion_detection_switch_preserves_polygon(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """Test that toggling motion detection preserves the user's drawn polygon.
+
+    When regionType is "grid" the firmware recomputes RegionCoordinatesList as
+    the bounding box of gridMap on every PUT, destroying the user's polygon.
+    The Hikvision web UI works around this by sending regionType="region" with
+    a zeroed gridMap, which makes the firmware treat RegionList as the source
+    of truth. The integration must mirror that payload.
+    """
+
+    entity_id = "switch.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_2_motiondetection"
+    assert (switch := hass.states.get(entity_id))
+    assert switch.state == STATE_OFF
+
+    def check_payload(request, route):
+        payload = request.content.decode("utf-8")
+        if "<regionType>region</regionType>" not in payload:
+            raise AssertionError("PUT payload must use regionType=region")
+        if "<regionType>grid</regionType>" in payload:
+            raise AssertionError("PUT payload must not use regionType=grid")
+        if "<gridMap>0" not in payload or any(
+            c not in "0" for c in payload.split("<gridMap>")[1].split("</gridMap>")[0]
+        ):
+            raise AssertionError("PUT payload must contain a zeroed gridMap")
+        if "RegionCoordinates" not in payload:
+            raise AssertionError("PUT payload must contain RegionCoordinates")
+        if "<enabled>true</enabled>" not in payload:
+            raise AssertionError("PUT payload must contain enabled=true")
+        return httpx.Response(200)
+
+    url = f"{TEST_HOST}/ISAPI/ContentMgmt/InputProxy/channels/2/video/motionDetection"
+    endpoint = respx.put(url).mock(side_effect=check_payload)
+
+    await hass.services.async_call(
+        SWITCH_DOMAIN,
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: entity_id},
+        blocking=True,
+    )
+    assert endpoint.called
