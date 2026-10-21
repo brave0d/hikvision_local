@@ -1,5 +1,21 @@
+[project]
+name = "hikvision-local"
+version = "2.0.0b0"
+description = "Home Assistant integration for Hikvision NVRs, DVRs and IP cameras"
+requires-python = ">=3.14"
+
 [tool.ruff]
 line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "ASYNC", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components"]
+force-sort-within-sections = true
+combine-as-imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+testpaths = ["tests"]
