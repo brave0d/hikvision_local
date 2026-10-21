@@ -1,7 +1,7 @@
-# Contributing to hikvision_next
-Everybody is invited and welcome to contribute to hikvision_next integration.
+# Contributing to hikvision_local
+Everybody is invited and welcome to contribute to hikvision_local integration.
 
--   Pull requests are always created against the [**dev**](https://github.com/maciej-or/hikvision_next/tree/dev) branch.
+-   Pull requests are created against the [**main**](https://github.com/brave0d/hikvision_local/tree/main) branch.
 - Code must follow [Home Assistant code style guidelines](https://developers.home-assistant.io/docs/development_guidelines)
 - Line length limit must be 120 characters
 - Install Ruff extension and select ruff as default formatter in vscode settings
@@ -11,8 +11,8 @@ Everybody is invited and welcome to contribute to hikvision_next integration.
 2. Mount the integration repo in `.devcontainer/devcontainer.json`
 ```
   "mounts": [
-    "source=/path/on/your/disk/hikvision_next/custom_components/hikvision_next,
-    target=${containerWorkspaceFolder}/config/custom_components/hikvision_next,
+    "source=/path/on/your/disk/hikvision_local/custom_components/hikvision_local,
+    target=${containerWorkspaceFolder}/config/custom_components/hikvision_local,
     type=bind"
   ]
 ```
@@ -22,7 +22,7 @@ NOTE: the first container build and launch Home Assistant may take longer.
 
 ## Test Environment
 
-Install python 3.12 or later and project dependencies:
+Install Python 3.14 or later and project dependencies:
 ```
 pip install -r requirements.test.txt
 ```
@@ -54,8 +54,8 @@ If you just want run the tests, the simplest way is to use docker on your PC:
 
 2. in a cmd window run:
 ```
-REM go to your hikvision_next directory. example:
-cd C:\Users\john\Documents\github\hikvision_next
+REM go to your hikvision_local directory. example:
+cd C:\Users\john\Documents\github\hikvision_local
 
 REM Build a docker container
 docker build -f run_test.dockerfile -t mine/pytest-homeassistant-custom-component:latest .

@@ -1,10 +1,10 @@
-"""Tests for the hikvision_next integration."""
+"""Tests for the hikvision_local integration."""
 
 import pytest
 from unittest.mock import patch
 from homeassistant.core import HomeAssistant
-from custom_components.hikvision_next.const import DOMAIN
-from custom_components.hikvision_next.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.const import DOMAIN
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from homeassistant.config_entries import ConfigEntryState
 
@@ -132,12 +132,12 @@ async def test_async_setup_entry_nvr_with_alarm_server(hass: HomeAssistant, init
 
     entry = init_integration
 
-    with patch("custom_components.hikvision_next.isapi.ISAPIClient.set_alarm_server") as set_alarm_server_mock:
+    with patch("custom_components.hikvision_local.isapi.ISAPIClient.set_alarm_server") as set_alarm_server_mock:
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
         assert entry.state == ConfigEntryState.LOADED
-        assert set_alarm_server_mock.call_args[0] == ("http://1.0.0.11:8123", "/api/hikvision")
+        assert set_alarm_server_mock.call_args[0] == ("http://1.0.0.11:8123", "/api/hikvision_local")
 
         # test successful unload
         await hass.config_entries.async_unload(entry.entry_id)

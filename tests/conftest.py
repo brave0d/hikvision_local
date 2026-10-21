@@ -4,10 +4,10 @@ import json
 import pytest
 import respx
 import xmltodict
-from custom_components.hikvision_next.const import DOMAIN, CONF_SET_ALARM_SERVER, CONF_ALARM_SERVER_HOST, RTSP_PORT_FORCED
+from custom_components.hikvision_local.const import DOMAIN, CONF_SET_ALARM_SERVER, CONF_ALARM_SERVER_HOST, RTSP_PORT_FORCED
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from custom_components.hikvision_next.isapi import ISAPIClient
+from custom_components.hikvision_local.isapi import ISAPIClient
 from homeassistant.core import HomeAssistant
 
 TEST_HOST_IP = "1.0.0.255"

@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import STATE_IDLE
 from homeassistant.components.camera.helper import get_camera_from_entity_id
 from homeassistant.components.camera import DOMAIN as CAMERA_DOMAIN
-from custom_components.hikvision_next.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from tests.conftest import load_fixture
 from tests.conftest import TEST_HOST

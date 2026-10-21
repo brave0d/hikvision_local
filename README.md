@@ -1,13 +1,24 @@
-# Hikvision Next
+# Hikvision Local
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/maciej-or/hikvision_next?style=flat-square) [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/brave0d/hikvision_local?style=flat-square) [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
 The Home Assistant integration for Hikvision NVRs and IP cameras. Receives and switches detection of alarm events. Provides video streams.
+
+Hikvision Local continues [hikvision_next](https://github.com/maciej-or/hikvision_next) by Maciej ([@maciej-or](https://github.com/maciej-or)).
+
+## Moving from hikvision_next
+
+Hikvision Local uses its own domain, `hikvision_local`, so it can be installed next to hikvision_next. Things to update when you switch:
+
+- Add your devices again under Hikvision Local. Entity IDs are new.
+- The Home Assistant event is now `hikvision_local_event` (was `hikvision_next_event`). Update automations that trigger on it.
+- Event notifications now go to `/api/hikvision_local` (was `/api/hikvision`). If you set the device's notification host by hand, change its URL. With `Set Notifications Host` checked, the integration updates it for you.
+- Actions are now `hikvision_local.reboot`, `hikvision_local.isapi_request` and `hikvision_local.update_snapshot`.
 
 ## Features
 
 - Camera entities for main and sub streams
-- Real-time Acusense events notifications through binary sensors and HA events (hikvision_next_event)
+- Real-time Acusense events notifications through binary sensors and HA events (hikvision_local_event)
 - Switches for Acusense events detection
 - Switches for NVR Outputs and PIR sensor
 - Holiday mode switch (allows to switch continuous recording with appropriate NVR setup)
@@ -39,13 +50,13 @@ Events must be set to alert the surveillance center in Linkage Action for Home A
 
 Creates automation that allows to take snapshots from selected cameras when an event sensor is triggered.
 
-[<img src="https://my.home-assistant.io/badges/blueprint_import.svg">](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/maciej-or/hikvision_next/blob/main/blueprints/take_pictures_on_motion_detection.yaml)
+[<img src="https://my.home-assistant.io/badges/blueprint_import.svg">](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/brave0d/hikvision_local/blob/main/blueprints/take_pictures_on_motion_detection.yaml)
 
 #### Display Sensor State On Hikvision Video
 
 Creates an automation that allows to display text overlay on a selected video stream with the state of a selected sensor. Refreshes every 15 minutes.
 
-[<img src="https://my.home-assistant.io/badges/blueprint_import.svg">](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/maciej-or/hikvision_next/blob/main/blueprints/display_sensor_state_on_hikvision_video.yaml)
+[<img src="https://my.home-assistant.io/badges/blueprint_import.svg">](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/brave0d/hikvision_local/blob/main/blueprints/display_sensor_state_on_hikvision_video.yaml)
 
 ## Preview
 
@@ -59,20 +70,20 @@ The scope supported features depends on device model, setup and firmware version
 
 ## Installation
 
-[<img src="https://my.home-assistant.io/badges/hacs_repository.svg">](https://my.home-assistant.io/redirect/hacs_repository/?owner=maciej-or&repository=hikvision_next&category=integration)
+[<img src="https://my.home-assistant.io/badges/hacs_repository.svg">](https://my.home-assistant.io/redirect/hacs_repository/?owner=brave0d&repository=hikvision_local&category=integration)
 
 ### With HACS
 
-1. This integration you will find in the default HACS store. Search for `Hikvision NVR / IP Camera` on `HACS / Integrations` page and press `Download` button
+1. In HACS, open the three-dot menu, choose `Custom repositories`, add `https://github.com/brave0d/hikvision_local` with type `Integration`, then search for `Hikvision Local` and press `Download`
 2. on `Settings / Devices & Services` page press `+ Add Integration`
-3. Search for `Hikvision NVR / IP Camera` and add your Hikvision device using config dialog, repeat the last 2 steps for more devices
+3. Search for `Hikvision Local` and add your Hikvision device using config dialog, repeat the last 2 steps for more devices
 
 ### Manual
 
-1. copy `custom_components/hikvision_next` folder into `conifg/custom_components`
+1. copy `custom_components/hikvision_local` folder into `config/custom_components`
 2. restart Home Assistant
 3. on `Settings / Devices & Services` page press `+ Add Integration`
-4. search for `Hikvision NVR / IP Camera` and add your Hikvision device using config dialog, repeat the last 2 steps for more devices
+4. search for `Hikvision Local` and add your Hikvision device using config dialog, repeat the last 2 steps for more devices
 
 ## Hikvision device setup checklist
 
@@ -88,7 +99,7 @@ The scope supported features depends on device model, setup and firmware version
   - Regions if needed
   - Arming Schedule
 - Storage Schedule Settings - set continuous recording in Holiday mode for desired cameras
-- Notifications Host - IP address of Home Assistant instance for event notifications. Can be set manually or by this integration if checked `Set Notifications Host` checkbox in the configuration dialog. It will be reverted to `http://0.0.0.0:80/` on integration unload.
+- Notifications Host - IP address of Home Assistant instance for event notifications, with the URL `/api/hikvision_local`. Can be set manually or by this integration if checked `Set Notifications Host` checkbox in the configuration dialog. It will be reverted to `http://0.0.0.0:80/` on integration unload.
 
 ## Reporting issues
 
@@ -102,7 +113,7 @@ Setup log level to `debug` in configuration.yaml
 ```yaml
 logger:
   logs:
-    custom_components.hikvision_next: debug
+    custom_components.hikvision_local: debug
 ```
 
 Restart Home Assistant

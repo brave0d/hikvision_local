@@ -4,8 +4,8 @@ import respx
 import pytest
 import httpx
 from homeassistant.core import HomeAssistant
-from custom_components.hikvision_next.isapi.const import EVENT_IO
-from custom_components.hikvision_next.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.isapi.const import EVENT_IO
+from custom_components.hikvision_local.hikvision_device import HikvisionDevice
 from tests.conftest import TEST_HOST
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from pytest_homeassistant_custom_component.common import MockConfigEntry
