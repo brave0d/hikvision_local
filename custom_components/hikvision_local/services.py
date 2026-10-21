@@ -4,7 +4,6 @@ import asyncio
 import logging
 
 from homeassistant.components.camera.helper import get_camera_from_entity_id
-from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -13,6 +12,7 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.service import async_extract_entity_ids
 from httpx import HTTPStatusError
 import voluptuous as vol
 
@@ -44,9 +44,8 @@ PTZ_DIRECTIONS = {
 }
 PTZ_SPEED = vol.All(vol.Coerce(int), vol.Range(min=-100, max=100))
 
-ACTION_PTZ_MOVE_SCHEMA = vol.Schema(
+ACTION_PTZ_MOVE_SCHEMA = cv.make_entity_service_schema(
     {
-        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Optional("direction"): vol.In(list(PTZ_DIRECTIONS)),
         vol.Optional("pan"): PTZ_SPEED,
         vol.Optional("tilt"): PTZ_SPEED,
@@ -54,11 +53,10 @@ ACTION_PTZ_MOVE_SCHEMA = vol.Schema(
         vol.Optional("duration", default=1000): vol.All(vol.Coerce(int), vol.Range(min=0, max=60000)),
     }
 )
-ACTION_PTZ_STOP_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_ids})
+ACTION_PTZ_STOP_SCHEMA = cv.make_entity_service_schema({})
 # Same fields as the onvif.ptz action, which Advanced Camera Card and other cards call.
-ACTION_PTZ_SCHEMA = vol.Schema(
+ACTION_PTZ_SCHEMA = cv.make_entity_service_schema(
     {
-        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Optional("pan"): vol.In(["LEFT", "RIGHT"]),
         vol.Optional("tilt"): vol.In(["UP", "DOWN"]),
         vol.Optional("zoom"): vol.In(["ZOOM_IN", "ZOOM_OUT"]),
@@ -125,6 +123,14 @@ async def _ptz_move(hass: HomeAssistant, entity_ids: list[str], pan: int, tilt: 
             )
 
 
+async def _ptz_targets(call: ServiceCall) -> list[str]:
+    """Return the camera entities a PTZ action targets (entities, devices, areas or labels)."""
+    entity_ids = sorted(e for e in await async_extract_entity_ids(call) if e.startswith("camera."))
+    if not entity_ids:
+        raise HomeAssistantError("Select at least one camera")
+    return entity_ids
+
+
 def setup_services(hass: HomeAssistant) -> None:
     """Set up the services for the Hikvision component."""
 
@@ -163,11 +169,11 @@ def setup_services(hass: HomeAssistant) -> None:
             pan, tilt, zoom = PTZ_DIRECTIONS[direction]
         else:
             raise HomeAssistantError("Set a direction, or pan, tilt or zoom")
-        await _ptz_move(hass, call.data[ATTR_ENTITY_ID], pan, tilt, zoom, call.data["duration"])
+        await _ptz_move(hass, await _ptz_targets(call), pan, tilt, zoom, call.data["duration"])
 
     async def handle_ptz(call: ServiceCall):
         """Handle the ONVIF-style PTZ action call. distance is accepted and ignored."""
-        entity_ids = call.data[ATTR_ENTITY_ID]
+        entity_ids = await _ptz_targets(call)
         if call.data["move_mode"] == "Stop":
             await _ptz_move(hass, entity_ids, 0, 0, 0, 0)
             return
@@ -179,7 +185,7 @@ def setup_services(hass: HomeAssistant) -> None:
 
     async def handle_ptz_stop(call: ServiceCall):
         """Handle the PTZ stop action call."""
-        await _ptz_move(hass, call.data[ATTR_ENTITY_ID], 0, 0, 0, 0)
+        await _ptz_move(hass, await _ptz_targets(call), 0, 0, 0, 0)
 
     hass.services.async_register(
         DOMAIN,
