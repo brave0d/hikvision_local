@@ -115,3 +115,19 @@ async def test_ptz_targets_a_device(hass: HomeAssistant, init_integration: MockC
 
     assert route.called
     assert second_channel.called
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2SE4C425MWG-E-26"], indirect=True)
+async def test_onvif_style_goto_preset(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """GotoPreset moves the camera to the preset; without a preset it fails."""
+    route = respx.put(f"{TEST_HOST}/ISAPI/PTZCtrl/channels/1/presets/3/goto").respond(200)
+
+    await hass.services.async_call(
+        DOMAIN, ACTION_PTZ, {"entity_id": CAMERA, "move_mode": "GotoPreset", "preset": 3}, blocking=True
+    )
+    assert route.called
+
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            DOMAIN, ACTION_PTZ, {"entity_id": CAMERA, "move_mode": "GotoPreset"}, blocking=True
+        )
