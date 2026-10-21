@@ -53,6 +53,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -n "${{ matrix.harness }}" ]; then
             sed -i "s/^pytest-homeassistant-custom-component==.*/${{ matrix.harness }}/" requirements.test.txt
+            grep -qx "${{ matrix.harness }}" requirements.test.txt
           fi
           pip install -r requirements.test.txt
       - name: Check the minimum job runs the version hacs.json declares
