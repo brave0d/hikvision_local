@@ -748,9 +748,9 @@ class ISAPIClient:
         """Start or stop a continuous PTZ movement; all zeros stop it.
 
         Values go from -100 to 100. Positive pan turns right, positive tilt goes up and positive
-        zoom zooms in. Hikvision applies zoom and pan/tilt as separate commands.
+        zoom zooms in.
         """
-        data = {"PTZData": {"zoom": zoom} if zoom else {"pan": pan, "tilt": tilt}}
+        data = {"PTZData": {"pan": pan, "tilt": tilt, "zoom": zoom}}
         xml = xmltodict.unparse(data, full_document=False)
         await self.request(PUT, f"PTZCtrl/channels/{channel_id}/continuous", present="xml", data=xml)
 

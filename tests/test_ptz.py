@@ -29,22 +29,22 @@ async def test_ptz_move_direction_stops_after_duration(hass: HomeAssistant, init
     )
     await hass.async_block_till_done(wait_background_tasks=True)
 
-    assert sent_commands(route) == [{"pan": "-50", "tilt": "50"}, {"pan": "0", "tilt": "0"}]
+    assert sent_commands(route) == [{"pan": "-50", "tilt": "50", "zoom": "0"}, {"pan": "0", "tilt": "0", "zoom": "0"}]
 
 
 @pytest.mark.parametrize("init_integration", ["DS-2SE4C425MWG-E-26"], indirect=True)
 async def test_ptz_zoom_and_stop(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
-    """Zoom is sent on its own; duration 0 keeps moving until ptz_stop."""
+    """Zoom moves are stopped too; duration 0 keeps moving until ptz_stop."""
     route = respx.put(PTZ_URL).respond(200)
 
     await hass.services.async_call(
         DOMAIN, ACTION_PTZ_MOVE, {"entity_id": CAMERA, "zoom": 30, "duration": 0}, blocking=True
     )
     await hass.async_block_till_done(wait_background_tasks=True)
-    assert sent_commands(route) == [{"zoom": "30"}]
+    assert sent_commands(route) == [{"pan": "0", "tilt": "0", "zoom": "30"}]
 
     await hass.services.async_call(DOMAIN, ACTION_PTZ_STOP, {"entity_id": CAMERA}, blocking=True)
-    assert sent_commands(route)[-1] == {"pan": "0", "tilt": "0"}
+    assert sent_commands(route)[-1] == {"pan": "0", "tilt": "0", "zoom": "0"}
 
 
 @pytest.mark.parametrize("init_integration", ["DS-2SE4C425MWG-E-26"], indirect=True)
@@ -80,4 +80,8 @@ async def test_onvif_style_ptz(hass: HomeAssistant, init_integration: MockConfig
     await hass.services.async_call(DOMAIN, ACTION_PTZ, {"entity_id": CAMERA, "move_mode": "Stop"}, blocking=True)
     await hass.async_block_till_done(wait_background_tasks=True)
 
-    assert sent_commands(route) == [{"pan": "70", "tilt": "-70"}, {"zoom": "50"}, {"pan": "0", "tilt": "0"}]
+    assert sent_commands(route) == [
+        {"pan": "70", "tilt": "-70", "zoom": "0"},
+        {"pan": "0", "tilt": "0", "zoom": "50"},
+        {"pan": "0", "tilt": "0", "zoom": "0"},
+    ]
