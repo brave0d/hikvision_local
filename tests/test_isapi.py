@@ -3,7 +3,7 @@
 import respx
 import httpx
 from contextlib import suppress
-from custom_components.hikvision_next.isapi import StorageInfo
+from custom_components.hikvision_local.isapi import StorageInfo
 from tests.conftest import mock_endpoint, load_fixture
 
 

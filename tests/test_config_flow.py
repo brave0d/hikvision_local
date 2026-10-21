@@ -3,7 +3,7 @@
 import respx
 import pytest
 from unittest.mock import patch
-from custom_components.hikvision_next.const import DOMAIN
+from custom_components.hikvision_local.const import DOMAIN
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
@@ -76,7 +76,7 @@ async def test_insufficient_permission_config_flow(hass, mock_isapi):
     assert result.get("errors") == {"base": "insufficient_permission"}
 
 
-@patch("custom_components.hikvision_next.isapi.ISAPIClient.get_device_info")
+@patch("custom_components.hikvision_local.isapi.ISAPIClient.get_device_info")
 async def test_unexpeced_exception_config_flow(get_device_info_mock, hass, mock_isapi):
     """Test a config flow with unexpeced exception."""
 

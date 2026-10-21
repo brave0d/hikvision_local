@@ -4,13 +4,13 @@ update_snapshot:
   target:
     entity:
       domain: image
-      integration: hikvision_next
+      integration: hikvision_local
   fields:
     filename:
       required: true
       name: Filename
       description: The filename of the snapshot to display.
-      example: "/media/hikvision_next/snapshots/2024-08/07/2024-08-07__11-54-19__camera01.jpg"
+      example: "/media/hikvision_local/snapshots/2024-08/07/2024-08-07__11-54-19__camera01.jpg"
       selector:
         text:
 
@@ -24,7 +24,7 @@ reboot:
       description: "Permission needed  - Remote: Shutdown/Reboot"
       selector:
         config_entry:
-          integration: hikvision_next
+          integration: hikvision_local
 
 isapi_request:
   name: ISAPI request
@@ -36,7 +36,7 @@ isapi_request:
       description: "The Hikvision device."
       selector:
         config_entry:
-          integration: hikvision_next
+          integration: hikvision_local
     method:
       required: true
       name: "HTTP method"

@@ -4,7 +4,7 @@ import pytest
 import respx
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from custom_components.hikvision_next.const import (
+from custom_components.hikvision_local.const import (
   ACTION_REBOOT,
   ATTR_CONFIG_ENTRY_ID,
   DOMAIN,

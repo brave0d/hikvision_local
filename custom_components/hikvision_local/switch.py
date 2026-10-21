@@ -22,7 +22,7 @@ async def async_setup_entry(
     entry: HikvisionConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add hikvision_next entities from a config_entry."""
+    """Add hikvision_local entities from a config_entry."""
 
     device = entry.runtime_data
     events_coordinator = device.coordinators.get(EVENTS_COORDINATOR)

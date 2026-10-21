@@ -435,7 +435,7 @@
       },
       "System/Holidays": {
         "error": {
-          "__type": "<class 'custom_components.hikvision_next.isapi.isapi.ISAPIForbiddenError'>",
+          "__type": "<class 'custom_components.hikvision_local.isapi.isapi.ISAPIForbiddenError'>",
           "repr": "ISAPIForbiddenError('http://1.2.3.4/ISAPI/System/Holidays')"
         }
       },
@@ -467,7 +467,7 @@
       },
       "ContentMgmt/InputProxy/channels": {
         "error": {
-          "__type": "<class 'custom_components.hikvision_next.isapi.isapi.ISAPIForbiddenError'>",
+          "__type": "<class 'custom_components.hikvision_local.isapi.isapi.ISAPIForbiddenError'>",
           "repr": "ISAPIForbiddenError('http://1.2.3.4/ISAPI/ContentMgmt/InputProxy/channels')"
         }
       },

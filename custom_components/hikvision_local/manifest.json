@@ -1,5 +1,5 @@
 {
-  "domain": "hikvision_next",
+  "domain": "hikvision_local",
   "name": "Hikvision NVR / IP Camera",
   "after_dependencies": ["http", "network"],
   "codeowners": ["@maciej-or"],

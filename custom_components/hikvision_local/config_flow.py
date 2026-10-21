@@ -1,4 +1,4 @@
-"""Config flow for hikvision_next integration."""
+"""Config flow for hikvision_local integration."""
 
 from __future__ import annotations
 
