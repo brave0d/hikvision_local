@@ -21,6 +21,9 @@ DEVICES = [
     "DS-7732NI-M4",
     "iDS-7204HUHI-M1",
     "iDS-7208HQHI-M1",
+    "iDS-7208HUHI-M1",
+    "DS-2CD2387G2-LSU",
+    "DS-7604NXI-K1",
 ]
 
 

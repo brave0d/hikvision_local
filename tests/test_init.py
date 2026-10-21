@@ -31,6 +31,9 @@ from tests.conftest import TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK, TEST_CONFIG
         "DS-7732NI-M4",
         "iDS-7204HUHI-M1",
         "iDS-7208HQHI-M1",
+        "iDS-7208HUHI-M1",
+        "DS-2CD2387G2-LSU",
+        "DS-7604NXI-K1",
     ],
     indirect=True,
 )
@@ -223,3 +226,32 @@ async def test_standalone_camera_has_no_parent_device(hass: HomeAssistant, init_
 
     assert devices
     assert all(entry.via_device_id is None for entry in devices)
+
+
+@pytest.mark.parametrize("init_integration", ["iDS-7208HUHI-M1"], indirect=True)
+async def test_dvr_reporting_ipc_device_type(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A DVR that reports deviceType IPC is still treated as a recorder with analog channels."""
+
+    device: HikvisionDevice = init_integration.runtime_data
+
+    assert device.device_info.device_type == "IPC"
+    assert device.device_info.is_nvr
+    assert device.capabilities.analog_cameras_inputs == 8
+    assert device.capabilities.input_ports == 16
+    # Inputs 1 to 4 have cameras connected: main and sub stream each.
+    assert [len(camera.streams) for camera in device.cameras[:4]] == [2, 2, 2, 2]
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7604NXI-K1"], indirect=True)
+async def test_nvr_skips_streams_it_refuses(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """An NVR that answers 403 for the third and fourth stream still loads with main and sub streams."""
+
+    device: HikvisionDevice = init_integration.runtime_data
+
+    assert device.device_info.is_nvr
+    assert [[stream.id for stream in camera.streams] for camera in device.cameras] == [
+        [101, 102],
+        [201, 202],
+        [301, 302],
+        [401, 402],
+    ]
