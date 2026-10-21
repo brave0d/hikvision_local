@@ -7,7 +7,7 @@
             "@version": "1.0",
             "@xmlns": "http://www.std-cgi.com/ver20/XMLSchema",
             "deviceName": "Embedded Net DVR",
-            "deviceID": "48453636-3830-0000-0000-accb00f000bb",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "DVR-108P-G/N",
             "serialNumber": "DVR-108P-G/N0000000000CCWRE00000000WCVU",
             "macAddress": "6f:21:95:2b:a5:ce",
@@ -17,7 +17,7 @@
             "encoderReleasedDate": "build 190119",
             "deviceType": "IPC",
             "telecontrolID": "255",
-            "customizedInfo": "DZP20191227129"
+            "customizedInfo": "DZP00000000000"
           }
         }
       },
