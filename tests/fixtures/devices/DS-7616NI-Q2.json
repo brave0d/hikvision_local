@@ -7,7 +7,7 @@
             "@version": "1.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "Network Video Recorder",
-            "deviceID": "48453236-3830-0000-0000-00df00d00000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "DS-7616NI-Q2/16P",
             "serialNumber": "DS-7616NI-Q2/00P0000000000CCRRE00000000WCVU",
             "macAddress": "52:a7:c0:3b:a5:10",

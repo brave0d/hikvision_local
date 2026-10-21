@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.isapi.org/ver20/XMLSchema",
             "deviceName": "NVR Casa Torino",
-            "deviceID": "484c3430-3730-0000-0000-e0baaded0bea",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "DS-7732NI-M4",
             "serialNumber": "DS-7732NI-M4-0000000000CCRRL00000000WCVU",
             "macAddress": "22:ea:fb:38:1e:06",

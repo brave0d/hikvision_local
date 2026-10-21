@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.isapi.org/ver20/XMLSchema",
             "deviceName": "nvr",
-            "deviceID": "484a3831-3130-0000-0000-000c0000f00e",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "DS-7608NXI-I2/8P/S",
             "serialNumber": "DS-7608NXI-I0/0P/S0000000000CCRRJ00000000WCVU",
             "macAddress": "e0:44:cf:0b:a7:98",
@@ -1206,7 +1206,7 @@
                 "defaultAdminPortEnabled": "true",
                 "enableAnr": "false",
                 "enableTiming": "true",
-                "devIndex": "99547530-e306-4229-97b3-a437defc006d"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "id": "2",
@@ -1229,7 +1229,7 @@
                 "defaultAdminPortEnabled": "true",
                 "enableAnr": "false",
                 "enableTiming": "true",
-                "devIndex": "d7493d22-b170-4b49-b5ce-b084fd67a1c8"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "id": "3",
@@ -1252,7 +1252,7 @@
                 "defaultAdminPortEnabled": "true",
                 "enableAnr": "true",
                 "enableTiming": "true",
-                "devIndex": "67aae058-eb97-45d7-8e82-9b28ee9f6b43"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "id": "4",

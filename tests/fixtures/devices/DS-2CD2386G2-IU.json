@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "yard",
-            "deviceID": "6aff4000-1f90-00b0-0000-000c00000000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "deviceDescription": "IPCamera",
             "deviceLocation": "hangzhou",
             "systemContact": "Hikvision.China",
@@ -180,7 +180,7 @@
                 "true"
               ],
               "isIrreversible": "true",
-              "salt": "e161ab2e468794e550348e8ff46eadce0e70a48e954be458843523e64faca39d",
+              "salt": "0000000000000000000000000000000000000000000000000000000000000000",
               "isSupportOnvifInfo": "true",
               "isSupportDeviceCertificatesManagement": "true",
               "isSupportDeviceSelfSignCertExport": "true",

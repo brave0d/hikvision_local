@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "IP DOME",
-            "deviceID": "bfd2c000-2120-00b0-000a-00000000000c",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "deviceDescription": "IPDome",
             "deviceLocation": "hangzhou",
             "systemContact": "Hikvision.China",
@@ -202,7 +202,7 @@
                 "@max": "16"
               },
               "isIrreversible": "true",
-              "salt": "ce60798705f164bdc2428c06d34b768ef854545b215b5354a1818f67ba31acea",
+              "salt": "0000000000000000000000000000000000000000000000000000000000000000",
               "isSupportOnvifInfo": "true",
               "isSupportDeviceCertificatesManagement": "true",
               "isSupportDeviceSelfSignCertExport": "true",

@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "Pietro",
-            "deviceID": "a6b9c000-7fc0-00b0-000e-00f0fba00000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "deviceDescription": "IPCamera",
             "deviceLocation": "hangzhou",
             "systemContact": "Hikvision.China",
@@ -162,7 +162,7 @@
                 "@max": "16"
               },
               "isIrreversible": "true",
-              "salt": "62ed0f42b7250511f0491f335302cea138a73b9692f896001af637512c22013d",
+              "salt": "0000000000000000000000000000000000000000000000000000000000000000",
               "isSupportOnvifInfo": "true",
               "isSupportDeviceSelfSignCertExport": "true"
             },

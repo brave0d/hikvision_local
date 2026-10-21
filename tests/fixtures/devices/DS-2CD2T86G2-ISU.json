@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "CAMERA 3",
-            "deviceID": "f1474000-98bf-00b0-0000-a0ff0ce0c000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "deviceDescription": "IPCamera",
             "deviceLocation": "hangzhou",
             "systemContact": "Hikvision.China",
@@ -182,7 +182,7 @@
                 "true"
               ],
               "isIrreversible": "true",
-              "salt": "87832f32100522b6799243f617f82db6679b20eb4d78e88c6917921dc0978159",
+              "salt": "0000000000000000000000000000000000000000000000000000000000000000",
               "isSupportOnvifInfo": "true",
               "isSupportDeviceCertificatesManagement": "true",
               "isSupportDeviceSelfSignCertExport": "true",
