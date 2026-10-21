@@ -104,7 +104,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           title="Tests fail on Home Assistant ${{ matrix.name }}"
-          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number')
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 200 --json number,title --jq "[.[] | select(.title == \"$title\")][0].number // empty")
           body="Nightly run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
