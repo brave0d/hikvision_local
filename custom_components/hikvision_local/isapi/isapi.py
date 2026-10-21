@@ -685,6 +685,8 @@ class ISAPIClient:
             position += num_matches
             if result.get("responseStatusStrg") != "MORE" or num_matches == 0:
                 break
+        else:
+            _LOGGER.warning("Recording search of track %s stopped after %s pages; later recordings are missing", track_id, max_pages)
         return sorted(segments, key=lambda segment: segment.start)
 
     async def search_alarm_log(
@@ -725,6 +727,8 @@ class ISAPIClient:
             position += len(matches)
             if result.get("responseStatusStrg") != "MORE" or not matches:
                 break
+        else:
+            _LOGGER.warning("Alarm log search stopped after %s pages; later events are missing", max_pages)
 
         events: list[LoggedEvent] = []
         open_events: dict[tuple[str, int | None], LoggedEvent] = {}
