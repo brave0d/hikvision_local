@@ -17,7 +17,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .hikvision_device import HikvisionDevice
@@ -114,47 +113,6 @@ def get_first_instance_unique_id(hass: HomeAssistant) -> int:
     """Get entry unique_id for first instance of integration."""
     entry = [entry for entry in hass.config_entries.async_entries(DOMAIN) if not entry.disabled_by][0]
     return entry.unique_id
-
-
-async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
-    """Migrate old entry."""
-    _LOGGER.debug("Migrating from version %s", config_entry.version)
-
-    # 1 -> 2: Config entry unique_id format changed
-    if config_entry.version == 1:
-        unique_id = config_entry.unique_id
-        if isinstance(unique_id, list) and len(unique_id) == 1 and isinstance(unique_id[0], list):
-            new_unique_id = unique_id[0][1]
-            hass.config_entries.async_update_entry(
-                config_entry,
-                data={**config_entry.data},
-                unique_id=new_unique_id,
-            )
-
-        config_entry.version = 2
-
-    # 2 -> 3: Delete previous alaram server sensor entities
-    if config_entry.version == 2:
-        old_keys = ["protocoltype", "ipaddress", "portno", "url"]
-        entity_registry = er.async_get(hass)
-        for key in old_keys:
-            entity_id = f"sensor.{slugify(config_entry.unique_id)}_alarm_server_{key}"
-            entity = entity_registry.async_get(entity_id)
-            if entity:
-                entity_registry.async_remove(entity_id)
-
-        hass.config_entries.async_update_entry(
-            config_entry,
-            version=3,
-        )
-
-    _LOGGER.debug(
-        "Migration to version %s.%s successful",
-        config_entry.version,
-        config_entry.minor_version,
-    )
-
-    return True
 
 
 def refresh_disabled_entities_in_registry(hass: HomeAssistant, device: HikvisionDevice):
