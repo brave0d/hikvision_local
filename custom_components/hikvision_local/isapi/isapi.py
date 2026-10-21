@@ -559,6 +559,22 @@ class ISAPIClient:
             if new_state == data[node]["enabled"]:
                 return
             data[node]["enabled"] = new_state
+            # When motion detection has regionType="grid", the firmware recomputes
+            # RegionCoordinatesList as the bounding box of gridMap on every PUT,
+            # destroying the user's custom polygon. The Hikvision web UI works
+            # around this by sending regionType="region" with a zeroed gridMap,
+            # which makes the firmware treat RegionList as the source of truth
+            # and re-derive gridMap from the polygon. Mirror what the UI does.
+            if data[node].get("regionType") == "grid":
+                layout = deep_get(data[node], "MotionDetectionLayout.layout")
+                if isinstance(layout, dict) and "gridMap" in layout:
+                    data[node]["regionType"] = "region"
+                    layout["gridMap"] = "0" * len(layout["gridMap"])
+                    region_list = layout.get("RegionList")
+                    if isinstance(region_list, dict) and "@size" not in region_list:
+                        regions = region_list.get("Region")
+                        size = len(regions) if isinstance(regions, list) else (1 if regions else 0)
+                        region_list["@size"] = str(size)
             xml = xmltodict.unparse(data)
             await self.request(PUT, event.url, present="xml", data=xml)
         else:
