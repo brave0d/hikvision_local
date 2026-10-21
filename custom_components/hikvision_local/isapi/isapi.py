@@ -228,7 +228,9 @@ class ISAPIClient:
                             connection_type=CONNECTION_TYPE_PROXIED,
                             ip_addr=source.get("ipAddress"),
                             ip_port=source.get("managePortNo"),
-                            streams=await self.get_camera_streams(camera_id),
+                            streams=await self.get_camera_streams(
+                                camera_id, default_streams=source.get("proxyProtocol") != "HIKVISION"
+                            ),
                         )
                     )
 
@@ -391,13 +393,32 @@ class ISAPIClient:
             url = f"Smart/{slug}/{channel_id}"
         return url
 
-    async def get_camera_streams(self, channel_id: int) -> list[CameraStreamInfo]:
-        """Get stream info for all cameras."""
+    async def get_camera_streams(self, channel_id: int, default_streams: bool = False) -> list[CameraStreamInfo]:
+        """Get stream info for all cameras.
+
+        default_streams: when the device hides the details of the main and sub stream, assume
+        they exist (NVRs answer 403 for IP channels added with ONVIF or other protocols).
+        """
         streams = []
         for stream_type_id, stream_type in STREAM_TYPE.items():
             stream_id = f"{channel_id}0{stream_type_id}"
             stream_info = (await self.request(GET, f"Streaming/channels/{stream_id}")).get("StreamingChannel")
             if not stream_info:
+                if default_streams and stream_type_id in (1, 2):
+                    # RTSP still works for these channels; only the stream details are hidden.
+                    streams.append(
+                        CameraStreamInfo(
+                            id=int(stream_id),
+                            name=str(stream_id),
+                            type_id=stream_type_id,
+                            type=stream_type,
+                            enabled=True,
+                            codec="H.264",
+                            width=1280 if stream_type_id == 1 else 640,
+                            height=720 if stream_type_id == 1 else 360,
+                            audio=False,
+                        )
+                    )
                 continue
             try:
                 streams.append(
