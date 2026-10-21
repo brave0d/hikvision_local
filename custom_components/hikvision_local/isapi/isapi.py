@@ -47,13 +47,17 @@ from .utils import bool_to_str, deep_get, parse_isapi_response, str_to_bool
 
 
 # Helper to sanitize channel IDs (e.g. converting "I-1" to 1)
-def clean_int(value):
-    """Sanitize and convert value to int, handling alphanumeric strings."""
+def clean_int(value, default: int = 0) -> int:
+    """Sanitize and convert value to int, handling alphanumeric strings.
+
+    Returns default for values without digits, such as None or "".
+    """
     try:
         return int(value)
     except ValueError, TypeError:
         # Extract digits from string (e.g. "I-1" -> "1")
-        return int("".join(filter(str.isdigit, str(value))))
+        digits = "".join(filter(str.isdigit, str(value)))
+        return int(digits) if digits else default
 
 
 Node = dict[str, Any]
