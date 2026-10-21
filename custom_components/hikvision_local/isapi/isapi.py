@@ -512,6 +512,27 @@ class ISAPIClient:
         node = self._get_event_state_node(event)
         return str_to_bool(state[node].get("enabled", "false")) if state.get(node) else False
 
+    @staticmethod
+    def _motion_polygons(layout: Any) -> list[dict]:
+        """Return the motion polygons of a layout that has a gridMap, or [] if none has 3+ points."""
+        if not isinstance(layout, dict) or "gridMap" not in layout:
+            return []
+        region_list = layout.get("RegionList")
+        if not isinstance(region_list, dict):
+            return []
+        regions = region_list.get("Region") or []
+        if isinstance(regions, dict):
+            regions = [regions]
+        valid = []
+        for region in regions:
+            points = deep_get(region, "RegionCoordinatesList.RegionCoordinates", [])
+            if isinstance(points, dict):
+                points = [points]
+            if len(points) >= 3:
+                valid.append(region)
+        # Rewrite only when every region is usable, so no part of the area is dropped.
+        return valid if valid and len(valid) == len(regions) else []
+
     async def get_event_switch_mutex(self, event: EventInfo, channel_id: int) -> list[MutexIssue]:
         """Get if event is mutually exclusive with enabled events."""
         mutex_issues = []
@@ -562,6 +583,21 @@ class ISAPIClient:
             if new_state == data[node]["enabled"]:
                 return
             data[node]["enabled"] = new_state
+            # When motion detection has regionType="grid", the firmware recomputes
+            # RegionCoordinatesList as the bounding box of gridMap on every PUT,
+            # destroying the user's custom polygon. The Hikvision web UI works
+            # around this by sending regionType="region" with a zeroed gridMap,
+            # which makes the firmware treat RegionList as the source of truth
+            # and re-derive gridMap from the polygon. Mirror what the UI does.
+            # Only when a usable polygon exists: on grid-only devices a zeroed gridMap would
+            # leave the camera with no motion area at all.
+            if data[node].get("regionType") == "grid":
+                layout = deep_get(data[node], "MotionDetectionLayout.layout")
+                regions = self._motion_polygons(layout)
+                if regions:
+                    data[node]["regionType"] = "region"
+                    layout["gridMap"] = "0" * len(layout["gridMap"])
+                    layout["RegionList"]["@size"] = str(len(regions))
             xml = xmltodict.unparse(data)
             await self.request(PUT, event.url, present="xml", data=xml)
         else:
