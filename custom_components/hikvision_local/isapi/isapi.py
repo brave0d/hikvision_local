@@ -576,6 +576,9 @@ class ISAPIClient:
         """Change audio alarm settings, leaving the schedule and other fields as they are."""
 
         settings = await self._get_audio_alarm_settings()
+        if not settings:
+            # Writing back an empty document would wipe the schedule and the other settings.
+            raise ValueError("Cannot read the current audio alarm settings")
         if sound_id is not None:
             # The device plays audioID, alertAudioID only records the choice within the alertAudio class
             settings["audioID"] = sound_id
