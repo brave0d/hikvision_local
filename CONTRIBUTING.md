@@ -4,7 +4,9 @@ Everybody is invited and welcome to contribute to hikvision_local integration.
 -   Pull requests are created against the [**main**](https://github.com/brave0d/hikvision_local/tree/main) branch.
 - Code must follow [Home Assistant code style guidelines](https://developers.home-assistant.io/docs/development_guidelines)
 - Line length limit must be 120 characters
-- Install Ruff extension and select ruff as default formatter in vscode settings
+- Code is formatted and linted with ruff (`ruff format` and `ruff check`); `pre-commit install` runs both before each commit
+- One change per commit, with a semantic prefix: `feat`, `fix`, `refactor`, `test`, `chore` or `docs`
+- Pull requests are squash-merged; the PR title becomes the commit on `main`
 
 ## Development Environment
 1. Set up devcontainer using guide at https://developers.home-assistant.io/docs/development_environment/
@@ -26,12 +28,12 @@ Install Python 3.14 or later and project dependencies:
 ```
 pip install -r requirements.test.txt
 ```
-and run `pytest`. For running tests in debug mode vscode is recommended.
+and run `pytest`. CI runs the tests on the minimum supported Home Assistant (see `hacs.json`) and on the latest stable release. For running tests in debug mode vscode is recommended.
 
 There are 2 types of tests:
 
 ### ISAPI communication
-They test specific ISAPI requests and use data from `tests/fixtures/ISAPI`. They are focued on data processing. The folder structure corresponds to ISAPI endpoints, and the XML files contain device responses.
+They test specific ISAPI requests and use data from `tests/fixtures/ISAPI`. They are focused on data processing. The folder structure corresponds to ISAPI endpoints, and the XML files contain device responses.
 
 ### The behavior of the Hikvision device in HomeAssistant
 

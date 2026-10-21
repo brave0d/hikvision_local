@@ -5,6 +5,7 @@
 The Home Assistant integration for Hikvision NVRs and IP cameras. Receives and switches detection of alarm events. Provides video streams.
 
 Hikvision Local continues [hikvision_next](https://github.com/maciej-or/hikvision_next) by Maciej ([@maciej-or](https://github.com/maciej-or)).
+If you'd like to thank the original author too, you can [support Maciej on Ko-fi](https://ko-fi.com/maciejor).
 
 ## Moving from hikvision_next
 
