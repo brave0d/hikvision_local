@@ -320,13 +320,13 @@
                 "ipAddress": "1.0.0.182",
                 "portNo": "0",
                 "nasType": "NFS",
-                "path": "\\kamera3",
+                "path": "/share",
                 "status": "ok",
                 "capacity": "15359",
                 "freeSpace": "512",
                 "property": "RW",
                 "mountType": "SMB/CIFS",
-                "userName": "kamera"
+                "userName": "user"
               },
               "supportMountType": {
                 "@opt": "NFS,SMB/CIFS"
