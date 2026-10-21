@@ -351,7 +351,7 @@ class ISAPIClient:
             if isinstance(channel_events, dict):
                 channel_events = [channel_events]
             for event_cap in channel_events:
-                event_types = deep_get(event_cap, "eventType").get("@opt", "").split(",")
+                event_types = deep_get(event_cap, "eventType", {}).get("@opt", "").split(",")
                 channel_id = clean_int(event_cap.get("channelID", 1))
                 for event_type in event_types:
                     event_id = event_type.lower()
