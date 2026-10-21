@@ -119,12 +119,6 @@ class HikvisionDevice(ISAPIClient):
         """Return device info linking a camera to its parent NVR device."""
         nvr_identifier = (DOMAIN, self.device_info.serial_no)
         device_registry = dr.async_get(self.hass)
-        if "via_device_id" not in DeviceInfo.__optional_keys__ or not hasattr(
-            device_registry, "async_get_device_by_identifier"
-        ):
-            # Home Assistant < 2026.8 only supports linking by identifier
-            return DeviceInfo(via_device=nvr_identifier)
-        # Home Assistant >= 2026.8 deprecates via_device in favour of via_device_id
         nvr_device = device_registry.async_get_device_by_identifier(nvr_identifier, self.entry.entry_id)
         if nvr_device is None:
             return DeviceInfo()
