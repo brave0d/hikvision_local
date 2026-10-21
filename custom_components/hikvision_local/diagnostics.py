@@ -28,7 +28,7 @@ def anonymise_ip(orignal: str):
     """Anonymise IP address."""
     if not orignal or orignal[0] == "0":
         return orignal
-    return f"1.0.0.{random.randint(0x00, 0xff)}"
+    return f"1.0.0.{random.randint(0x00, 0xFF)}"
 
 
 def anonymise_serial(orignal: str):

@@ -4,7 +4,12 @@ import json
 import pytest
 import respx
 import xmltodict
-from custom_components.hikvision_local.const import DOMAIN, CONF_SET_ALARM_SERVER, CONF_ALARM_SERVER_HOST, RTSP_PORT_FORCED
+from custom_components.hikvision_local.const import (
+    DOMAIN,
+    CONF_SET_ALARM_SERVER,
+    CONF_ALARM_SERVER_HOST,
+    RTSP_PORT_FORCED,
+)
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.hikvision_local.isapi import ISAPIClient
@@ -12,11 +17,7 @@ from homeassistant.core import HomeAssistant
 
 TEST_HOST_IP = "1.0.0.255"
 TEST_HOST = f"http://{TEST_HOST_IP}"
-TEST_CLIENT = {
-    CONF_HOST: TEST_HOST,
-    CONF_USERNAME: "u1",
-    CONF_PASSWORD: "***"
-}
+TEST_CLIENT = {CONF_HOST: TEST_HOST, CONF_USERNAME: "u1", CONF_PASSWORD: "***"}
 
 TEST_CONFIG = {**TEST_CLIENT, CONF_VERIFY_SSL: True, CONF_SET_ALARM_SERVER: False, CONF_ALARM_SERVER_HOST: ""}
 TEST_CONFIG_WITH_ALARM_SERVER = {
@@ -42,11 +43,7 @@ def mock_config_entry(request) -> MockConfigEntry:
     """Return the default mocked config entry."""
 
     config = getattr(request, "param", TEST_CONFIG)
-    return MockConfigEntry(
-        domain=DOMAIN,
-        data=config,
-        version=3
-    )
+    return MockConfigEntry(domain=DOMAIN, data=config, version=3)
 
 
 def load_fixture(path, file):
@@ -129,7 +126,7 @@ async def init_integration(respx_mock, request, mock_isapi, hass: HomeAssistant,
         await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
         unique_id = None
-        if mock_config_entry.state.value == 'loaded':
+        if mock_config_entry.state.value == "loaded":
             unique_id = mock_config_entry.runtime_data.device_info.serial_no
         hass.config_entries.async_update_entry(
             mock_config_entry,
@@ -147,20 +144,16 @@ async def init_multi_device_integration(respx_mock, request, mock_isapi, hass: H
     devices = request.param
     config_entries = []
     for device in devices:
-        config_entry = MockConfigEntry(
-            domain=DOMAIN,
-            data=device['config'],
-            version=3
-        )
-        model = device['model']
-        mock_device_endpoints(model, device['config'][CONF_HOST])
+        config_entry = MockConfigEntry(domain=DOMAIN, data=device["config"], version=3)
+        model = device["model"]
+        mock_device_endpoints(model, device["config"][CONF_HOST])
         config_entry.add_to_hass(hass)
 
         await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
 
         unique_id = None
-        if config_entry.state.value == 'loaded':
+        if config_entry.state.value == "loaded":
             unique_id = config_entry.runtime_data.device_info.serial_no
         hass.config_entries.async_update_entry(
             config_entry,

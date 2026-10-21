@@ -23,6 +23,7 @@ async def test_sensor_value(
         assert (sensor := hass.states.get(entity_id))
         assert sensor.state == state
 
+
 @pytest.mark.parametrize("init_integration", ["DS-2CD2T86G2-ISU"], indirect=True)
 async def test_sensor_value_outside_network(
     hass: HomeAssistant,
@@ -62,7 +63,7 @@ async def test_scenechange_support(
     data = device_data[init_integration.title]
     entities = [
         f"binary_sensor.{data['serial_no']}_1_scenechangedetection",
-        f"switch.{data['serial_no']}_1_scenechangedetection"
+        f"switch.{data['serial_no']}_1_scenechangedetection",
     ]
 
     entity_registry = er.async_get(hass)

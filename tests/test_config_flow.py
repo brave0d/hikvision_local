@@ -100,17 +100,14 @@ async def test_user_input_validation(hass, mock_isapi_device):
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
-    user_input = {
-        **TEST_CONFIG,
-        CONF_HOST: TEST_HOST + "/"
-    }
+    user_input = {**TEST_CONFIG, CONF_HOST: TEST_HOST + "/"}
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input=user_input)
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"] == TEST_CONFIG
 
 
-@pytest.mark.parametrize("mock_isapi_device", [("DS-2CD2386G2-IU", TEST_CONFIG_OUTSIDE_NETWORK['host'])], indirect=True)
+@pytest.mark.parametrize("mock_isapi_device", [("DS-2CD2386G2-IU", TEST_CONFIG_OUTSIDE_NETWORK["host"])], indirect=True)
 async def test_user_input_validation_with_rtsp_port(hass, mock_isapi_device):
     """Test a successful config flow."""
 
@@ -147,11 +144,7 @@ async def test_reconfiguration(hass: HomeAssistant, init_integration: MockConfig
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {
-            **TEST_CONFIG,
-            CONF_HOST: TEST_HOST2,
-            CONF_VERIFY_SSL: False
-        },
+        {**TEST_CONFIG, CONF_HOST: TEST_HOST2, CONF_VERIFY_SSL: False},
     )
 
     assert result["type"] is FlowResultType.ABORT
@@ -160,6 +153,7 @@ async def test_reconfiguration(hass: HomeAssistant, init_integration: MockConfig
     assert entry.data[CONF_PASSWORD] == TEST_CONFIG[CONF_PASSWORD]
     assert entry.data[CONF_HOST] == TEST_HOST2
     assert entry.data[CONF_VERIFY_SSL] is False
+
 
 @respx.mock
 async def test_reauth(hass, mock_isapi, mock_config_entry: MockConfigEntry):

@@ -179,7 +179,7 @@ class ISAPIClient:
                     serial_no = source.get("serialNumber")
                     if not serial_no or self.get_camera_by_serial_no(serial_no):
                         # serial no is not always recognized correcly by NVR
-                        serial_no = f"{self.device_info.serial_no}_{source.get("proxyProtocol")}_{camera_id}"
+                        serial_no = f"{self.device_info.serial_no}_{source.get('proxyProtocol')}_{camera_id}"
 
                     self.cameras.append(
                         IPCamera(
@@ -827,8 +827,8 @@ class ISAPISetEventStateMutexError(Exception):
         """Initialize exception."""
         self.event = event
         self.mutex_issues = mutex_issues
-        self.message = f"""You cannot enable {EVENTS[event.id]['label']} events.
-            Please disable {EVENTS[mutex_issues[0].event_id]['label']}
+        self.message = f"""You cannot enable {EVENTS[event.id]["label"]} events.
+            Please disable {EVENTS[mutex_issues[0].event_id]["label"]}
             on channels {mutex_issues[0].channels} first"""
 
 

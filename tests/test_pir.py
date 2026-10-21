@@ -12,23 +12,19 @@ from custom_components.hikvision_local.hikvision_device import HikvisionDevice
 from custom_components.hikvision_local.notifications import EventNotificationsView
 from tests.test_notifications import mock_event_notification
 from tests.conftest import TEST_HOST
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    SERVICE_TURN_OFF,
-    STATE_ON,
-    STATE_OFF
-)
+from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_ON, STATE_OFF
+
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2443G0-IW"], indirect=True)
 async def test_pir_entities(
     hass: HomeAssistant,
     init_integration: MockConfigEntry,
 ) -> None:
-    """Test PIR entities creation """
+    """Test PIR entities creation"""
 
     entities = [
         "binary_sensor.ds_2cd2443g0_iw00000000aawre00000000_1_pir",
-        "switch.ds_2cd2443g0_iw00000000aawre00000000_1_pir"
+        "switch.ds_2cd2443g0_iw00000000aawre00000000_1_pir",
     ]
 
     entity_registry = er.async_get(hass)
@@ -39,7 +35,8 @@ async def test_pir_entities(
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2443G0-IW"], indirect=True)
 async def test_pir_alert(
-    hass: HomeAssistant, init_integration: MockConfigEntry,
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
 ) -> None:
     """Test incoming PIR alarm."""
 
@@ -82,7 +79,7 @@ async def test_pir_support_detection(
     hass: HomeAssistant,
     init_integration: MockConfigEntry,
 ) -> None:
-    """Test PIR entities creation """
+    """Test PIR entities creation"""
 
     device_data = {
         "DS-2CD2443G0-IW": {
@@ -93,13 +90,11 @@ async def test_pir_support_detection(
         },
         "DS-2CD2386G2-IU": {
             "isSupportPIR": False,
-        }
+        },
     }
 
     entry = init_integration
     device: HikvisionDevice = entry.runtime_data
     data = device_data[init_integration.title]
-    pir_events = [
-        s for s in device.supported_events if (s.id == EVENT_PIR)
-    ]
+    pir_events = [s for s in device.supported_events if (s.id == EVENT_PIR)]
     assert (len(pir_events) == 1) == data["isSupportPIR"]

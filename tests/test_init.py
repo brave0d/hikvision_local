@@ -11,25 +11,27 @@ from homeassistant.config_entries import ConfigEntryState
 from tests.conftest import TEST_CONFIG, TEST_CONFIG_WITH_ALARM_SERVER, TEST_CONFIG_OUTSIDE_NETWORK
 
 
-@pytest.mark.parametrize("init_integration",
-[
-    "DS-7608NXI-I2",
-    "DS-2CD2386G2-IU",
-    "DS-2CD2146G2-ISU",
-    "DS-2CD2443G0-IW",
-    "DS-2CD2532F-IWS",
-    "DS-2TD1228-2-QA",
-    "DS-2CD2346G2-ISU",
-    "DS-2CD2T46G2-ISU",
-    "DS-2CD2T86G2-ISU",
-    "DS-2SE4C425MWG-E-26",
-    "DS-7616NI-K2",
-    "DS-7616NI-Q2",
-    "DS-7732NI-M4",
-    "iDS-7204HUHI-M1",
-    "iDS-7208HQHI-M1"
-], indirect=True)
-
+@pytest.mark.parametrize(
+    "init_integration",
+    [
+        "DS-7608NXI-I2",
+        "DS-2CD2386G2-IU",
+        "DS-2CD2146G2-ISU",
+        "DS-2CD2443G0-IW",
+        "DS-2CD2532F-IWS",
+        "DS-2TD1228-2-QA",
+        "DS-2CD2346G2-ISU",
+        "DS-2CD2T46G2-ISU",
+        "DS-2CD2T86G2-ISU",
+        "DS-2SE4C425MWG-E-26",
+        "DS-7616NI-K2",
+        "DS-7616NI-Q2",
+        "DS-7732NI-M4",
+        "iDS-7204HUHI-M1",
+        "iDS-7208HQHI-M1",
+    ],
+    indirect=True,
+)
 async def test_basic_init(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
     """Test a successful setup entry."""
 
@@ -147,7 +149,7 @@ async def test_async_setup_entry_nvr_with_alarm_server(hass: HomeAssistant, init
         assert not hass.data.get(DOMAIN)
 
 
-@pytest.mark.parametrize("mock_isapi", [TEST_CONFIG_OUTSIDE_NETWORK['host']], indirect=True)
+@pytest.mark.parametrize("mock_isapi", [TEST_CONFIG_OUTSIDE_NETWORK["host"]], indirect=True)
 @pytest.mark.parametrize("mock_config_entry", [TEST_CONFIG_OUTSIDE_NETWORK], indirect=True)
 @pytest.mark.parametrize("init_integration", [("DS-2CD2T86G2-ISU")], indirect=True)
 async def test_async_setup_entry_nvr_outside_network(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:

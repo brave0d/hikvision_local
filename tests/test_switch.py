@@ -60,7 +60,7 @@ async def test_event_switch_state_of_a_camera(
         ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_fielddetection", STATE_ON),
         ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_scenechangedetection", STATE_ON),
         ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_io", STATE_OFF),
-        ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_alarm_output", STATE_OFF)
+        ("switch.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_alarm_output", STATE_OFF),
     ]:
         assert (switch := hass.states.get(entity_id))
         assert switch.state == state
@@ -200,10 +200,10 @@ async def test_ipc_multichannel_event_switch(
     assert len(device.cameras[1].events_info) == 4
 
     switch_entities = [
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_motiondetection',
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_tamperdetection',
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_fielddetection',
-        'switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_linedetection',
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_motiondetection",
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_1_tamperdetection",
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_fielddetection",
+        "switch.ds_2se4c425mwg_e_0000000000aawrfc0000000_2_linedetection",
         # 2 events are diabled
     ]
     for entity_id in switch_entities:
