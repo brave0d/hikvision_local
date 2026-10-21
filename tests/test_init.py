@@ -239,8 +239,9 @@ async def test_dvr_reporting_ipc_device_type(hass: HomeAssistant, init_integrati
     assert device.device_info.is_nvr
     assert device.capabilities.analog_cameras_inputs == 8
     assert device.capabilities.input_ports == 16
-    # Inputs 1 to 4 have cameras connected: main and sub stream each.
-    assert [len(camera.streams) for camera in device.cameras[:4]] == [2, 2, 2, 2]
+    # Inputs 1 to 4 have cameras connected: main and sub stream each. Inputs 5 to 8 are disabled.
+    assert [camera.id for camera in device.cameras] == [1, 2, 3, 4]
+    assert [len(camera.streams) for camera in device.cameras] == [2, 2, 2, 2]
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7604NXI-K1"], indirect=True)

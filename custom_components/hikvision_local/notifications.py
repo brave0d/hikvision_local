@@ -170,6 +170,11 @@ class EventNotificationsView(HomeAssistantView):
 
         _LOGGER.debug("Alert: %s", alert)
 
+        if alert.channel_id and alert.event_id != EVENT_IO and not self.device.get_camera_by_id(alert.channel_id):
+            # For example a video loss alert from an analog input that is disabled on the DVR.
+            _LOGGER.debug("Ignoring %s alert for channel %s without a camera", alert.event_id, alert.channel_id)
+            return
+
         serial_no = self.device.device_info.serial_no.lower()
 
         device_id_param = f"_{alert.channel_id}" if alert.channel_id != 0 and alert.event_id != EVENT_IO else ""

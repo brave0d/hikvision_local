@@ -243,6 +243,9 @@ class ISAPIClient:
                 )
 
                 for analog_camera in analog_cameras:
+                    if not str_to_bool(analog_camera.get("videoInputEnabled", "true")):
+                        # Disabled inputs have no camera; "NO VIDEO" on an enabled input can be an offline one.
+                        continue
                     camera_id = clean_int(analog_camera.get("id"))
                     device_serial_no = f"{self.device_info.serial_no}-VI{camera_id}"
                     input_port = clean_int(analog_camera.get("inputPort"))

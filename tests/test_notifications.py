@@ -242,3 +242,18 @@ async def test_nvr_and_cam_notification_alert(
     assert sensor_cam_2.state == STATE_OFF
     assert sensor_cam_3.state == STATE_ON
     assert sensor_nvr_1.state == STATE_ON
+
+
+@pytest.mark.parametrize("init_integration", ["iDS-7208HUHI-M1"], indirect=True)
+async def test_alert_for_disabled_dvr_input_is_ignored(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    caplog,
+) -> None:
+    """A video loss alert from a disabled DVR input is ignored without a warning."""
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification("dvr_5_videoloss"))
+
+    assert response.status == HTTPStatus.OK
+    assert "Cannot process incoming event" not in caplog.text
