@@ -87,8 +87,6 @@ class EventSwitch(CoordinatorEntity, SwitchEntity):
         """Turn off."""
         try:
             await self.coordinator.device.set_event_enabled_state(self.device_id, self.event, False)
-        except Exception:
-            raise
         finally:
             await self.coordinator.async_request_refresh()
 
