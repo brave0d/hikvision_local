@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "SCD14 #TUIN",
-            "deviceID": "c8e3b8e9-59b0-00b0-0000-e0b0f0b0f0a0",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "deviceDescription": "IPCamera",
             "deviceLocation": "hangzhou",
             "systemContact": "Hikvision.China",

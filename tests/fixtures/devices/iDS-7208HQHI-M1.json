@@ -7,7 +7,7 @@
             "@version": "1.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "Embedded Net DVR",
-            "deviceID": "48464437-3930-0000-0000-dc00f000e000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "iDS-7208HQHI-M1(A)/S(C)",
             "serialNumber": "iDS-7208HQHI-M0(A)/S(C)0000000000CCWRFD0000000WCVU",
             "macAddress": "e5:58:62:82:ed:41",

@@ -7,7 +7,7 @@
             "@version": "2.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "CAMERA 2",
-            "deviceID": "59b20000-e1d0-00b0-0000-acb00f00a000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "deviceDescription": "IPCamera",
             "deviceLocation": "hangzhou",
             "systemContact": "Hikvision.China",
@@ -182,7 +182,7 @@
                 "true"
               ],
               "isIrreversible": "true",
-              "salt": "9738996b51de3f0029724974b51a47d7d750568eddf367f163304e49918563fe",
+              "salt": "0000000000000000000000000000000000000000000000000000000000000000",
               "isSupportOnvifInfo": "true",
               "isSupportDeviceCertificatesManagement": "true",
               "isSupportDeviceSelfSignCertExport": "true",

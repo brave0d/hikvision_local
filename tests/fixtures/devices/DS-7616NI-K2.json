@@ -7,7 +7,7 @@
             "@version": "1.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "NVR",
-            "deviceID": "48473931-3030-0000-0000-acb00f0000bd",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "DS-7616NI-K2",
             "serialNumber": "DS-7616NI-K20000000000CCRRG00000000WCVU",
             "macAddress": "87:02:30:0a:c5:06",
@@ -1121,7 +1121,7 @@
                 },
                 "enableAnr": "false",
                 "enableTiming": "true",
-                "devIndex": "f0c86cfe-af3a-474b-be4c-cb941e9dcbfd"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "@version": "1.0",
@@ -1142,7 +1142,7 @@
                   "deviceID": null
                 },
                 "enableTiming": "true",
-                "devIndex": "6f8bbaaa-623c-495d-ae9b-1f6033828b11"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "@version": "1.0",
@@ -1164,7 +1164,7 @@
                 },
                 "enableAnr": "false",
                 "enableTiming": "true",
-                "devIndex": "b340f31d-e501-4b19-9df5-1fbd90c52c2e"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "@version": "1.0",
@@ -1186,7 +1186,7 @@
                 },
                 "enableAnr": "false",
                 "enableTiming": "true",
-                "devIndex": "98029b01-79dd-44d2-94c9-b0cd3761885d"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "@version": "1.0",
@@ -1208,7 +1208,7 @@
                 },
                 "enableAnr": "false",
                 "enableTiming": "true",
-                "devIndex": "69cf8cc8-0bb9-4ac8-8f01-9d34b7ae909f"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               },
               {
                 "@version": "1.0",
@@ -1229,7 +1229,7 @@
                   "deviceID": null
                 },
                 "enableTiming": "true",
-                "devIndex": "37d5c328-8599-49c9-8b34-a62139e4f547"
+                "devIndex": "00000000-0000-0000-0000-000000000000"
               }
             ]
           }

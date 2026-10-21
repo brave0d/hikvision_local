@@ -7,7 +7,7 @@
             "@version": "1.0",
             "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
             "deviceName": "Embedded Net DVR",
-            "deviceID": "48414831-3630-0000-0000-0c0bf0000000",
+            "deviceID": "00000000-0000-0000-0000-000000000000",
             "model": "iDS-7204HUHI-M1/E",
             "serialNumber": "iDS-7204HUHI-M0/E0000000000CCWRAH0000000WCVU",
             "macAddress": "8b:92:35:5f:d5:fa",
