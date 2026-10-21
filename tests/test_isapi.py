@@ -172,3 +172,14 @@ async def test_single_channel_event_fallback(mock_isapi):
         "Event/channels/capabilities",
         "Event/triggers/fielddetection-1",
     ]
+
+
+async def test_event_fallback_ignores_capabilities_without_event_type(mock_isapi):
+    """A capability entry without eventType doesn't stop event discovery."""
+    responses = {
+        "Event/triggers": {},
+        "Event/channels/capabilities": {"ChannelEventCapList": {"ChannelEventCap": [{"channelID": "1"}]}},
+    }
+    mock_isapi.request = AsyncMock(side_effect=lambda _, endpoint: responses.get(endpoint, {}))
+
+    assert await mock_isapi.get_supported_events({}) == []
