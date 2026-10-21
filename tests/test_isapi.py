@@ -3,10 +3,12 @@
 from contextlib import suppress
 
 import httpx
+import pytest
 import respx
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
-from custom_components.hikvision_local.isapi import StorageInfo
+from custom_components.hikvision_local.isapi import ISAPIClient, StorageInfo
+from custom_components.hikvision_local.isapi.isapi import clean_int
 from tests.conftest import load_fixture, mock_endpoint
 
 
@@ -88,3 +90,26 @@ async def test_update_notification_hosts_from_ipaddress_to_hostname(mock_isapi):
     await isapi.set_alarm_server("https://ha.hostname.domain", ALARM_SERVER_PATH)
 
     assert endpoint.called
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [("1", 1), (3, 3), ("I-1", 1), ("D12", 12), (None, 0), ("", 0), ("abc", 0)]
+)
+def test_clean_int_reads_alphanumeric_channel_ids(value, expected):
+    """Hybrid DVRs report channel IDs like "I-1"; the digits are the channel number."""
+    assert clean_int(value) == expected
+
+
+def test_parse_event_notification_with_alphanumeric_channel_id():
+    """Event alerts from hybrid DVRs carry channel IDs like "I-2"."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+    <ipAddress>1.0.0.10</ipAddress>
+    <channelID>I-2</channelID>
+    <eventType>VMD</eventType>
+    <eventState>active</eventState>
+    </EventNotificationAlert>"""
+
+    alert = ISAPIClient.parse_event_notification(xml)
+
+    assert alert.channel_id == 2
+    assert alert.event_id == "motiondetection"
