@@ -212,3 +212,14 @@ async def test_camera_devices_linked_to_nvr(hass: HomeAssistant, init_integratio
         assert camera_device.via_device_id == nvr_device.id
 
     assert "deprecated `via_device`" not in caplog.text
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_standalone_camera_has_no_parent_device(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """Test a standalone IP camera registers its device without a parent link."""
+
+    device_registry = dr.async_get(hass)
+    devices = dr.async_entries_for_config_entry(device_registry, init_integration.entry_id)
+
+    assert devices
+    assert all(entry.via_device_id is None for entry in devices)
