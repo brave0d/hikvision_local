@@ -1,15 +1,14 @@
-# manifest.json
-xmltodict==0.13.0
+# Home Assistant test harness, pinned to the latest stable release we support.
+# Dependabot keeps this pin current.
+pytest-homeassistant-custom-component==0.13.373
+
+# Integration requirements (manifest.json)
+xmltodict>=0.13.0
 requests-toolbelt==1.0.0
 
-# tests
-pytest
-pytest-asyncio
-pytest-cov>=4.1.0
-pytest-homeassistant-custom-component>=0.13.179
-
-#
-async-timeout
-httpx
+# Test helpers
+pytest-cov
 respx
-aiohttp_cors
+
+# Needed by Home Assistant components the tests load
+PyTurboJPEG
