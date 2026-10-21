@@ -24,6 +24,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Switches for NVR Outputs and PIR sensor
 - Holiday mode switch (allows to switch continuous recording with appropriate NVR setup)
 - Image entities for the latest snapshots
+- PTZ actions: `ptz_move`, `ptz_stop`, and an ONVIF-style `ptz` action for cards such as Advanced Camera Card
 - Tracking HDD and NAS status
 - Tracking Notifications Host settings for diagnostic purposes
 - Remote reboot device
