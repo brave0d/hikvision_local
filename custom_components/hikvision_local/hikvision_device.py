@@ -121,6 +121,7 @@ class HikvisionDevice(ISAPIClient):
         device_registry = dr.async_get(self.hass)
         nvr_device = device_registry.async_get_device_by_identifier(nvr_identifier, self.entry.entry_id)
         if nvr_device is None:
+            _LOGGER.warning("NVR device %s is not registered yet, camera is added without a parent link", self.host)
             return DeviceInfo()
         return DeviceInfo(via_device_id=nvr_device.id)
 
