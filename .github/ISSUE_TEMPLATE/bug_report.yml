@@ -1,0 +1,33 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happens
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device model and firmware
+      placeholder: DS-7604NXI-K1/4P, V4.85.030
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Home Assistant and integration versions
+      placeholder: Home Assistant 2026.10.2, Hikvision Local 2.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics and logs
+      description: >-
+        Attach the diagnostics file (device page, three-dot menu, Download diagnostics) and debug
+        logs (set `custom_components.hikvision_local: debug` under `logger`). Diagnostics are
+        anonymised; check logs for addresses and serial numbers before posting.

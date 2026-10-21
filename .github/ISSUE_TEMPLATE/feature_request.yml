@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest support for a device feature or an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: feature
+    attributes:
+      label: What you'd like
+      description: The feature, and how you would use it in Home Assistant.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device model and firmware
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: A diagnostics file from the device helps add support for it.
