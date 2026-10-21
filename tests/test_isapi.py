@@ -205,3 +205,15 @@ async def test_camera_streams_defaults_for_hidden_streams(mock_isapi):
     assert await mock_isapi.get_camera_streams(3) == []
     streams = await mock_isapi.get_camera_streams(3, default_streams=True)
     assert [(stream.id, stream.type_id) for stream in streams] == [(301, 1), (302, 2)]
+
+
+async def test_camera_streams_no_defaults_when_some_details_exist(mock_isapi):
+    """A channel with real details for one stream gets no made-up streams."""
+    responses = {
+        "Streaming/channels/301": {"StreamingChannel": {"id": "301", "channelName": "Main", "enabled": "true"}}
+    }
+    mock_isapi.request = AsyncMock(side_effect=lambda _, endpoint: responses.get(endpoint, {}))
+
+    streams = await mock_isapi.get_camera_streams(3, default_streams=True)
+
+    assert [stream.id for stream in streams] == [301]
