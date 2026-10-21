@@ -6,7 +6,7 @@ import datetime
 import logging
 
 from homeassistant.components.camera import DynamicStreamSettings
-from homeassistant.components.media_player import MediaClass, MediaType
+from homeassistant.components.media_player import BrowseError, MediaClass, MediaType
 from homeassistant.components.media_source import (
     BrowseMediaSource,
     MediaSource,
@@ -14,15 +14,24 @@ from homeassistant.components.media_source import (
     PlayMedia,
     Unresolvable,
 )
-from homeassistant.components.stream import create_stream
+from homeassistant.components.stream import Stream, create_stream
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util, slugify
+from httpx import HTTPStatusError
 
 from .const import DOMAIN
 from .hikvision_device import HikvisionDevice
-from .isapi import AnalogCamera, IPCamera, LoggedEvent, RecordingSegment
+from .isapi import (
+    AnalogCamera,
+    IPCamera,
+    ISAPIForbiddenError,
+    ISAPIUnauthorizedError,
+    LoggedEvent,
+    RecordingSegment,
+)
 from .isapi.utils import get_stream_id
 
 _LOGGER = logging.getLogger(__name__)
@@ -85,6 +94,9 @@ class HikvisionMediaSource(MediaSource):
         """Initialize HikvisionMediaSource."""
         super().__init__(DOMAIN)
         self.hass = hass
+        # The playback stream of each camera; a new playback stops the previous one, because
+        # devices allow only a few playback sessions at a time.
+        self._streams: dict[tuple[str, str], Stream] = {}
 
     def _label(self, key: str) -> str:
         """Return a label in the configured language."""
@@ -98,8 +110,11 @@ class HikvisionMediaSource(MediaSource):
             raise Unresolvable(f"Unknown media item '{item.identifier}'.")
 
         device, camera = self._get_camera(parts[1], parts[2])
-        start = dt_util.utc_from_timestamp(int(parts[3]))
-        end = dt_util.utc_from_timestamp(int(parts[4])) if len(parts) == 5 else start + PLAYBACK_LENGTH
+        try:
+            start = dt_util.utc_from_timestamp(int(parts[3]))
+            end = dt_util.utc_from_timestamp(int(parts[4])) if len(parts) == 5 else start + PLAYBACK_LENGTH
+        except ValueError as ex:
+            raise Unresolvable(f"Unknown media item '{item.identifier}'.") from ex
         end = min(end, dt_util.utcnow())
         if end <= start:
             raise Unresolvable("Recording start time is in the future.")
@@ -107,13 +122,28 @@ class HikvisionMediaSource(MediaSource):
         url = device.get_playback_source(get_stream_id(camera.id), start, end)
         _LOGGER.debug("Playing back %s from %s to %s", camera.name, start, end)
 
-        stream = create_stream(self.hass, url, {}, DynamicStreamSettings(), f"{camera.name} playback")
+        key = (parts[1], parts[2])
+        if (previous := self._streams.pop(key, None)) is not None:
+            await previous.stop()
+        try:
+            stream = create_stream(self.hass, url, {}, DynamicStreamSettings(), f"{camera.name} playback")
+        except HomeAssistantError as ex:
+            raise Unresolvable(f"Cannot play recordings: {ex}") from ex
+        self._streams[key] = stream
         stream.add_provider("hls", timeout=STREAM_IDLE_TIMEOUT)
         stream_url: str = stream.endpoint_url("hls").replace("master_", "")
         return PlayMedia(stream_url, "application/x-mpegURL")
 
     async def async_browse_media(self, item: MediaSourceItem) -> BrowseMediaSource:
         """Browse cameras, days, hours, events and recordings."""
+        try:
+            return await self._browse(item)
+        except (HTTPStatusError, ISAPIForbiddenError, ISAPIUnauthorizedError) as ex:
+            # For example a user without the playback or log search permission.
+            raise BrowseError(f"The device refused the recordings search: {ex}") from ex
+
+    async def _browse(self, item: MediaSourceItem) -> BrowseMediaSource:
+        """Browse one level of the recordings tree."""
         parts = item.identifier.split("|") if item.identifier else []
 
         if not parts:
