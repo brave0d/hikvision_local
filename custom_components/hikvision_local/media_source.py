@@ -173,7 +173,9 @@ class HikvisionMediaSource(MediaSource):
         """Return the camera name as shown in Home Assistant, falling back to the device channel name."""
         registry = dr.async_get(self.hass)
         for serial_no in (camera.serial_no, device.device_info.serial_no):
-            if serial_no and (device_entry := registry.async_get_device(identifiers={(DOMAIN, serial_no)})):
+            if serial_no and (
+                device_entry := registry.async_get_device_by_identifier((DOMAIN, serial_no), device.entry.entry_id)
+            ):
                 return device_entry.name_by_user or device_entry.name or camera.name
         return camera.name
 

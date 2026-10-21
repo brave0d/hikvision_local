@@ -3,14 +3,14 @@
 import datetime
 from unittest.mock import MagicMock, patch
 
-import httpx
-import pytest
-import respx
 from homeassistant.components.media_source import MediaSourceItem, Unresolvable
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
+import httpx
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+import respx
 
 from custom_components.hikvision_local.const import DOMAIN
 from custom_components.hikvision_local.isapi import RecordingSegment
@@ -87,10 +87,18 @@ def test_overlaps() -> None:
         start=datetime.datetime(2024, 10, 9, 10, 5, tzinfo=UTC),
         end=datetime.datetime(2024, 10, 9, 10, 25, tzinfo=UTC),
     )
-    assert overlaps([seg], datetime.datetime(2024, 10, 9, 10, 0, tzinfo=UTC), datetime.datetime(2024, 10, 9, 10, 10, tzinfo=UTC))
-    assert overlaps([seg], datetime.datetime(2024, 10, 9, 10, 20, tzinfo=UTC), datetime.datetime(2024, 10, 9, 10, 30, tzinfo=UTC))
-    assert not overlaps([seg], datetime.datetime(2024, 10, 9, 10, 25, tzinfo=UTC), datetime.datetime(2024, 10, 9, 10, 35, tzinfo=UTC))
-    assert not overlaps([], datetime.datetime(2024, 10, 9, 10, 0, tzinfo=UTC), datetime.datetime(2024, 10, 9, 11, 0, tzinfo=UTC))
+    assert overlaps(
+        [seg], datetime.datetime(2024, 10, 9, 10, 0, tzinfo=UTC), datetime.datetime(2024, 10, 9, 10, 10, tzinfo=UTC)
+    )
+    assert overlaps(
+        [seg], datetime.datetime(2024, 10, 9, 10, 20, tzinfo=UTC), datetime.datetime(2024, 10, 9, 10, 30, tzinfo=UTC)
+    )
+    assert not overlaps(
+        [seg], datetime.datetime(2024, 10, 9, 10, 25, tzinfo=UTC), datetime.datetime(2024, 10, 9, 10, 35, tzinfo=UTC)
+    )
+    assert not overlaps(
+        [], datetime.datetime(2024, 10, 9, 10, 0, tzinfo=UTC), datetime.datetime(2024, 10, 9, 11, 0, tzinfo=UTC)
+    )
 
 
 @respx.mock
@@ -164,7 +172,9 @@ async def test_search_alarm_log(mock_isapi) -> None:
     )
     assert route.call_count == 2
     assert b"<searchResultPostion>3</searchResultPostion>" in route.calls[1].request.content
-    assert [(e.event_type, e.channel_id, e.start.strftime("%H:%M:%S"), e.end and e.end.strftime("%H:%M:%S")) for e in events] == [
+    assert [
+        (e.event_type, e.channel_id, e.start.strftime("%H:%M:%S"), e.end and e.end.strftime("%H:%M:%S")) for e in events
+    ] == [
         ("motion", 2, "08:00:00", None),
         ("sceneChangeDetection", 1, "09:00:00", "09:00:00"),
         ("motion", 1, "10:12:00", "10:12:08"),
@@ -193,8 +203,7 @@ def test_playback_source(mock_isapi) -> None:
         datetime.datetime(2024, 10, 9, 11, 0, tzinfo=UTC),
     )
     assert url == (
-        "rtsp://u1:%2A%2A%2A@1.0.0.255:554/Streaming/tracks/101/"
-        "?starttime=20241009T100000Z&endtime=20241009T110000Z"
+        "rtsp://u1:%2A%2A%2A@1.0.0.255:554/Streaming/tracks/101/?starttime=20241009T100000Z&endtime=20241009T110000Z"
     )
 
 
@@ -208,7 +217,7 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     source = await async_get_media_source(hass)
 
     device_registry = dr.async_get(hass)
-    device_entry = device_registry.async_get_device(identifiers={(DOMAIN, camera.serial_no)})
+    device_entry = device_registry.async_get_device_by_identifier((DOMAIN, camera.serial_no), init_integration.entry_id)
     root = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "", None))
     assert [child.title for child in root.children] == [device_entry.name]
     device_registry.async_update_device(device_entry.id, name_by_user="Front door")
@@ -217,9 +226,7 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     cam_id = root.children[0].identifier
     assert cam_id == f"CAM|{entry.entry_id}|{camera.id}"
 
-    respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/record/tracks/101/dailyDistribution").respond(
-        text=DAILY_DISTRIBUTION
-    )
+    respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/record/tracks/101/dailyDistribution").respond(text=DAILY_DISTRIBUTION)
     today = dt_util.now().date()
     days = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, cam_id, None))
     titles = [child.title for child in days.children]
