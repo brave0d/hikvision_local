@@ -50,3 +50,27 @@ async def test_snapshots_are_image_entities(hass: HomeAssistant, init_integratio
 
     assert snapshots
     assert all(entry.entity_id.startswith("image.") for entry in snapshots)
+
+
+@pytest.mark.generated_entity_ids
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_generated_entity_ids_for_an_nvr(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """NVR entities get unique IDs named after the camera or the NVR."""
+
+    entity_registry = er.async_get(hass)
+    entity_ids = [
+        entry.entity_id for entry in er.async_entries_for_config_entry(entity_registry, init_integration.entry_id)
+    ]
+
+    assert len(entity_ids) == len(set(entity_ids))
+    for expected in (
+        "camera.garden",
+        "camera.garden_sub_stream",
+        "image.garden_snapshot",
+        "binary_sensor.garden_motion",
+        "switch.garden_motion_detection",
+        "switch.nvr_alarm_output_1",
+        "switch.nvr_holiday_mode",
+        "sensor.nvr_sata_hdd1",
+    ):
+        assert expected in entity_ids, expected
