@@ -1,5 +1,7 @@
 """Tests for switch platform."""
 
+import json
+
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
@@ -8,8 +10,10 @@ import httpx
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
+import xmltodict
 
 from custom_components.hikvision_local.hikvision_device import HikvisionDevice
+from custom_components.hikvision_local.isapi import EventInfo
 from custom_components.hikvision_local.isapi.const import EVENT_IO
 from tests.conftest import TEST_HOST
 
@@ -254,3 +258,36 @@ async def test_motion_detection_switch_preserves_polygon(
         blocking=True,
     )
     assert endpoint.called
+
+
+def load_device_response(model: str, endpoint: str) -> dict:
+    """Return one recorded ISAPI response from a device fixture."""
+    with open(f"tests/fixtures/devices/{model}.json") as f:
+        return json.load(f)["data"]["ISAPI"][endpoint]["response"]
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("model", "endpoint"),
+    [
+        ("DS-7608NXI-I2", "ContentMgmt/InputProxy/channels/3/video/motionDetection"),
+        ("DS-2CD2443G0-IW", "System/Video/inputs/channels/1/motionDetection"),
+        ("DS-2CD2346G2-ISU", "System/Video/inputs/channels/1/motionDetection"),
+    ],
+)
+async def test_motion_detection_toggle_keeps_grid_only_areas(mock_isapi, model: str, endpoint: str) -> None:
+    """Without a usable polygon the grid is the motion area, so only enabled changes."""
+
+    original = load_device_response(model, endpoint)
+    current = original["MotionDetection"]["enabled"]
+    new_state = "false" if current == "true" else "true"
+    respx.get(f"{TEST_HOST}/ISAPI/{endpoint}").respond(text=xmltodict.unparse(original))
+    put = respx.put(f"{TEST_HOST}/ISAPI/{endpoint}").respond(200)
+    event = EventInfo(id="motiondetection", channel_id=1, io_port_id=0, url=endpoint)
+
+    await mock_isapi.set_event_enabled_state(1, event, new_state == "true")
+
+    sent = xmltodict.parse(put.calls.last.request.content)["MotionDetection"]
+    expected = xmltodict.parse(xmltodict.unparse(original))["MotionDetection"]
+    expected["enabled"] = new_state
+    assert sent == expected
