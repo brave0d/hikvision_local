@@ -76,3 +76,12 @@ async def test_supplement_light_turn_on_off(
     assert state.state == STATE_ON
     assert state.attributes["brightness"] == 153
     assert calls["count"] == 2
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7604NXI-K1"], indirect=True)
+async def test_supplement_lights_through_an_nvr(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """An NVR exposes the supplement light of each connected ColorVu camera."""
+    lights = hass.states.async_all(LIGHT_DOMAIN)
+
+    assert len(lights) == 4
+    assert all(light.state == STATE_ON for light in lights)
