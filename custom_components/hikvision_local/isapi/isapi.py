@@ -474,20 +474,23 @@ class ISAPIClient:
         brightness: int,
         regulation_mode: str | None = None,
     ) -> SupplementLightState:
-        """Set supplement light state."""
+        """Set supplement light state.
 
-        payload = {
-            "SupplementLight": {
-                "supplementLightMode": mode,
-                "whiteLightBrightness": str(brightness),
-            }
-        }
-
+        The current settings are read first and sent back with only these fields changed, so other
+        light settings (IR brightness, smart light, schedules) stay as they are.
+        """
+        url = f"Image/channels/{channel_id}/supplementLight"
+        payload = await self.request(GET, url)
+        if not isinstance(payload, dict) or not isinstance(payload.get("SupplementLight"), dict):
+            raise ValueError(f"Cannot read the supplement light settings of channel {channel_id}")
+        settings = payload["SupplementLight"]
+        settings["supplementLightMode"] = mode
+        settings["whiteLightBrightness"] = str(brightness)
         if regulation_mode:
-            payload["SupplementLight"]["mixedLightBrightnessRegulatMode"] = regulation_mode
+            settings["mixedLightBrightnessRegulatMode"] = regulation_mode
 
         xml = xmltodict.unparse(payload)
-        await self.request(PUT, f"Image/channels/{channel_id}/supplementLight", present="xml", data=xml)
+        await self.request(PUT, url, present="xml", data=xml)
         return SupplementLightState(mode=mode, brightness=brightness, regulation_mode=regulation_mode)
 
     def get_event_url(self, event_id: str, channel_id: int, io_port_id: int, is_proxy: bool) -> str | None:
