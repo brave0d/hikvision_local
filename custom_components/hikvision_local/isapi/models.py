@@ -122,7 +122,7 @@ class AnalogCamera:
     connection_type: str
     streams: list[CameraStreamInfo] = field(default_factory=list)
     events_info: list[EventInfo] = field(default_factory=list)
-    supplement_light: "SupplementLight" | None = None
+    supplement_light: SupplementLight | None = None
 
 
 @dataclass

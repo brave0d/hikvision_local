@@ -113,10 +113,7 @@ class ISAPIClient:
     def _node_opt_list(node: Any) -> list[str]:
         if node is None:
             return []
-        if isinstance(node, dict):
-            value = node.get("@opt") or node.get("#text")
-        else:
-            value = node
+        value = (node.get("@opt") or node.get("#text")) if isinstance(node, dict) else node
         if not value:
             return []
         return [opt for opt in str(value).split(",") if opt]
