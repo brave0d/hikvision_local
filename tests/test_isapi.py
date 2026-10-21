@@ -275,3 +275,15 @@ async def test_audio_alarm_without_alert_audio_list(mock_isapi):
     assert state.sound_id == 2
     payload = json.loads(put.calls.last.request.content)["AudioAlarm"]
     assert payload == {"audioID": 2, "audioVolume": 5, "alarmTimes": 3}
+
+
+@respx.mock
+async def test_set_audio_alarm_refuses_to_write_unread_settings(mock_isapi):
+    """Unreadable settings are never written back as an empty document."""
+    url = f"{mock_isapi.host}/ISAPI/Event/triggers/notifications/AudioAlarm?format=json"
+    respx.get(url).respond(json={})
+    put = respx.put(url).respond(200)
+
+    with pytest.raises(ValueError):
+        await mock_isapi.set_audio_alarm_state(volume=50)
+    assert not put.called
