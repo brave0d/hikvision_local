@@ -885,7 +885,7 @@ class ISAPIClient:
                 method,
                 full_url,
                 auth=self._auth_method,
-                data=data,
+                content=data,
                 timeout=self.timeout,
             )
             response.raise_for_status()
