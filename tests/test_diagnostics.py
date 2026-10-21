@@ -81,3 +81,10 @@ def test_anonymise_data_handles_lists_and_addresses() -> None:
     assert result["nasList"]["nas"] == {"path": "/share", "nasName": "nas1", "hddSerialNumber": "ABC0D0E0"}
     assert result["IPAddress"]["ipv6Address"] == "fd00::1"
     assert result["IPAddress"]["ipAddress"].startswith("1.0.0.")
+
+
+def test_anonymise_data_replaces_custom_audio_urls() -> None:
+    """A custom audio alarm URL can contain credentials, so it is replaced."""
+    result = anonymise_data({"AudioAlarm": {"customAudioURL": "https://user:pass@nas.local/siren.wav", "audioID": 1}})
+
+    assert result["AudioAlarm"] == {"customAudioURL": "https://example.com/audio.wav", "audioID": 1}
