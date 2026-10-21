@@ -93,24 +93,36 @@ def _ptz_camera(hass: HomeAssistant, entity_id: str):
     return device, stream_info.id // 100
 
 
+# Pending automatic stops per (config entry, channel), so a newer command cancels an older stop.
+_PTZ_STOPS: dict[tuple[str, int], asyncio.Task] = {}
+
+
 async def _ptz_move(hass: HomeAssistant, entity_ids: list[str], pan: int, tilt: int, zoom: int, duration: int):
     """Move the cameras, then stop them after duration milliseconds (0 keeps them moving)."""
     for entity_id in entity_ids:
         device, channel_id = _ptz_camera(hass, entity_id)
+        key = (device.entry.entry_id, channel_id)
+        if (pending := _PTZ_STOPS.pop(key, None)) is not None:
+            pending.cancel()
         try:
             await device.ptz_continuous(channel_id, pan, tilt, zoom)
         except (HTTPStatusError, ISAPIForbiddenError, ISAPIUnauthorizedError) as ex:
             raise HomeAssistantError(f"PTZ control failed for {entity_id}: {ex}") from ex
         if duration and (pan or tilt or zoom):
 
-            async def stop_later(device=device, channel_id=channel_id, entity_id=entity_id):
-                await asyncio.sleep(duration / 1000)
+            async def stop_later(device=device, channel_id=channel_id, entity_id=entity_id, key=key):
                 try:
+                    await asyncio.sleep(duration / 1000)
                     await device.ptz_continuous(channel_id, 0, 0, 0)
                 except (HTTPStatusError, ISAPIForbiddenError, ISAPIUnauthorizedError) as ex:
                     _LOGGER.warning("Stopping PTZ movement of %s failed: %s", entity_id, ex)
+                finally:
+                    if _PTZ_STOPS.get(key) is asyncio.current_task():
+                        del _PTZ_STOPS[key]
 
-            device.entry.async_create_background_task(hass, stop_later(), f"{DOMAIN} PTZ stop {entity_id}")
+            _PTZ_STOPS[key] = device.entry.async_create_background_task(
+                hass, stop_later(), f"{DOMAIN} PTZ stop {entity_id}"
+            )
 
 
 def setup_services(hass: HomeAssistant) -> None:
