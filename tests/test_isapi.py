@@ -1,6 +1,7 @@
 """Tests for specific ISAPI responses."""
 
 from contextlib import suppress
+from unittest.mock import AsyncMock
 
 import httpx
 import pytest
@@ -113,3 +114,22 @@ def test_parse_event_notification_with_alphanumeric_channel_id():
 
     assert alert.channel_id == 2
     assert alert.event_id == "motiondetection"
+
+
+async def test_analog_inputs_count_only_physical_inputs(mock_isapi):
+    """Only video inputs with an input port are counted as analog inputs."""
+    mock_isapi.request = AsyncMock(
+        return_value={
+            "VideoInputChannelList": {
+                "VideoInputChannel": [
+                    {"id": "1", "inputPort": "1"},
+                    {"id": "2", "inputPort": "2"},
+                    {"id": "33"},
+                ]
+            }
+        }
+    )
+    assert await mock_isapi.get_analog_inputs_count() == 2
+
+    mock_isapi.request = AsyncMock(side_effect=httpx.ConnectError("unreachable"))
+    assert await mock_isapi.get_analog_inputs_count() == 0
