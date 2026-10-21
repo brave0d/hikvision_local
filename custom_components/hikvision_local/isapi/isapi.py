@@ -399,19 +399,23 @@ class ISAPIClient:
             stream_info = (await self.request(GET, f"Streaming/channels/{stream_id}")).get("StreamingChannel")
             if not stream_info:
                 continue
-            streams.append(
-                CameraStreamInfo(
-                    id=int(stream_info["id"]),
-                    name=stream_info["channelName"],
-                    type_id=stream_type_id,
-                    type=stream_type,
-                    enabled=stream_info["enabled"],
-                    codec=deep_get(stream_info, "Video.videoCodecType"),
-                    width=deep_get(stream_info, "Video.videoResolutionWidth", 0),
-                    height=deep_get(stream_info, "Video.videoResolutionHeight", 0),
-                    audio=str_to_bool(deep_get(stream_info, "Audio.enabled", "false")),
+            try:
+                streams.append(
+                    CameraStreamInfo(
+                        id=int(stream_info["id"]),
+                        name=stream_info["channelName"],
+                        type_id=stream_type_id,
+                        type=stream_type,
+                        enabled=stream_info["enabled"],
+                        codec=deep_get(stream_info, "Video.videoCodecType"),
+                        width=deep_get(stream_info, "Video.videoResolutionWidth", 0),
+                        height=deep_get(stream_info, "Video.videoResolutionHeight", 0),
+                        audio=str_to_bool(deep_get(stream_info, "Audio.enabled", "false")),
+                    )
                 )
-            )
+            except (KeyError, TypeError, ValueError) as ex:
+                # Incomplete stream details shouldn't stop the rest of the device from loading.
+                _LOGGER.debug("Stream %s not available: %s", stream_id, ex)
         return streams
 
     def get_camera_by_id(self, camera_id: int) -> IPCamera | AnalogCamera | None:
