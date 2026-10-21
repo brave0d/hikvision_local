@@ -3,6 +3,7 @@
 import respx
 import httpx
 from contextlib import suppress
+from custom_components.hikvision_local.const import ALARM_SERVER_PATH
 from custom_components.hikvision_local.isapi import StorageInfo
 from tests.conftest import mock_endpoint, load_fixture
 
@@ -64,7 +65,7 @@ async def test_update_notification_hosts(mock_isapi):
     mock_endpoint("Event/notification/httpHosts", "nvr_single_item")
     url = f"{isapi.host}/ISAPI/Event/notification/httpHosts"
     endpoint = respx.put(url).mock(side_effect=update_side_effect)
-    await isapi.set_alarm_server("http://1.0.0.11:8123", "/api/hikvision")
+    await isapi.set_alarm_server("http://1.0.0.11:8123", ALARM_SERVER_PATH)
 
     assert endpoint.called
 
@@ -82,6 +83,6 @@ async def test_update_notification_hosts_from_ipaddress_to_hostname(mock_isapi):
     mock_endpoint("Event/notification/httpHosts", "nvr_single_item")
     url = f"{isapi.host}/ISAPI/Event/notification/httpHosts"
     endpoint = respx.put(url).mock(side_effect=update_side_effect)
-    await isapi.set_alarm_server("https://ha.hostname.domain", "/api/hikvision")
+    await isapi.set_alarm_server("https://ha.hostname.domain", ALARM_SERVER_PATH)
 
     assert endpoint.called
