@@ -3,7 +3,9 @@
     "abort": {
       "already_configured": "Urządzenie jest już skonfigurowane",
       "reauth_successful": "Ponowne uwierzytelnienie powiodło się",
-      "reconfigure_successful": "Ponowna konfiguracja powiodła się"
+      "reconfigure_successful": "Ponowna konfiguracja powiodła się",
+      "nothing_to_import": "Nie ma już urządzeń z hikvision_next do zaimportowania.",
+      "import_incomplete": "Wpis hikvision_next nie zawiera adresu lub danych logowania. Skonfiguruj urządzenie jako nowe."
     },
     "step": {
       "user": {
@@ -25,6 +27,17 @@
           "set_alarm_server": "Pozwól integracji ustawić Notifications Host urządzenia na Home Assistant, aby zdarzenia docierały. Ustawienie jest cofane po wyładowaniu lub usunięciu integracji",
           "alarm_server": "Adres Home Assistant osiągalny z urządzenia, na przykład http://192.168.1.10:8123",
           "rtsp_port_forced": "Tylko gdy port RTSP zgłaszany przez urządzenie nie jest tym właściwym, na przykład przy przekierowaniu portów"
+        },
+        "menu_options": {
+          "import_hikvision_next": "Importuj urządzenie z hikvision_next",
+          "manual": "Skonfiguruj nowe urządzenie"
+        }
+      },
+      "import_hikvision_next": {
+        "title": "Import z hikvision_next",
+        "description": "Wybierz urządzenie z hikvision_next do skonfigurowania tutaj. Adres, dane logowania i ustawienia hosta powiadomień zostaną przeniesione. Jeśli hikvision_next ustawia host powiadomień urządzenia, przejmie go Hikvision Local; zdarzenia będą wtedy trafiać tylko do Hikvision Local.",
+        "data": {
+          "entry_id": "Urządzenie"
         }
       }
     },
@@ -203,6 +216,10 @@
     "alarm_server_not_set": {
       "title": "{device} nie wysyła zdarzeń do Home Assistant",
       "description": "Notifications Host (serwer alarmowy) urządzenia **{device}** to `{address}` ze ścieżką `{path}`, więc jego zdarzenia nie docierają do Home Assistant, a czujniki zdarzeń pozostają wyłączone.\n\nW interfejsie WWW urządzenia ustaw Notifications Host na adres tego Home Assistant ze ścieżką `{expected_path}`. Możesz też pozwolić integracji ustawić go samodzielnie: zaznacz „Ustaw host powiadomień” podczas ponownej konfiguracji integracji."
+    },
+    "remove_hikvision_next": {
+      "title": "Usuń {device} z hikvision_next",
+      "description": "**{device}** jest skonfigurowane jednocześnie w Hikvision Local i hikvision_next. Obie integracje odpytują urządzenie, a host powiadomień może wskazywać tylko na jedną z nich.\n\n1. Usuń urządzenie z hikvision_next (Ustawienia > Urządzenia i usługi > hikvision_next).\n2. hikvision_next po usunięciu resetuje host powiadomień urządzenia, więc potem przeładuj Hikvision Local albo ustaw host powiadomień ponownie.\n\nTen komunikat zniknie po usunięciu wpisu z hikvision_next."
     }
   }
 }

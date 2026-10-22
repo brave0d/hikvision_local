@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from .isapi.const import EVENTS as ISAPI_EVENTS
 
 DOMAIN: Final = "hikvision_local"
+OLD_DOMAIN: Final = "hikvision_next"  # the integration this one continues
 
 RTSP_PORT_FORCED: Final = "rtsp_port_forced"
 CONF_SET_ALARM_SERVER: Final = "set_alarm_server"

@@ -3,7 +3,9 @@
     "abort": {
       "already_configured": "Device is already configured",
       "reauth_successful": "Re-authentication was successful",
-      "reconfigure_successful": "Re-configuration was successful"
+      "reconfigure_successful": "Re-configuration was successful",
+      "nothing_to_import": "There are no hikvision_next devices left to import.",
+      "import_incomplete": "The hikvision_next entry lacks the address or credentials. Set the device up as a new device."
     },
     "step": {
       "user": {
@@ -25,6 +27,17 @@
           "set_alarm_server": "Let the integration point the device's Notifications Host at Home Assistant, so events arrive. It is reset when the integration is unloaded or removed",
           "alarm_server": "Home Assistant address the device can reach, for example http://192.168.1.10:8123",
           "rtsp_port_forced": "Only when the RTSP port the device reports isn't the one to use, for example behind port forwarding"
+        },
+        "menu_options": {
+          "import_hikvision_next": "Import a device from hikvision_next",
+          "manual": "Set up a new device"
+        }
+      },
+      "import_hikvision_next": {
+        "title": "Import from hikvision_next",
+        "description": "Choose the hikvision_next device to set up here. Its address, credentials and notifications host settings are taken over. If hikvision_next sets the device's notifications host, Hikvision Local takes it over; events then go to Hikvision Local only.",
+        "data": {
+          "entry_id": "Device"
         }
       }
     },
@@ -203,6 +216,10 @@
     "alarm_server_not_set": {
       "title": "{device} doesn't send events to Home Assistant",
       "description": "The Notifications Host (alarm server) of **{device}** is `{address}` with the path `{path}`, so its events don't reach Home Assistant and the event sensors stay off.\n\nIn the device's web interface, set the Notifications Host to the address of this Home Assistant with the path `{expected_path}`. You can also let the integration set it: check \"Set notifications host\" when reconfiguring the integration."
+    },
+    "remove_hikvision_next": {
+      "title": "Remove {device} from hikvision_next",
+      "description": "**{device}** is set up in both Hikvision Local and hikvision_next. Both poll the device, and its notifications host can point at only one of them.\n\n1. Remove the device from hikvision_next (Settings > Devices & services > hikvision_next).\n2. hikvision_next resets the device's notifications host when it is removed, so reload Hikvision Local afterwards, or set the notifications host again.\n\nThis message goes away once the hikvision_next entry is removed."
     }
   }
 }

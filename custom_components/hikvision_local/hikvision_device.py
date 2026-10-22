@@ -21,6 +21,7 @@ from .const import (
     EVENTS,
     EVENTS_COORDINATOR,
     LIGHTS_COORDINATOR,
+    OLD_DOMAIN,
     RTSP_PORT_FORCED,
     SECONDARY_COORDINATOR,
 )
@@ -207,6 +208,27 @@ class HikvisionDevice(ISAPIClient):
                 "expected_path": ALARM_SERVER_PATH,
             },
         )
+
+    @property
+    def old_integration_issue_id(self) -> str:
+        """Return the repair issue ID asking to remove this device from hikvision_next."""
+        return f"remove_hikvision_next_{self.entry.entry_id}"
+
+    def check_old_integration(self) -> None:
+        """Ask the user to remove this device from hikvision_next once it is set up here."""
+        old_entries = self.hass.config_entries.async_entries(OLD_DOMAIN, include_disabled=False)
+        if any(entry.unique_id == self.entry.unique_id for entry in old_entries):
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                self.old_integration_issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="remove_hikvision_next",
+                translation_placeholders={"device": self.entry.title},
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, self.old_integration_issue_id)
 
     def handle_exception(self, ex: Exception, details: str = ""):
         """Handle common exceptions."""
