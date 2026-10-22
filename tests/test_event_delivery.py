@@ -1,12 +1,18 @@
 """Tests for the checks that events reach Home Assistant."""
 
+from http import HTTPStatus
+
+from homeassistant.const import STATE_UNKNOWN, EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import entity_registry as er, issue_registry as ir
+from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH, DOMAIN
 from custom_components.hikvision_local.isapi import AlarmServer
+from custom_components.hikvision_local.notifications import EventNotificationsView
+from tests.test_notifications import mock_event_notification
 
 
 def alarm_server_issue(hass: HomeAssistant, entry: MockConfigEntry) -> ir.IssueEntry | None:
@@ -58,3 +64,24 @@ async def test_no_issue_when_integration_sets_alarm_server(
     device.check_alarm_server(AlarmServer("0.0.0.0", None, 80, "/", "HTTP"))
 
     assert alarm_server_issue(hass, init_integration) is None
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_last_event_sensor(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """The sensor shows when the device last sent an alert, and which one."""
+
+    registry = er.async_get(hass)
+    serial_no = init_integration.runtime_data.device_info.serial_no
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{serial_no}_last_alert")
+    assert registry.async_get(entity_id).entity_category == EntityCategory.DIAGNOSTIC
+    assert hass.states.get(entity_id).state == STATE_UNKNOWN
+
+    view = EventNotificationsView(hass)
+    assert (await view.post(mock_event_notification("vmd"))).status == HTTPStatus.OK
+    await hass.async_block_till_done()
+
+    assert (state := hass.states.get(entity_id))
+    assert dt_util.parse_datetime(state.state) is not None
+    assert state.attributes["device_class"] == "timestamp"
+    assert state.attributes["event_id"] == "motiondetection"
+    assert state.attributes["channel_id"] == 1
