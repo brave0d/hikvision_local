@@ -482,11 +482,8 @@ async def test_unknown_event_type_is_logged_once_at_debug(
     [
         "",
         "  \n",
-        """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
-        <ipAddress>1.0.0.255</ipAddress>
-        </EventNotificationAlert>""",
     ],
-    ids=["empty", "whitespace", "no-event-type"],
+    ids=["empty", "whitespace"],
 )
 async def test_notification_without_event_is_ignored(
     hass: HomeAssistant,
@@ -494,10 +491,29 @@ async def test_notification_without_event_is_ignored(
     caplog,
     payload: str,
 ) -> None:
-    """Empty notifications and alerts without an event type don't log a warning."""
+    """Empty notifications don't log a warning."""
 
     view = EventNotificationsView(hass)
     response = await view.post(mock_event_notification(None, payload=payload))
 
     assert response.status == HTTPStatus.OK
     assert "Cannot process incoming event" not in caplog.text
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_alert_without_event_type_logs_a_warning(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    caplog,
+) -> None:
+    """An alert whose event type can't be read is reported, not dropped silently."""
+
+    payload = """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.255</ipAddress>
+    </EventNotificationAlert>"""
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification(None, payload=payload))
+
+    assert response.status == HTTPStatus.OK
+    assert "Cannot process incoming event without an event type" in caplog.text
