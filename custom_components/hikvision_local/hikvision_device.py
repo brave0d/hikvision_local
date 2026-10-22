@@ -6,7 +6,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er, issue_registry as ir
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.util import slugify
@@ -26,6 +26,7 @@ from .const import (
 )
 from .coordinator import AudioAlarmCoordinator, EventsCoordinator, SecondaryCoordinator, SupplementLightCoordinator
 from .isapi import (
+    AlarmServer,
     AnalogCamera,
     EventInfo,
     IPCamera,
@@ -174,6 +175,37 @@ class HikvisionDevice(ISAPIClient):
             if entry and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
                 entity_registry.async_update_entity(entity_id, disabled_by=None)
                 _LOGGER.info("Enabled %s after turning on notifications for %s", entity_id, event.trigger_id)
+
+    @property
+    def alarm_server_issue_id(self) -> str:
+        """Return the repair issue ID for this device's alarm server."""
+        return f"alarm_server_{self.entry.entry_id}"
+
+    def check_alarm_server(self, alarm_server: AlarmServer | None) -> None:
+        """Raise a repair issue when the device doesn't send events to Home Assistant."""
+        if self.control_alarm_server_host or alarm_server is None:
+            # The integration sets the alarm server itself, or the device can't report it.
+            ir.async_delete_issue(self.hass, DOMAIN, self.alarm_server_issue_id)
+            return
+        address = alarm_server.ip_address or alarm_server.host_name or ""
+        path = (alarm_server.url or "").rstrip("/")
+        if address not in ("", "0.0.0.0") and path == ALARM_SERVER_PATH:
+            ir.async_delete_issue(self.hass, DOMAIN, self.alarm_server_issue_id)
+            return
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            self.alarm_server_issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="alarm_server_not_set",
+            translation_placeholders={
+                "device": self.entry.title,
+                "address": address or "-",
+                "path": alarm_server.url or "-",
+                "expected_path": ALARM_SERVER_PATH,
+            },
+        )
 
     def handle_exception(self, ex: Exception, details: str = ""):
         """Handle common exceptions."""

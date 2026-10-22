@@ -15,7 +15,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+    entity_registry as er,
+    issue_registry as ir,
+)
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
@@ -106,6 +111,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: HikvisionConfigEntry) -
 
     # Reset alarm server after it has been set
     device = entry.runtime_data
+    ir.async_delete_issue(hass, DOMAIN, device.alarm_server_issue_id)
     if device.control_alarm_server_host:
         with suppress(Exception):
             await device.set_alarm_server("http://0.0.0.0:80", "/")

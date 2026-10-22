@@ -128,6 +128,7 @@ class SecondaryCoordinator(DataUpdateCoordinator):
         try:
             if self.device.capabilities.support_alarm_server:
                 alarm_server = await self.device.get_alarm_server()
+                self.device.check_alarm_server(alarm_server)
                 data[CONF_ALARM_SERVER_HOST] = {
                     "protocol_type": alarm_server.protocol_type,
                     "address": alarm_server.ip_address or alarm_server.host_name,

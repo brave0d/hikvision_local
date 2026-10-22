@@ -6,6 +6,7 @@ from .isapi import (  # noqa: F401
     ISAPIUnsupportedEventError,
 )
 from .models import (  # noqa: F401
+    AlarmServer,
     AlertInfo,
     AnalogCamera,
     AudioAlarm,
