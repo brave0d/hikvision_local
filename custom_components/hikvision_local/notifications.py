@@ -190,7 +190,7 @@ class EventNotificationsView(HomeAssistantView):
             if entity:
                 attributes = dict(entity.attributes) if entity else {}
                 if hasattr(alert, "target_type") and alert.target_type:
-                  attributes["target_type"] = alert.target_type
+                    attributes["target_type"] = alert.target_type
                 self.hass.states.async_set(entity_id, STATE_ON, attributes)
                 self.fire_hass_event(alert)
             return

@@ -136,7 +136,8 @@ async def test_ipc_motion_detection_on_thermometry_channel_alert(
 
 @pytest.mark.parametrize("init_integration", ["DS-2TD1228-2-QA"], indirect=True)
 async def test_motion_detection_human_alert(
-    hass: HomeAssistant, init_integration: MockConfigEntry,
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
 ) -> None:
     """Test incoming motion detection event alert with target type from ip multi channel camera."""
 
@@ -144,7 +145,7 @@ async def test_motion_detection_human_alert(
 
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_OFF
-    assert sensor.attributes.get("target_type") == None
+    assert sensor.attributes.get("target_type") is None
 
     view = EventNotificationsView(hass)
     mock_request = mock_event_notification("motiondetection_human")
