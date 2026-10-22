@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
-from homeassistant.const import CONTENT_TYPE_TEXT_PLAIN, STATE_ON, Platform
+from homeassistant.const import CONTENT_TYPE_TEXT_PLAIN, STATE_OFF, STATE_ON, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get
 from homeassistant.util import slugify
@@ -189,10 +189,13 @@ class EventNotificationsView(HomeAssistantView):
             entity = self.hass.states.get(entity_id)
             if entity:
                 attributes = dict(entity.attributes)
+                attributes.pop("target_type", None)
+                if alert.event_state == "inactive":
+                    # The event has ended, or the device sends a heartbeat (videoloss).
+                    self.hass.states.async_set(entity_id, STATE_OFF, attributes)
+                    return
                 if alert.target_type:
                     attributes["target_type"] = alert.target_type
-                else:
-                    attributes.pop("target_type", None)
                 self.hass.states.async_set(entity_id, STATE_ON, attributes)
                 self.fire_hass_event(alert)
             return

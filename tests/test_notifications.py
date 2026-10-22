@@ -328,3 +328,55 @@ async def test_alert_for_disabled_dvr_input_is_ignored(
 
     assert response.status == HTTPStatus.OK
     assert "Cannot process incoming event" not in caplog.text
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_inactive_alert_turns_sensor_off(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """An inactive alert switches the sensor off and fires no event."""
+
+    entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_motiondetection"
+    bus_events = []
+
+    def bus_event_listener(event: Event) -> None:
+        bus_events.append(event)
+
+    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification("vmd_human"))
+    assert response.status == HTTPStatus.OK
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_ON
+    assert sensor.attributes.get("target_type") == "human"
+
+    response = await view.post(mock_event_notification("vmd_inactive"))
+    assert response.status == HTTPStatus.OK
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_OFF
+    assert sensor.attributes.get("target_type") is None
+
+    await hass.async_block_till_done()
+    assert len(bus_events) == 1
+
+
+@pytest.mark.parametrize("init_integration", ["iDS-7208HUHI-M1"], indirect=True)
+async def test_video_loss_heartbeat_keeps_sensor_off(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """DVRs send inactive video loss alerts as a heartbeat; the sensor stays off."""
+
+    entity_id = "binary_sensor.ids_7208huhi_m0_s_a0000000000ccwrj00000000wcvu_1_videoloss"
+
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_OFF
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification("dvr_1_videoloss_inactive"))
+
+    assert response.status == HTTPStatus.OK
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_OFF
