@@ -5,6 +5,7 @@ import json
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN, SERVICE_TURN_OFF, SERVICE_TURN_ON
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 import httpx
 import pytest
@@ -127,5 +128,24 @@ async def test_notify_switch_does_not_write_unchanged_trigger(
         {ATTR_ENTITY_ID: notify_switch_id(hass, init_integration, "fielddetection")},
         blocking=True,
     )
+
+    assert not endpoint.called
+
+
+@pytest.mark.parametrize("init_integration", [MODEL], indirect=True)
+async def test_notify_switch_reports_unreadable_trigger(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A trigger the device doesn't return raises a Home Assistant error and writes nothing."""
+
+    url = f"{TEST_HOST}/ISAPI/Event/triggers/VMD-1"
+    respx.get(url).respond(text="<ResponseStatus><statusCode>1</statusCode></ResponseStatus>")
+    endpoint = respx.put(url).respond()
+
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            SWITCH_DOMAIN,
+            SERVICE_TURN_ON,
+            {ATTR_ENTITY_ID: notify_switch_id(hass, init_integration, "motiondetection")},
+            blocking=True,
+        )
 
     assert not endpoint.called

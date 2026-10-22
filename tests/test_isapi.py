@@ -365,3 +365,25 @@ async def test_events_notify_center_reads_missing_triggers_one_by_one(mock_isapi
     result = await mock_isapi.get_events_notify_center(["VMD-1", "fielddetection-1", "linedetection-1"])
 
     assert result == {"VMD-1": False, "fielddetection-1": True}
+
+
+async def test_events_notify_center_skips_unreadable_triggers(mock_isapi):
+    """A trigger that can't be read doesn't drop the state of the others."""
+    request = httpx.Request("GET", "http://1.0.0.255/ISAPI/Event/triggers/scenechangedetection-1")
+    not_found = httpx.HTTPStatusError("404", request=request, response=httpx.Response(404, request=request))
+
+    async def respond(_, endpoint):
+        if endpoint == "Event/triggers/scenechangedetection-1":
+            raise not_found
+        return {
+            "EventTriggerList": {
+                "EventTrigger": {
+                    "id": "VMD-1",
+                    "EventTriggerNotificationList": {"EventTriggerNotification": {"notificationMethod": "center"}},
+                }
+            }
+        }
+
+    mock_isapi.request = AsyncMock(side_effect=respond)
+
+    assert await mock_isapi.get_events_notify_center(["VMD-1", "scenechangedetection-1"]) == {"VMD-1": True}
