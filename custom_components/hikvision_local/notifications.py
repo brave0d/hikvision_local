@@ -218,7 +218,10 @@ class EventNotificationsView(HomeAssistantView):
                 self.hass.states.async_set(entity_id, STATE_ON, attributes)
                 self.fire_hass_event(alert)
             return
-        raise ValueError(f"Entity not found {entity_id}")
+        # For example an event the integration didn't find on this channel at setup.
+        _LOGGER.debug(
+            "No entity for %s alert on channel %s (unique ID %s)", alert.event_id, alert.channel_id, unique_id
+        )
 
     def trigger_target_sensors(self, entity_registry, unique_id: str, alert: AlertInfo) -> None:
         """Set the person and vehicle sensors of a motion alert."""
