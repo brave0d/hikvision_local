@@ -1162,7 +1162,7 @@ class ISAPIClient:
         event_id = alert.get("eventType")
         if not event_id or event_id == "duration":
             # <EventNotificationAlert version="2.0"
-            event_id = alert["DurationList"]["Duration"]["relationEvent"]
+            event_id = deep_get(alert, "DurationList.Duration.relationEvent", "")
         raw_event_type = event_id
         event_id = normalize_event_id(event_id)
 
@@ -1181,8 +1181,8 @@ class ISAPIClient:
         target_type = alert.get("targetType")
         event_state = str(alert.get("eventState", "active")).lower()
 
-        if not EVENTS[event_id]:
-            raise ValueError(f"Unsupported event {event_id}")
+        if event_id not in EVENTS:
+            raise ISAPIUnsupportedEventError(event_id)
 
         return AlertInfo(
             channel_id,
@@ -1347,6 +1347,15 @@ class ISAPISetEventStateMutexError(Exception):
         self.message = f"""You cannot enable {EVENTS[event.id]["label"]} events.
             Please disable {EVENTS[mutex_issues[0].event_id]["label"]}
             on channels {mutex_issues[0].channels} first"""
+
+
+class ISAPIUnsupportedEventError(ValueError):
+    """Event notification of a type the integration has no entities for."""
+
+    def __init__(self, event_id: str) -> None:
+        """Initialize exception."""
+        super().__init__(f"Unsupported event {event_id}")
+        self.event_id = event_id
 
 
 class ISAPIUnauthorizedError(Exception):

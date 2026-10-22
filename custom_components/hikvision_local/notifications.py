@@ -19,7 +19,7 @@ from requests_toolbelt.multipart import MultipartDecoder
 
 from .const import ALARM_SERVER_PATH, DOMAIN, HIKVISION_EVENT
 from .hikvision_device import HikvisionDevice
-from .isapi import AlertInfo, IPCamera, ISAPIClient
+from .isapi import AlertInfo, IPCamera, ISAPIClient, ISAPIUnsupportedEventError
 from .isapi.const import EVENT_IO
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,6 +49,7 @@ class EventNotificationsView(HomeAssistantView):
         self.name = DOMAIN
         self.device: HikvisionDevice
         self.hass = hass
+        self.unsupported_events: set[str] = set()
 
     async def post(self, request: web.Request):
         """Accept the POST request from NVR or IP Camera."""
@@ -57,11 +58,18 @@ class EventNotificationsView(HomeAssistantView):
             _LOGGER.debug("--- Incoming event notification ---")
             _LOGGER.debug("Source: %s", request.remote)
             xml = await self.parse_event_request(request)
+            if not xml:
+                _LOGGER.debug("Ignoring event notification without content")
+                return web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
             _LOGGER.debug("alert info: %s", xml)
             alert = ISAPIClient.parse_event_notification(xml)
             self.device = self.get_isapi_device(request.remote, alert)
             self.update_alert_channel(alert)
             self.trigger_sensor(alert)
+        except ISAPIUnsupportedEventError as ex:
+            if ex.event_id not in self.unsupported_events:
+                self.unsupported_events.add(ex.event_id)
+                _LOGGER.debug("Ignoring %s events, the integration has no entities for them", ex.event_id)
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.warning("Cannot process incoming event %s", ex)
 
@@ -115,6 +123,8 @@ class EventNotificationsView(HomeAssistantView):
         """Extract XML content from multipart request or from simple request."""
 
         data = await request.read()
+        if not data.strip():
+            return ""
 
         content_type_header = request.headers.get(CONTENT_TYPE).strip()
 
