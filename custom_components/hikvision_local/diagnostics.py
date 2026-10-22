@@ -7,6 +7,7 @@ import ipaddress
 import json
 import random
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntry
@@ -36,6 +37,19 @@ def anonymise_ip(orignal: str):
         # Link-local IPv6 addresses embed the MAC address, so every IPv6 address is replaced.
         return "fd00::1"
     return f"1.0.0.{random.randint(0x00, 0xFF)}"
+
+
+def anonymise_url(orignal: str):
+    """Anonymise the host of an absolute URL, dropping credentials and the query; relative URLs stay."""
+    parts = urlsplit(orignal)
+    if not parts.hostname:
+        return orignal
+    # Same replacement as the device's ipAddress field, so the two still match.
+    host = anon_map.setdefault((anonymise_ip, parts.hostname), anonymise_ip(parts.hostname))
+    if ":" in host:
+        host = f"[{host}]"
+    netloc = f"{host}:{parts.port}" if parts.port else host
+    return urlunsplit((parts.scheme, netloc, parts.path, "", ""))
 
 
 def anonymise_serial(orignal: str):
@@ -94,6 +108,8 @@ ANON_KEYS = {
     # A custom audio alarm URL can contain a host and credentials.
     "customAudioURL": anonymise_text("https://example.com/audio.wav"),
     "customAudioName": anonymise_text("custom"),
+    # Channel status reports each camera's address as a URL.
+    "url": anonymise_url,
 }
 
 # Channel names are user-entered, so they are replaced inside these elements only.
