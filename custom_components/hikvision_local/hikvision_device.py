@@ -216,7 +216,8 @@ class HikvisionDevice(ISAPIClient):
 
     def check_old_integration(self) -> None:
         """Ask the user to remove this device from hikvision_next once it is set up here."""
-        if any(entry.unique_id == self.entry.unique_id for entry in self.hass.config_entries.async_entries(OLD_DOMAIN)):
+        old_entries = self.hass.config_entries.async_entries(OLD_DOMAIN, include_disabled=False)
+        if any(entry.unique_id == self.entry.unique_id for entry in old_entries):
             ir.async_create_issue(
                 self.hass,
                 DOMAIN,
