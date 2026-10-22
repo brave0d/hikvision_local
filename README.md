@@ -5,7 +5,6 @@
 The Home Assistant integration for Hikvision NVRs and IP cameras. Receives and switches detection of alarm events. Provides video streams.
 
 Hikvision Local continues [hikvision_next](https://github.com/maciej-or/hikvision_next) by Maciej ([@maciej-or](https://github.com/maciej-or)).
-If you'd like to thank the original author too, you can [support Maciej on Ko-fi](https://ko-fi.com/maciejor).
 
 ## Moving from hikvision_next
 
@@ -258,3 +257,13 @@ Hikvision Local is built on [hikvision_next](https://github.com/maciej-or/hikvis
 - [@tominogino](https://github.com/tominogino): hybrid DVR channel IDs
 - [@Ambivert28](https://github.com/Ambivert28): ONVIF channel streams
 - [@mrpharderwijk](https://github.com/mrpharderwijk): alarm server sensor fix
+
+## Support
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-brave0d-ea4aaa?logo=githubsponsors&style=flat-square)](https://github.com/sponsors/brave0d)
+
+If Hikvision Local is useful to you, you can [sponsor its development](https://github.com/sponsors/brave0d). To thank the original author of hikvision_next, you can [support Maciej on Ko-fi](https://ko-fi.com/maciejor).
+
+### Sponsors
+
+Thank you to everyone who sponsors this project.
