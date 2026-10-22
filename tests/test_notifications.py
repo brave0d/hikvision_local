@@ -156,6 +156,14 @@ async def test_motion_detection_human_alert(
     assert sensor.state == STATE_ON
     assert sensor.attributes.get("target_type") == "human"
 
+    mock_request = mock_event_notification("ipc_thermometry_motiondetection")
+    response = await view.post(mock_request)
+
+    assert response.status == HTTPStatus.OK
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_ON
+    assert sensor.attributes.get("target_type") is None
+
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2146G2-ISU"], indirect=True)
 async def test_field_detection_alert(
