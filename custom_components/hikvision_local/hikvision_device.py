@@ -187,7 +187,8 @@ class HikvisionDevice(ISAPIClient):
             # The integration sets the alarm server itself, or the device can't report it.
             ir.async_delete_issue(self.hass, DOMAIN, self.alarm_server_issue_id)
             return
-        address = alarm_server.ip_address or alarm_server.host_name or ""
+        ip_address = alarm_server.ip_address if alarm_server.ip_address not in (None, "", "0.0.0.0") else None
+        address = ip_address or alarm_server.host_name or alarm_server.ip_address or ""
         path = (alarm_server.url or "").rstrip("/")
         if address not in ("", "0.0.0.0") and path == ALARM_SERVER_PATH:
             ir.async_delete_issue(self.hass, DOMAIN, self.alarm_server_issue_id)
