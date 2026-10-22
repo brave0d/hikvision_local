@@ -11,7 +11,7 @@ import xmltodict
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
 from custom_components.hikvision_local.isapi import ISAPIClient, StorageInfo
-from custom_components.hikvision_local.isapi.isapi import clean_int
+from custom_components.hikvision_local.isapi.isapi import clean_int, normalize_event_id
 from tests.conftest import load_fixture, mock_endpoint
 
 
@@ -116,6 +116,57 @@ def test_parse_event_notification_with_alphanumeric_channel_id():
 
     assert alert.channel_id == 2
     assert alert.event_id == "motiondetection"
+
+
+@pytest.mark.parametrize(
+    ("event_type", "expected"),
+    [
+        ("VMD", "motiondetection"),
+        ("vmd-1", "motiondetection"),
+        ("fielddetection", "fielddetection"),
+        ("LineDetection-12", "linedetection"),
+        ("IO", "io"),
+        ("unknownevent-3", "unknownevent"),
+    ],
+)
+def test_normalize_event_id(event_type, expected):
+    """Event types map to event IDs without a channel suffix."""
+    assert normalize_event_id(event_type) == expected
+
+
+def test_parse_event_notification_with_suffixed_event_type():
+    """An alert without a channel ID takes the channel from an event type like linedetection-2."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.10</ipAddress>
+    <eventType>linedetection-2</eventType>
+    <eventState>active</eventState>
+    </EventNotificationAlert>"""
+
+    alert = ISAPIClient.parse_event_notification(xml)
+
+    assert alert.event_id == "linedetection"
+    assert alert.channel_id == 2
+
+
+async def test_events_from_suffixed_triggers(mock_isapi):
+    """A trigger without a channel ID takes the channel from its suffixed event type or ID."""
+    responses = {
+        "Event/triggers": {
+            "EventNotification": {
+                "EventTriggerList": {
+                    "EventTrigger": [
+                        {"id": "fielddetection-1", "eventType": "fielddetection-1"},
+                        {"id": "VMD-2", "eventType": "VMD"},
+                    ]
+                }
+            }
+        },
+    }
+    mock_isapi.request = AsyncMock(side_effect=lambda _, endpoint: responses.get(endpoint, {}))
+
+    events = await mock_isapi.get_supported_events({})
+
+    assert [(event.id, event.channel_id) for event in events] == [("fielddetection", 1), ("motiondetection", 2)]
 
 
 async def test_analog_inputs_count_only_physical_inputs(mock_isapi):

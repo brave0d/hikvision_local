@@ -9,6 +9,7 @@ from http import HTTPStatus
 import ipaddress
 import json
 import logging
+import re
 from typing import Any
 from urllib.parse import quote, urljoin, urlparse
 import uuid
@@ -68,6 +69,22 @@ def clean_int(value, default: int = 0) -> int:
         # Extract digits from string (e.g. "I-1" -> "1")
         digits = "".join(filter(str.isdigit, str(value)))
         return int(digits) if digits else default
+
+
+def normalize_event_id(event_type: str) -> str:
+    """Return the event ID for an event type, without a channel suffix (vmd-1 -> motiondetection)."""
+    event_id = event_type.lower().strip()
+    if event_id not in EVENTS and event_id not in EVENTS_ALTERNATE_ID:
+        event_id = re.sub(r"-\d+$", "", event_id)
+    return EVENTS_ALTERNATE_ID.get(event_id, event_id)
+
+
+def event_channel_suffix(*values: str | None) -> int:
+    """Return the channel from the first value with a suffix such as facedetection-1, or 0."""
+    for value in values:
+        if value and (match := re.search(r"-(\d+)$", str(value))):
+            return int(match.group(1))
+    return 0
 
 
 Node = dict[str, Any]
@@ -337,10 +354,7 @@ class ISAPIClient:
             event_type = event_trigger.get("eventType")
             if not event_type:
                 return None
-            event_id = event_type.lower()
-            # Translate to alternate IDs
-            if event_id in EVENTS_ALTERNATE_ID:
-                event_id = EVENTS_ALTERNATE_ID[event_id]
+            event_id = normalize_event_id(event_type)
 
             if event_id == EVENT_PIR:
                 is_supported = str_to_bool(deep_get(system_capabilities, "WLAlarmCap.isSupportPIR", False))
@@ -361,6 +375,8 @@ class ISAPIClient:
                 if not channel_id:
                     channel_id = clean_int(event_trigger.get("dynVideoInputChannelID", 0))
                     is_proxy = channel_id > 0
+                if not channel_id:
+                    channel_id = event_channel_suffix(event_type, event_trigger.get("id"))
 
             url = self.get_event_url(event_id, channel_id, io_port, is_proxy)
 
@@ -1147,13 +1163,12 @@ class ISAPIClient:
         if not event_id or event_id == "duration":
             # <EventNotificationAlert version="2.0"
             event_id = alert["DurationList"]["Duration"]["relationEvent"]
-        event_id = event_id.lower()
-
-        # handle alternate event type
-        if EVENTS_ALTERNATE_ID.get(event_id):
-            event_id = EVENTS_ALTERNATE_ID[event_id]
+        raw_event_type = event_id
+        event_id = normalize_event_id(event_id)
 
         channel_id = clean_int(alert.get("channelID", alert.get("dynChannelID", 0)))
+        if not channel_id:
+            channel_id = event_channel_suffix(raw_event_type)
         io_port_id = clean_int(alert.get("inputIOPortID", 0))
         # <EventNotificationAlert version="1.0"
         device_serial = deep_get(alert, "Extensions.serialNumber.#text")
@@ -1179,6 +1194,7 @@ class ISAPIClient:
             detection_target,
             target_type,
             event_state=event_state,
+            ip_address=alert.get("ipAddress"),
         )
 
     async def get_camera_image(
