@@ -110,6 +110,7 @@ class CapabilitiesInfo:
     support_alarm_server: bool = False
     support_channel_zero: bool = False
     support_event_mutex_checking: bool = False
+    support_channel_status: bool = False  # NVR reports the connection status of its IP cameras
     input_ports: int = 0
     output_ports: int = 0
 

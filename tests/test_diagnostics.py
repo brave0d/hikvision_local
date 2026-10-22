@@ -88,3 +88,29 @@ def test_anonymise_data_replaces_custom_audio_urls() -> None:
     result = anonymise_data({"AudioAlarm": {"customAudioURL": "https://user:pass@nas.local/siren.wav", "audioID": 1}})
 
     assert result["AudioAlarm"] == {"customAudioURL": "https://example.com/audio.wav", "audioID": 1}
+
+
+def test_anonymise_data_replaces_hosts_in_urls() -> None:
+    """Channel status URLs get the same address as the camera's ipAddress; relative URLs stay."""
+    data = {
+        "InputProxyChannelStatus": {
+            "sourceInputPortDescriptor": {"ipAddress": "192.168.1.50"},
+            "url": "http://192.168.1.50:80",
+        },
+        "HttpHostNotification": {"url": "/api/hikvision_local"},
+        "other": {"url": "https://admin:secret@192.168.1.60/path?token=abc"},
+    }
+
+    result = anonymise_data(data)
+
+    status = result["InputProxyChannelStatus"]
+    address = status["sourceInputPortDescriptor"]["ipAddress"]
+    assert address.startswith("1.0.0.")
+    assert status["url"] == f"http://{address}:80"
+    assert result["HttpHostNotification"]["url"] == "/api/hikvision_local"
+    other = result["other"]["url"]
+    assert other.startswith("https://1.0.0.")
+    assert other.endswith("/path")
+    assert "admin" not in other
+    assert "secret" not in other
+    assert "token" not in other

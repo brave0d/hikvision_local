@@ -194,6 +194,10 @@ class ISAPIClient:
 
         await self.get_cameras()
 
+        if any(camera.connection_type == CONNECTION_TYPE_PROXIED for camera in self.cameras):
+            with suppress(Exception):
+                self.capabilities.support_channel_status = bool(await self.get_cameras_online_status())
+
         # NVRs expose audio alarm per channel under a different URL
         if not self.device_info.is_nvr:
             self.audio_alarm = await self.get_audio_alarm()
@@ -1019,6 +1023,21 @@ class ISAPIClient:
             await self.request(PUT, event.url, present="xml", data=xml)
         else:
             raise ISAPISetEventStateMutexError(event, mutex_issues)
+
+    async def get_cameras_online_status(self) -> dict[int, dict[str, Any]]:
+        """Get the connection status of IP cameras connected to an NVR, by camera ID."""
+        data = await self.request(GET, "ContentMgmt/InputProxy/channels/status")
+        channels = deep_get(data, "InputProxyChannelStatusList.InputProxyChannelStatus", [])
+        if isinstance(channels, dict):
+            channels = [channels]
+        return {
+            clean_int(channel["id"]): {
+                "online": str_to_bool(channel.get("online", "false")),
+                "detect_result": channel.get("chanDetectResult"),
+            }
+            for channel in channels
+            if isinstance(channel, dict) and channel.get("id")
+        }
 
     async def get_io_port_status(self, port_type: str, port_no: int) -> str:
         """Get status of physical ports."""

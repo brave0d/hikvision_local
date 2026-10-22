@@ -28,6 +28,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Recordings browser: play recordings from the camera's SD card or the NVR's disks in the Home Assistant media browser, with alarm events marked
 - PTZ actions: `ptz_move`, `ptz_stop`, and an ONVIF-style `ptz` action for cards such as Advanced Camera Card
 - Supplement light (ColorVu white light, IR) as light entities, also for cameras connected to an NVR. Turning the light off sets the camera's supplement light mode to off (`close`) until it's turned on again, so the camera has no light at night meanwhile.
+- Connection status of each IP camera connected to an NVR, as a diagnostic binary sensor
 - Tracking HDD and NAS status
 - Tracking Notifications Host settings for diagnostic purposes
 - Remote reboot device
