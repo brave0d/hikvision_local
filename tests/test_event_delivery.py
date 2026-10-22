@@ -1,6 +1,7 @@
 """Tests for the checks that events reach Home Assistant."""
 
 from http import HTTPStatus
+from unittest.mock import AsyncMock
 
 from homeassistant.const import STATE_UNKNOWN, EntityCategory
 from homeassistant.core import HomeAssistant
@@ -85,3 +86,31 @@ async def test_last_event_sensor(hass: HomeAssistant, init_integration: MockConf
     assert state.attributes["device_class"] == "timestamp"
     assert state.attributes["event_id"] == "motiondetection"
     assert state.attributes["channel_id"] == 1
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_issue_accepts_host_name_alarm_server(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """An alarm server given by host name, with ipAddress 0.0.0.0, points at Home Assistant."""
+
+    init_integration.runtime_data.check_alarm_server(
+        AlarmServer("0.0.0.0", "homeassistant.local", 8123, ALARM_SERVER_PATH, "HTTP")
+    )
+
+    assert alarm_server_issue(hass, init_integration) is None
+
+
+@pytest.mark.parametrize(
+    ("hosts", "expected"),
+    [
+        ({"ipAddress": "1.0.0.1", "portNo": "8123", "url": "/api/hikvision_local"}, "1.0.0.1"),
+        ([{"ipAddress": "1.0.0.2", "portNo": "80", "url": "/"}], "1.0.0.2"),
+        ([], None),
+    ],
+)
+async def test_alarm_server_with_one_or_no_hosts(mock_isapi, hosts, expected) -> None:
+    """A single notification host (a dict) and an empty list are both read."""
+    mock_isapi.request = AsyncMock(return_value={"HttpHostNotificationList": {"HttpHostNotification": hosts}})
+
+    alarm_server = await mock_isapi.get_alarm_server()
+
+    assert (alarm_server.ip_address if alarm_server else None) == expected
