@@ -87,7 +87,8 @@ async def test_ipc_intrusion_detection_alert(
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
 async def test_ipc_vmd_detection_alert(
-    hass: HomeAssistant, init_integration: MockConfigEntry,
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
 ) -> None:
     """Test incoming motion detection event alert from ip camera."""
 
