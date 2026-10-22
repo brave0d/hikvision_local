@@ -1,0 +1,86 @@
+rules:
+  # Bronze
+  action-setup: done
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency: done
+  docs-actions: done
+  docs-conditions:
+    status: exempt
+    comment: The integration provides no conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  docs-triggers:
+    status: exempt
+    comment: The integration provides no device triggers; events are binary sensors and hikvision_local_event.
+  entity-event-setup: done
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions:
+    status: todo
+    comment: Actions raise HomeAssistantError; invalid input should raise ServiceValidationError.
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: exempt
+    comment: There is no options flow; settings are changed by reconfiguring.
+  docs-installation-parameters:
+    status: todo
+    comment: The setup fields have descriptions in the form, not yet in the README.
+  entity-unavailable:
+    status: todo
+    comment: Coordinator entities go unavailable; event binary sensors don't.
+  integration-owner: done
+  log-when-unavailable: todo
+  parallel-updates: todo
+  reauthentication-flow: done
+  test-coverage:
+    status: todo
+    comment: 91%; Silver asks for 95%.
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery: todo
+  discovery-update-info: todo
+  docs-data-update: todo
+  docs-examples:
+    status: todo
+    comment: Blueprints and a PTZ example exist; more automation examples to add.
+  docs-known-limitations: todo
+  docs-supported-devices: done
+  docs-supported-functions: todo
+  docs-troubleshooting:
+    status: todo
+    comment: The README covers reporting issues and event delivery checks, not a full troubleshooting guide.
+  docs-use-cases: todo
+  dynamic-devices:
+    status: todo
+    comment: Cameras added to an NVR appear after a reload.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default: done
+  entity-translations: done
+  exception-translations: todo
+  icon-translations:
+    status: todo
+    comment: Icons are set with _attr_icon.
+  reconfiguration-flow: done
+  repair-issues: done
+  stale-devices: todo
+
+  # Platinum
+  async-dependency:
+    status: todo
+    comment: requests-toolbelt is used only to parse multipart bodies, but it is not an async library.
+  inject-websession: done
+  strict-typing: todo
