@@ -11,7 +11,8 @@ If you'd like to thank the original author too, you can [support Maciej on Ko-fi
 
 Hikvision Local uses its own domain, `hikvision_local`, so it can be installed next to hikvision_next. Things to update when you switch:
 
-- Add your devices again under Hikvision Local. Entity IDs are new.
+- Add your devices under Hikvision Local. While hikvision_next is still installed, `+ Add Integration` offers to import its devices with their address, credentials and notifications host settings. Entity IDs are new.
+- Then remove each device from hikvision_next; a repair issue reminds you. hikvision_next resets the device's notifications host when it is removed, so reload Hikvision Local afterwards, or set the notifications host again.
 - The Home Assistant event is now `hikvision_local_event` (was `hikvision_next_event`). Update automations that trigger on it.
 - Event notifications now go to `/api/hikvision_local` (was `/api/hikvision`). If you set the device's notification host by hand, change its URL. With `Set Notifications Host` checked, the integration updates it for you.
 - Actions are now `hikvision_local.reboot`, `hikvision_local.isapi_request` and `hikvision_local.update_snapshot`.
