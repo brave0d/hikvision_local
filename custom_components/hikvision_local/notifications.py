@@ -25,14 +25,14 @@ from .isapi.const import EVENT_IO
 _LOGGER = logging.getLogger(__name__)
 
 CONTENT_TYPE = "Content-Type"
-CONTENT_TYPE_XML = (
-    "application/xml",
-    'application/xml; charset="UTF-8"',
-    "text/xml",
-)
-CONTENT_TYPE_TEXT_HTML = "text/html"
+CONTENT_TYPE_XML = ("application/xml", "text/xml")
 CONTENT_TYPE_IMAGE = "image/jpeg"
 MAX_LOGGED_UNSUPPORTED_EVENTS = 50
+
+
+def _mimetype(content_type: str | None) -> str:
+    """Return the media type of a Content-Type header, without parameters, in lower case."""
+    return (content_type or "").split(";")[0].strip().lower()
 
 
 def _clean_id(value: str | None) -> str:
@@ -131,33 +131,24 @@ class EventNotificationsView(HomeAssistantView):
         if not data.strip():
             return ""
 
-        content_type_header = request.headers.get(CONTENT_TYPE).strip()
+        content_type_header = (request.headers.get(CONTENT_TYPE) or "").strip()
 
         _LOGGER.debug("request headers: %s", request.headers)
         xml = None
-        if content_type_header in CONTENT_TYPE_XML:
+        mimetype = _mimetype(content_type_header)
+        if mimetype in CONTENT_TYPE_XML or (not mimetype and data.lstrip().startswith(b"<")):
             xml = data.decode("utf-8")
-        else:
+        elif mimetype.startswith("multipart/"):
             # "multipart/form-data; boundary=boundary"
             decoder = MultipartDecoder(data, content_type_header)
             for part in decoder.parts:
-                headers = {}
-                for key, value in part.headers.items():
-                    assert isinstance(key, bytes)
-                    headers[key.decode("ascii")] = value.decode("ascii")
+                headers = {key.decode("ascii").lower(): value.decode("ascii") for key, value in part.headers.items()}
                 _LOGGER.debug("part headers: %s", headers)
-                if headers.get(CONTENT_TYPE) in CONTENT_TYPE_XML:
+                part_mimetype = _mimetype(headers.get(CONTENT_TYPE.lower()))
+                if part_mimetype in CONTENT_TYPE_XML:
                     xml = part.text
-                if headers.get(CONTENT_TYPE) == CONTENT_TYPE_IMAGE:
+                elif part_mimetype == CONTENT_TYPE_IMAGE:
                     _LOGGER.debug("image found")
-                    # Use camera.snapshot service instead
-                    # from datetime import datetime
-                    # import aiofiles
-                    # now = datetime.now()
-                    # filename = f"/media/{DOMAIN}/snapshots/{now.strftime('%Y-%m-%d_%H-%M-%S_%f')}.jpg"
-                    # async with aiofiles.open(filename, "wb") as image_file:
-                    #     await image_file.write(part.content)
-                    #     await image_file.flush()
 
         if not xml:
             raise ValueError(f"Unexpected event Content-Type {content_type_header}")
