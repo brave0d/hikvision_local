@@ -1,6 +1,7 @@
 """Test event notifications."""
 
 from http import HTTPStatus
+import logging
 from unittest.mock import MagicMock
 
 from homeassistant.const import STATE_OFF, STATE_ON
@@ -448,3 +449,71 @@ async def test_camera_alert_without_channel_id(
     assert response.status == HTTPStatus.OK
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_ON
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_unknown_event_type_is_logged_once_at_debug(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    caplog,
+) -> None:
+    """Alerts for event types without entities are ignored without a warning."""
+
+    payload = """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.255</ipAddress>
+    <channelID>1</channelID>
+    <eventType>facedetection</eventType>
+    <eventState>active</eventState>
+    </EventNotificationAlert>"""
+
+    view = EventNotificationsView(hass)
+    with caplog.at_level(logging.DEBUG, logger="custom_components.hikvision_local.notifications"):
+        for _ in range(2):
+            response = await view.post(mock_event_notification(None, payload=payload))
+            assert response.status == HTTPStatus.OK
+
+    assert "Cannot process incoming event" not in caplog.text
+    assert caplog.text.count("Ignoring facedetection events") == 1
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "",
+        "  \n",
+    ],
+    ids=["empty", "whitespace"],
+)
+async def test_notification_without_event_is_ignored(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    caplog,
+    payload: str,
+) -> None:
+    """Empty notifications don't log a warning."""
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification(None, payload=payload))
+
+    assert response.status == HTTPStatus.OK
+    assert "Cannot process incoming event" not in caplog.text
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_alert_without_event_type_logs_a_warning(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    caplog,
+) -> None:
+    """An alert whose event type can't be read is reported, not dropped silently."""
+
+    payload = """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.255</ipAddress>
+    </EventNotificationAlert>"""
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification(None, payload=payload))
+
+    assert response.status == HTTPStatus.OK
+    assert "Cannot process incoming event without an event type" in caplog.text

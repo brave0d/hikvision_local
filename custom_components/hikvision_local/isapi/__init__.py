@@ -3,6 +3,7 @@ from .isapi import (  # noqa: F401
     ISAPIForbiddenError,
     ISAPISetEventStateMutexError,
     ISAPIUnauthorizedError,
+    ISAPIUnsupportedEventError,
 )
 from .models import (  # noqa: F401
     AlertInfo,
