@@ -27,6 +27,7 @@ class AlertInfo:
     region_id: int = 0
     detection_target: str = field(default=None)
     target_type: str = field(default=None)
+    event_state: str = "active"
 
 
 @dataclass
