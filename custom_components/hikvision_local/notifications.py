@@ -13,11 +13,12 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.const import CONTENT_TYPE_TEXT_PLAIN, STATE_OFF, STATE_ON, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity_registry import async_get
 from homeassistant.util import slugify
 from requests_toolbelt.multipart import MultipartDecoder
 
-from .const import ALARM_SERVER_PATH, DOMAIN, HIKVISION_EVENT
+from .const import ALARM_SERVER_PATH, DOMAIN, HIKVISION_EVENT, SIGNAL_ALERT_RECEIVED
 from .hikvision_device import HikvisionDevice
 from .isapi import AlertInfo, IPCamera, ISAPIClient, ISAPIUnsupportedEventError
 from .isapi.const import EVENT_IO, EVENT_MOTION, MOTION_TARGETS
@@ -67,6 +68,7 @@ class EventNotificationsView(HomeAssistantView):
             alert = ISAPIClient.parse_event_notification(xml)
             self.device = self.get_isapi_device(request.remote, alert)
             self.update_alert_channel(alert)
+            async_dispatcher_send(self.hass, SIGNAL_ALERT_RECEIVED.format(self.device.entry.entry_id), alert)
             self.trigger_sensor(alert)
         except ISAPIUnsupportedEventError as ex:
             if not ex.event_id:

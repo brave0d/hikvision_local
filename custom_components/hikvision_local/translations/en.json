@@ -161,6 +161,9 @@
       },
       "notifications_host_path": {
         "name": "Notifications Host Path"
+      },
+      "last_alert": {
+        "name": "Last event"
       }
     },
     "image": {

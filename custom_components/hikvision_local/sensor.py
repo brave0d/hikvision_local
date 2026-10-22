@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.core import HomeAssistant
+from datetime import datetime
+from typing import Any
+
+from homeassistant.components.sensor import RestoreSensor, SensorDeviceClass, SensorEntity
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from . import HikvisionConfigEntry
-from .const import CONF_ALARM_SERVER_HOST, SECONDARY_COORDINATOR
-from .isapi import StorageInfo
+from .const import CONF_ALARM_SERVER_HOST, SECONDARY_COORDINATOR, SIGNAL_ALERT_RECEIVED
+from .isapi import AlertInfo, StorageInfo
 
 NOTIFICATION_HOST_KEYS = [
     "protocol_type",
@@ -38,7 +43,10 @@ async def async_setup_entry(
         for item in list(device.storage):
             entities.append(StorageSensor(coordinator, item))
 
-        async_add_entities(entities, True)
+    if device.capabilities.support_alarm_server:
+        entities.append(LastAlertSensor(entry))
+
+    async_add_entities(entities, True)
 
 
 class AlarmServerSensor(CoordinatorEntity, SensorEntity):
@@ -96,3 +104,41 @@ class StorageSensor(CoordinatorEntity, SensorEntity):
         if self.hdd.ip:
             attrs["ip"] = self.hdd.ip
         return attrs
+
+
+class LastAlertSensor(RestoreSensor):
+    """When the device last sent an event alert to Home Assistant."""
+
+    _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_should_poll = False
+    _attr_translation_key = "last_alert"
+
+    def __init__(self, entry: HikvisionConfigEntry) -> None:
+        """Initialize."""
+        device = entry.runtime_data
+        self._attr_unique_id = f"{device.device_info.serial_no}_last_alert"
+        self._attr_device_info = device.hass_device_info()
+        self._attr_native_value: datetime | None = None
+        self._attr_extra_state_attributes: dict[str, Any] = {}
+        self.entry_id = entry.entry_id
+
+    async def async_added_to_hass(self) -> None:
+        """Restore the last alert time and listen for new alerts."""
+        await super().async_added_to_hass()
+        if (last := await self.async_get_last_sensor_data()) and isinstance(last.native_value, datetime):
+            self._attr_native_value = last.native_value
+        if (state := await self.async_get_last_state()) is not None:
+            self._attr_extra_state_attributes = {
+                key: value for key, value in state.attributes.items() if key in ("event_id", "channel_id")
+            }
+        self.async_on_remove(
+            async_dispatcher_connect(self.hass, SIGNAL_ALERT_RECEIVED.format(self.entry_id), self._alert_received)
+        )
+
+    @callback
+    def _alert_received(self, alert: AlertInfo) -> None:
+        self._attr_native_value = dt_util.utcnow()
+        self._attr_extra_state_attributes = {"event_id": alert.event_id, "channel_id": alert.channel_id}
+        self.async_write_ha_state()
