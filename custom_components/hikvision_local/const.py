@@ -19,6 +19,7 @@ LIGHTS_COORDINATOR: Final = "lights"
 AUDIO_ALARM_COORDINATOR: Final = "audio_alarm"
 HOLIDAY_MODE = "holiday_mode"
 CAMERAS_STATUS = "cameras_status"
+SIGNAL_ALERT_RECEIVED = f"{DOMAIN}_alert_received_{{}}"  # formatted with the config entry ID
 
 SUPPLEMENT_LIGHT_OFF_MODE: Final = "close"
 

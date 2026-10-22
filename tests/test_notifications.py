@@ -569,3 +569,27 @@ async def test_multipart_alert_with_part_content_type_parameters(
 
     assert response.status == HTTPStatus.OK
     assert hass.states.get(entity_id).state == STATE_ON
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_alert_without_entity_logs_at_debug(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    caplog,
+) -> None:
+    """An alert for an event the device has no entity for is logged at debug level, not as a warning."""
+
+    payload = """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.255</ipAddress>
+    <channelID>1</channelID>
+    <eventType>PIR</eventType>
+    <eventState>active</eventState>
+    </EventNotificationAlert>"""
+
+    view = EventNotificationsView(hass)
+    with caplog.at_level(logging.DEBUG, logger="custom_components.hikvision_local.notifications"):
+        response = await view.post(mock_event_notification(None, payload=payload))
+
+    assert response.status == HTTPStatus.OK
+    assert "Cannot process incoming event" not in caplog.text
+    assert "No entity for pir alert on channel 1" in caplog.text

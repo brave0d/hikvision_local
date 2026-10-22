@@ -161,6 +161,9 @@
       },
       "notifications_host_path": {
         "name": "Host powiadomień ścieżka"
+      },
+      "last_alert": {
+        "name": "Ostatnie zdarzenie"
       }
     },
     "image": {
@@ -185,6 +188,12 @@
       "audio_alarm_times": {
         "name": "Powtórzenia alarmu dźwiękowego"
       }
+    }
+  },
+  "issues": {
+    "alarm_server_not_set": {
+      "title": "{device} nie wysyła zdarzeń do Home Assistant",
+      "description": "Notifications Host (serwer alarmowy) urządzenia **{device}** to `{address}` ze ścieżką `{path}`, więc jego zdarzenia nie docierają do Home Assistant, a czujniki zdarzeń pozostają wyłączone.\n\nW interfejsie WWW urządzenia ustaw Notifications Host na adres tego Home Assistant ze ścieżką `{expected_path}`. Możesz też pozwolić integracji ustawić go samodzielnie: zaznacz „Ustaw host powiadomień” podczas ponownej konfiguracji integracji."
     }
   }
 }

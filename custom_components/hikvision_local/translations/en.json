@@ -161,6 +161,9 @@
       },
       "notifications_host_path": {
         "name": "Notifications Host Path"
+      },
+      "last_alert": {
+        "name": "Last event"
       }
     },
     "image": {
@@ -185,6 +188,12 @@
       "audio_alarm_times": {
         "name": "Audio Alarm Repeats"
       }
+    }
+  },
+  "issues": {
+    "alarm_server_not_set": {
+      "title": "{device} doesn't send events to Home Assistant",
+      "description": "The Notifications Host (alarm server) of **{device}** is `{address}` with the path `{path}`, so its events don't reach Home Assistant and the event sensors stay off.\n\nIn the device's web interface, set the Notifications Host to the address of this Home Assistant with the path `{expected_path}`. You can also let the integration set it: check \"Set notifications host\" when reconfiguring the integration."
     }
   }
 }

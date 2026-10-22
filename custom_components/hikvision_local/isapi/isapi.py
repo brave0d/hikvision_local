@@ -1182,8 +1182,11 @@ class ISAPIClient:
 
     def _get_event_notification_host(self, data: Node) -> Node:
         hosts = deep_get(data, "HttpHostNotificationList.HttpHostNotification", [])
+        if isinstance(hosts, dict):
+            return hosts
         if hosts:
             return hosts[0]
+        return None
 
     async def get_alarm_server(self) -> AlarmServer | None:
         """Get event notifications listener server URL."""
@@ -1192,6 +1195,8 @@ class ISAPIClient:
         if not data:
             return None
         host = self._get_event_notification_host(data)
+        if not host:
+            return None
 
         return AlarmServer(
             ip_address=host.get("ipAddress"),
