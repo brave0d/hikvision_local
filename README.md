@@ -49,9 +49,10 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Region Exiting
 - NVR Input Triggers
 - PIR
+- Person and Vehicle, from AcuSense motion detection
 
 **NOTE**
-Events must be set to alert the surveillance center in Linkage Action for Home Assistant to be notified. Otherwise related binary sensors and switches will appear as disabled entities.
+Events must have the "Notify Surveillance Center" linkage action for Home Assistant to be notified. Otherwise their binary sensors and switches are added as disabled entities. The event's "Notify HA" switch adds that action from Home Assistant and enables them.
 
 ### Blueprints
 
