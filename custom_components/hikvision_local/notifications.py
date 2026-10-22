@@ -32,6 +32,7 @@ CONTENT_TYPE_XML = (
 )
 CONTENT_TYPE_TEXT_HTML = "text/html"
 CONTENT_TYPE_IMAGE = "image/jpeg"
+MAX_LOGGED_UNSUPPORTED_EVENTS = 50
 
 
 def _clean_id(value: str | None) -> str:
@@ -67,8 +68,12 @@ class EventNotificationsView(HomeAssistantView):
             self.update_alert_channel(alert)
             self.trigger_sensor(alert)
         except ISAPIUnsupportedEventError as ex:
-            if ex.event_id not in self.unsupported_events:
-                self.unsupported_events.add(ex.event_id)
+            if not ex.event_id:
+                _LOGGER.warning("Cannot process incoming event without an event type")
+            elif ex.event_id not in self.unsupported_events:
+                # The endpoint is unauthenticated, so the set of logged types is capped.
+                if len(self.unsupported_events) < MAX_LOGGED_UNSUPPORTED_EVENTS:
+                    self.unsupported_events.add(ex.event_id)
                 _LOGGER.debug("Ignoring %s events, the integration has no entities for them", ex.event_id)
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.warning("Cannot process incoming event %s", ex)
