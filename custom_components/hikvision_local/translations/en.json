@@ -92,6 +92,36 @@
       },
       "io": {
         "name": "Alarm Input {io_port_id}"
+      },
+      "notify_motiondetection": {
+        "name": "Notify HA of motion"
+      },
+      "notify_tamperdetection": {
+        "name": "Notify HA of video tampering"
+      },
+      "notify_videoloss": {
+        "name": "Notify HA of video loss"
+      },
+      "notify_scenechangedetection": {
+        "name": "Notify HA of scene change"
+      },
+      "notify_fielddetection": {
+        "name": "Notify HA of intrusion"
+      },
+      "notify_linedetection": {
+        "name": "Notify HA of line crossing"
+      },
+      "notify_regionentrance": {
+        "name": "Notify HA of region entrance"
+      },
+      "notify_regionexiting": {
+        "name": "Notify HA of region exiting"
+      },
+      "notify_io": {
+        "name": "Notify HA of alarm input {io_port_id}"
+      },
+      "notify_pir": {
+        "name": "Notify HA of PIR"
       }
     },
     "camera": {

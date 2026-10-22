@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.switch import ENTITY_ID_FORMAT, SwitchEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -13,6 +14,7 @@ from homeassistant.util import slugify
 
 from . import HikvisionConfigEntry
 from .const import EVENTS_COORDINATOR, HOLIDAY_MODE, SECONDARY_COORDINATOR
+from .coordinator import notify_switch_unique_id
 from .isapi import EventInfo, ISAPISetEventStateMutexError
 from .isapi.const import EVENT_IO
 
@@ -38,6 +40,15 @@ async def async_setup_entry(
     # Device supported events
     for event in device.events_info:
         entities.append(EventSwitch(0, event, events_coordinator))
+
+    # 'Notify Home Assistant' (Notify Surveillance Center) switches
+    for camera in device.cameras:
+        for event in camera.events_info:
+            if event.trigger_id:
+                entities.append(NotifyCenterSwitch(camera.id, event, events_coordinator))
+    for event in device.events_info:
+        if event.trigger_id:
+            entities.append(NotifyCenterSwitch(0, event, events_coordinator))
 
     # Output port switch
     for i in range(1, device.capabilities.output_ports + 1):
@@ -86,6 +97,49 @@ class EventSwitch(CoordinatorEntity, SwitchEntity):
         """Turn off."""
         try:
             await self.coordinator.device.set_event_enabled_state(self.device_id, self.event, False)
+        finally:
+            await self.coordinator.async_request_refresh()
+
+
+class NotifyCenterSwitch(CoordinatorEntity, SwitchEntity):
+    """Switch of an event's 'Notify Surveillance Center' action, which sends its alerts to Home Assistant."""
+
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:bell-ring-outline"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, device_id: int, event: EventInfo, coordinator) -> None:
+        """Initialize."""
+        super().__init__(coordinator)
+        self._attr_unique_id = notify_switch_unique_id(event)
+        self._attr_device_info = coordinator.device.hass_device_info(device_id)
+        self._attr_translation_key = f"notify_{event.id}"
+        if event.id == EVENT_IO:
+            self._attr_translation_placeholders = {"io_port_id": event.io_port_id}
+        self.event = event
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return True if the event trigger notifies Home Assistant."""
+        return self.coordinator.data.get(self.unique_id)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on."""
+        try:
+            await self.coordinator.device.set_event_notify_center(self.event, True)
+            self.event.disabled = False
+            self.coordinator.device.enable_event_entities(self.event)
+        except ValueError as ex:
+            raise HomeAssistantError(str(ex)) from ex
+        finally:
+            await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off."""
+        try:
+            await self.coordinator.device.set_event_notify_center(self.event, False)
+        except ValueError as ex:
+            raise HomeAssistantError(str(ex)) from ex
         finally:
             await self.coordinator.async_request_refresh()
 

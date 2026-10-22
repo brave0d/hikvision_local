@@ -92,6 +92,36 @@
       },
       "io": {
         "name": "Wejście alarmowe {io_port_id}"
+      },
+      "notify_motiondetection": {
+        "name": "Powiadamiaj HA o ruchu"
+      },
+      "notify_tamperdetection": {
+        "name": "Powiadamiaj HA o sabotażu obrazu"
+      },
+      "notify_videoloss": {
+        "name": "Powiadamiaj HA o zaniku sygnału wideo"
+      },
+      "notify_scenechangedetection": {
+        "name": "Powiadamiaj HA o zmianie sceny"
+      },
+      "notify_fielddetection": {
+        "name": "Powiadamiaj HA o wtargnięciu"
+      },
+      "notify_linedetection": {
+        "name": "Powiadamiaj HA o przekroczeniu linii"
+      },
+      "notify_regionentrance": {
+        "name": "Powiadamiaj HA o wejściu w obszar"
+      },
+      "notify_regionexiting": {
+        "name": "Powiadamiaj HA o wyjściu z obszaru"
+      },
+      "notify_io": {
+        "name": "Powiadamiaj HA o wejściu alarmowym {io_port_id}"
+      },
+      "notify_pir": {
+        "name": "Powiadamiaj HA o PIR"
       }
     },
     "camera": {

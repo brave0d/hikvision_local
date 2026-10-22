@@ -21,6 +21,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Camera entities for main and sub streams
 - Real-time Acusense events notifications through binary sensors and HA events (hikvision_local_event)
 - Switches for Acusense events detection
+- "Notify HA" switches that add or remove an event's Notify Surveillance Center action, which sends its alerts to Home Assistant
 - Switches for NVR Outputs and PIR sensor
 - Holiday mode switch (allows to switch continuous recording with appropriate NVR setup)
 - Image entities for the latest snapshots
@@ -101,7 +102,7 @@ The scope supported features depends on device model, setup and firmware version
   - Remote: Live View
   - Remote: Notify Surveillance Center / Trigger Alarm Output
 - Events
-  - Notify Surveillance Center
+  - Notify Surveillance Center (can also be set from Home Assistant with the event's "Notify HA" switch)
   - Regions if needed
   - Arming Schedule
 - Storage Schedule Settings - set continuous recording in Holiday mode for desired cameras
