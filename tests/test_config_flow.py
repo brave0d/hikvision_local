@@ -6,6 +6,7 @@ from homeassistant.config_entries import SOURCE_USER, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+import httpx
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
@@ -90,7 +91,19 @@ async def test_unexpeced_exception_config_flow(get_device_info_mock, hass, mock_
     get_device_info_mock.side_effect = Exception("Something went wrong")
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input=TEST_CONFIG)
     assert result.get("type") == FlowResultType.FORM
-    assert result.get("errors") == {"base": "Unexpected Exception: Something went wrong"}
+    assert result.get("errors") == {"base": "unknown"}
+
+
+@patch("custom_components.hikvision_local.isapi.ISAPIClient.get_device_info")
+async def test_cannot_connect_config_flow(get_device_info_mock, hass, mock_isapi):
+    """A device that can't be reached shows the cannot_connect error."""
+
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+
+    get_device_info_mock.side_effect = httpx.ConnectError("All connection attempts failed")
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input=TEST_CONFIG)
+    assert result.get("type") == FlowResultType.FORM
+    assert result.get("errors") == {"base": "cannot_connect"}
 
 
 @pytest.mark.parametrize("mock_isapi_device", ["DS-2CD2386G2-IU"], indirect=True)

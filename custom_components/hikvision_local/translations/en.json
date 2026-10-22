@@ -16,6 +16,15 @@
           "rtsp_port_forced": "Force RTSP port (Optional)",
           "set_alarm_server": "Set notifications host using following address:",
           "alarm_server": "Home Assistant address accessible by Hikvison device"
+        },
+        "data_description": {
+          "host": "Address of the NVR or camera, with http:// or https://, for example http://192.168.1.64",
+          "verify_ssl": "Turn off for devices with a self-signed HTTPS certificate",
+          "username": "A device user with the permissions listed in the README",
+          "password": "Password of that user",
+          "set_alarm_server": "Let the integration point the device's Notifications Host at Home Assistant, so events arrive. It is reset when the integration is unloaded or removed",
+          "alarm_server": "Home Assistant address the device can reach, for example http://192.168.1.10:8123",
+          "rtsp_port_forced": "Only when the RTSP port the device reports isn't the one to use, for example behind port forwarding"
         }
       }
     },

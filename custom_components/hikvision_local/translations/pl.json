@@ -16,6 +16,15 @@
           "verify_ssl": "Zweryfikuj certyfikat SSL (odznacz dla certyfikatu self-signed)",
           "set_alarm_server": "Ustaw host powiadomień używając następującego adresu:",
           "alarm_server": "Adres Home Assistant dostępny dla urządzenia Hikvision"
+        },
+        "data_description": {
+          "host": "Adres rejestratora lub kamery z http:// lub https://, na przykład http://192.168.1.64",
+          "verify_ssl": "Wyłącz dla urządzeń z samopodpisanym certyfikatem HTTPS",
+          "username": "Użytkownik urządzenia z uprawnieniami wymienionymi w README",
+          "password": "Hasło tego użytkownika",
+          "set_alarm_server": "Pozwól integracji ustawić Notifications Host urządzenia na Home Assistant, aby zdarzenia docierały. Ustawienie jest cofane po wyładowaniu lub usunięciu integracji",
+          "alarm_server": "Adres Home Assistant osiągalny z urządzenia, na przykład http://192.168.1.10:8123",
+          "rtsp_port_forced": "Tylko gdy port RTSP zgłaszany przez urządzenie nie jest tym właściwym, na przykład przy przekierowaniu portów"
         }
       }
     },
