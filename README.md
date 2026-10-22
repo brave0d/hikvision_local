@@ -109,6 +109,10 @@ The scope supported features depends on device model, setup and firmware version
 - Storage Schedule Settings - set continuous recording in Holiday mode for desired cameras
 - Notifications Host - IP address of Home Assistant instance for event notifications, with the URL `/api/hikvision_local`. Can be set manually or by this integration if checked `Set Notifications Host` checkbox in the configuration dialog. It will be reverted to `http://0.0.0.0:80/` on integration unload.
 
+If events don't arrive:
+- Home Assistant shows a repair issue when the device's Notifications Host is unset (`0.0.0.0`) or uses another path, such as `/api/hikvision` from hikvision_next.
+- The device's "Last event" diagnostic sensor shows when it last sent an alert. If it never changes, the device doesn't reach Home Assistant. Check the address, the port and any firewall between them.
+
 ## Reporting issues
 
 There are a lot of Hikvision devices with different firmwares in the world. In most cases logs are crucial to solve your problem, so please attach them to the report.
