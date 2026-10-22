@@ -112,6 +112,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: HikvisionConfigEntry) -
     # Reset alarm server after it has been set
     device = entry.runtime_data
     ir.async_delete_issue(hass, DOMAIN, device.alarm_server_issue_id)
+    ir.async_delete_issue(hass, DOMAIN, device.old_integration_issue_id)
     if device.control_alarm_server_host:
         with suppress(Exception):
             await device.set_alarm_server("http://0.0.0.0:80", "/")

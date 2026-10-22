@@ -91,6 +91,8 @@ class EventsCoordinator(DataUpdateCoordinator):
             except Exception as ex:  # pylint: disable=broad-except
                 self.device.handle_exception(ex, "Cannot fetch cameras connection status")
 
+        self.device.check_old_integration()
+
         # Refresh HDD data
         try:
             self.device.storage = await self.device.get_storage_devices()
