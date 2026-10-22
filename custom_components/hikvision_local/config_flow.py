@@ -14,6 +14,7 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
 )
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
+import httpx
 import voluptuous as vol
 
 from . import HikvisionConfigEntry
@@ -79,9 +80,12 @@ class HikvisionConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "insufficient_permission"
             except ISAPIUnauthorizedError:
                 errors["base"] = "invalid_auth"
-            except Exception as ex:  # pylint: disable=broad-except
-                _LOGGER.error("Unexpected %s %s", {type(ex).__name__}, ex)
-                errors["base"] = f"Unexpected {type(ex).__name__}: {ex}"
+            except httpx.HTTPError as ex:
+                _LOGGER.warning("Cannot connect to %s: %s", user_input[CONF_HOST], ex)
+                errors["base"] = "cannot_connect"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected error while connecting to %s", user_input[CONF_HOST])
+                errors["base"] = "unknown"
 
             if not errors:
                 if self.source == SOURCE_RECONFIGURE:
