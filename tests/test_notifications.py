@@ -4,9 +4,9 @@ from http import HTTPStatus
 from unittest.mock import MagicMock
 
 from homeassistant.const import STATE_OFF, STATE_ON
-from homeassistant.core import Event, HomeAssistant
+from homeassistant.core import HomeAssistant
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry, async_capture_events
 
 from custom_components.hikvision_local.const import HIKVISION_EVENT, RTSP_PORT_FORCED
 from custom_components.hikvision_local.notifications import EventNotificationsView
@@ -38,12 +38,7 @@ async def test_nvr_intrusion_detection_alert(
     """Test incoming intrusion detection event alert from nvr."""
 
     entity_id = "binary_sensor.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_2_fielddetection"
-    bus_events = []
-
-    def bus_event_listener(event: Event) -> None:
-        bus_events.append(event)
-
-    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
 
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_OFF
@@ -93,12 +88,7 @@ async def test_ipc_vmd_detection_alert(
     """Test incoming motion detection event alert from ip camera."""
 
     entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_motiondetection"
-    bus_events = []
-
-    def bus_event_listener(event: Event) -> None:
-        bus_events.append(event)
-
-    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
 
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_OFF
@@ -185,12 +175,7 @@ async def test_field_detection_alert(
     """Test incoming field detection event with detection target."""
 
     entity_id = "binary_sensor.ds_2cd2146g2_isu00000000aawrg00000000_1_fielddetection"
-    bus_events = []
-
-    def bus_event_listener(event: Event) -> None:
-        bus_events.append(event)
-
-    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
 
     view = EventNotificationsView(hass)
     mock_request = mock_event_notification("fielddetection_human")
@@ -249,13 +234,6 @@ async def test_nvr_and_cam_notification_alert(
     entity_cam_1_id = "binary_sensor.ds_2cd2t46g2_isu_sl00000000aawrg00000000_1_io"
     entity_cam_2_id = "binary_sensor.ds_2cd2346g2_isu_sl00000000aawrj00000000_1_io"
     entity_cam_3_id = "binary_sensor.ds_2cd2t86g2_isu_sl00000000aawrae0000000_1_io"
-
-    bus_events = []
-
-    def bus_event_listener(event: Event) -> None:
-        bus_events.append(event)
-
-    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
 
     assert (sensor_cam_1 := hass.states.get(entity_cam_1_id))
     assert (sensor_cam_2 := hass.states.get(entity_cam_2_id))
@@ -338,12 +316,7 @@ async def test_inactive_alert_turns_sensor_off(
     """An inactive alert switches the sensor off and fires no event."""
 
     entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_motiondetection"
-    bus_events = []
-
-    def bus_event_listener(event: Event) -> None:
-        bus_events.append(event)
-
-    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
 
     view = EventNotificationsView(hass)
     response = await view.post(mock_event_notification("vmd_human"))
