@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import suppress
 import datetime
@@ -87,6 +88,11 @@ def event_channel_suffix(*values: str | None) -> int:
         if value and (match := re.search(r"-(\d+)$", str(value))):
             return int(match.group(1))
     return 0
+
+
+def split_targets(target_type: str | None) -> list[str]:
+    """Return the targets in a targetType value such as "human,vehicle"."""
+    return [target.strip().lower() for target in (target_type or "").split(",") if target.strip()]
 
 
 def get_trigger_notifications(event_trigger: dict) -> list[dict]:
@@ -228,10 +234,18 @@ class ISAPIClient:
             self.audio_alarm = await self.get_audio_alarm()
 
         self.supported_events = await self.get_supported_events(capabilities)
-        for event in self.supported_events:
-            if event.id == EVENT_MOTION and event.url:
-                with suppress(Exception):
-                    event.targets = await self.get_motion_targets(event.url)
+        # One request per motion event; a few at a time, so large NVRs set up quicker without being flooded.
+        motion_events = [event for event in self.supported_events if event.id == EVENT_MOTION and event.url]
+        semaphore = asyncio.Semaphore(4)
+
+        async def read_targets(event: EventInfo) -> list[str]:
+            async with semaphore:
+                return await self.get_motion_targets(event.url)
+
+        targets = await asyncio.gather(*(read_targets(event) for event in motion_events), return_exceptions=True)
+        for event, event_targets in zip(motion_events, targets, strict=True):
+            if isinstance(event_targets, list):
+                event.targets = event_targets
 
         await self.get_protocols()
 
@@ -674,7 +688,7 @@ class ISAPIClient:
         target_type = deep_get(data, "MotionDetection.MotionDetectionLayout.targetType", "")
         if not isinstance(target_type, str):
             return []
-        return [target for target in MOTION_TARGETS if target in target_type.split(",")]
+        return [target for target in MOTION_TARGETS if target in split_targets(target_type)]
 
     def get_event_url(self, event_id: str, channel_id: int, io_port_id: int, is_proxy: bool) -> str | None:
         """Get event ISAPI URL."""
