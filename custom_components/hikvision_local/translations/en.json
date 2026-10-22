@@ -4,7 +4,8 @@
       "already_configured": "Device is already configured",
       "reauth_successful": "Re-authentication was successful",
       "reconfigure_successful": "Re-configuration was successful",
-      "nothing_to_import": "There are no hikvision_next devices left to import."
+      "nothing_to_import": "There are no hikvision_next devices left to import.",
+      "import_incomplete": "The hikvision_next entry lacks the address or credentials. Set the device up as a new device."
     },
     "step": {
       "user": {
@@ -34,7 +35,7 @@
       },
       "import_hikvision_next": {
         "title": "Import from hikvision_next",
-        "description": "Choose the hikvision_next device to set up here. Its address, credentials and notifications host settings are taken over.",
+        "description": "Choose the hikvision_next device to set up here. Its address, credentials and notifications host settings are taken over. If hikvision_next sets the device's notifications host, Hikvision Local takes it over; events then go to Hikvision Local only.",
         "data": {
           "entry_id": "Device"
         }

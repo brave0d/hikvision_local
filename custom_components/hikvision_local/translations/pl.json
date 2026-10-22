@@ -4,7 +4,8 @@
       "already_configured": "Urządzenie jest już skonfigurowane",
       "reauth_successful": "Ponowne uwierzytelnienie powiodło się",
       "reconfigure_successful": "Ponowna konfiguracja powiodła się",
-      "nothing_to_import": "Nie ma już urządzeń z hikvision_next do zaimportowania."
+      "nothing_to_import": "Nie ma już urządzeń z hikvision_next do zaimportowania.",
+      "import_incomplete": "Wpis hikvision_next nie zawiera adresu lub danych logowania. Skonfiguruj urządzenie jako nowe."
     },
     "step": {
       "user": {
@@ -34,7 +35,7 @@
       },
       "import_hikvision_next": {
         "title": "Import z hikvision_next",
-        "description": "Wybierz urządzenie z hikvision_next do skonfigurowania tutaj. Adres, dane logowania i ustawienia hosta powiadomień zostaną przeniesione.",
+        "description": "Wybierz urządzenie z hikvision_next do skonfigurowania tutaj. Adres, dane logowania i ustawienia hosta powiadomień zostaną przeniesione. Jeśli hikvision_next ustawia host powiadomień urządzenia, przejmie go Hikvision Local; zdarzenia będą wtedy trafiać tylko do Hikvision Local.",
         "data": {
           "entry_id": "Urządzenie"
         }

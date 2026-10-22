@@ -151,7 +151,12 @@ class HikvisionConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_ALARM_SERVER_HOST: "",
                 **{key: value for key, value in old_entry.data.items() if key in IMPORTED_KEYS},
             }
+            if not all(data.get(key) for key in (CONF_HOST, CONF_USERNAME, CONF_PASSWORD)):
+                return self.async_abort(reason="import_incomplete")
             data[CONF_HOST] = data[CONF_HOST].rstrip("/")
+            if not data[CONF_ALARM_SERVER_HOST]:
+                # Without an address there's nothing to point the device at.
+                data[CONF_SET_ALARM_SERVER] = False
             try:
                 device = HikvisionDevice(self.hass, data=data)
                 await device.get_device_info()
