@@ -1164,7 +1164,7 @@ class ISAPIClient:
         region_id = int(deep_get(alert, "DetectionRegionList.DetectionRegionEntry.regionID", 0))
 
         target_type = alert.get("targetType")
-        event_state = alert.get("eventState", "active")
+        event_state = str(alert.get("eventState", "active")).lower()
 
         if not EVENTS[event_id]:
             raise ValueError(f"Unsupported event {event_id}")
