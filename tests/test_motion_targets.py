@@ -10,6 +10,7 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hikvision_local.const import DOMAIN
+from custom_components.hikvision_local.isapi.isapi import split_targets
 from custom_components.hikvision_local.notifications import EventNotificationsView
 from tests.test_notifications import mock_event_notification
 
@@ -90,3 +91,29 @@ async def test_target_sensors_follow_motion_event_enabled_state(
         for target in ("human", "vehicle"):
             assert (entry := registry.async_get(entity_ids[target]))
             assert entry.disabled_by == motion.disabled_by
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_person_sensor_works_without_motion_sensor(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """The person sensor follows alerts when the motion sensor is disabled."""
+
+    entity_ids = target_entity_ids(hass, init_integration)
+    er.async_get(hass).async_update_entity(entity_ids["motion"], disabled_by=er.RegistryEntryDisabler.USER)
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_ids["motion"]) is None
+
+    view = EventNotificationsView(hass)
+    assert (await view.post(mock_event_notification("vmd_human"))).status == HTTPStatus.OK
+
+    assert hass.states.get(entity_ids["human"]).state == STATE_ON
+
+
+@pytest.mark.parametrize(
+    ("target_type", "expected"),
+    [("human,vehicle", ["human", "vehicle"]), ("Human, Vehicle", ["human", "vehicle"]), ("", []), (None, [])],
+)
+def test_split_targets(target_type, expected) -> None:
+    """targetType values are split into lower-case targets."""
+    assert split_targets(target_type) == expected
