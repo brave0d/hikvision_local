@@ -102,39 +102,43 @@ class HikvisionDevice(ISAPIClient):
 
     def hass_device_info(self, camera_id: int = 0) -> DeviceInfo:
         """Return Home Assistant entity device information."""
+        return DeviceInfo(**self.device_registry_fields(camera_id))
+
+    def device_registry_fields(self, camera_id: int = 0) -> dict[str, Any]:
+        """Return the device registry fields of the device (0) or one of its cameras.
+
+        A plain dict, so it can also be passed to the device registry directly.
+        """
         if camera_id == 0:
-            return DeviceInfo(
-                manufacturer=self.device_info.manufacturer,
-                identifiers={(DOMAIN, self.device_info.serial_no)},
-                connections={(dr.CONNECTION_NETWORK_MAC, self.device_info.mac_address)},
-                model=self.device_info.model,
-                name=self.device_info.name,
-                sw_version=self.device_info.firmware,
-            )
-        else:
-            camera_info = self.get_camera_by_id(camera_id)
-            is_ip_camera = isinstance(camera_info, IPCamera)
+            return {
+                "manufacturer": self.device_info.manufacturer,
+                "identifiers": {(DOMAIN, self.device_info.serial_no)},
+                "connections": {(dr.CONNECTION_NETWORK_MAC, self.device_info.mac_address)},
+                "model": self.device_info.model,
+                "name": self.device_info.name,
+                "sw_version": self.device_info.firmware,
+            }
+        camera_info = self.get_camera_by_id(camera_id)
+        fields = {
+            "manufacturer": self.device_info.manufacturer,
+            "identifiers": {(DOMAIN, camera_info.serial_no)},
+            "model": camera_info.model,
+            "name": camera_info.name,
+            "sw_version": camera_info.firmware if isinstance(camera_info, IPCamera) else "Unknown",
+        }
+        if self.device_info.is_nvr and (nvr_device_id := self._nvr_device_id()):
+            fields["via_device_id"] = nvr_device_id
+        return fields
 
-            device_info = DeviceInfo(
-                manufacturer=self.device_info.manufacturer,
-                identifiers={(DOMAIN, camera_info.serial_no)},
-                model=camera_info.model,
-                name=camera_info.name,
-                sw_version=camera_info.firmware if is_ip_camera else "Unknown",
-            )
-            if self.device_info.is_nvr:
-                device_info.update(self._via_nvr_device_info())
-            return device_info
-
-    def _via_nvr_device_info(self) -> DeviceInfo:
-        """Return device info linking a camera to its parent NVR device."""
+    def _nvr_device_id(self) -> str | None:
+        """Return the device registry ID of the NVR, to link its cameras to it."""
         nvr_identifier = (DOMAIN, self.device_info.serial_no)
         device_registry = dr.async_get(self.hass)
         nvr_device = device_registry.async_get_device_by_identifier(nvr_identifier, self.entry.entry_id)
         if nvr_device is None:
             _LOGGER.warning("NVR device %s is not registered yet, camera is added without a parent link", self.host)
-            return DeviceInfo()
-        return DeviceInfo(via_device_id=nvr_device.id)
+            return None
+        return nvr_device.id
 
     def get_device_event_capabilities(
         self,
