@@ -181,16 +181,20 @@ Download logs from `Settings / System / Logs`
 
 ## Tested models
 
+Models reported to work. Recorded data from many of them is used in the tests.
+
 ### NVR
 
 - Annke N46PCK
 - DS-7108NI-Q1/8P
+- DS-7604NXI-K1/4P
 - DS-7608NI-I2
 - DS-7608NI-I2/8P
 - DS-7608NXI-I2/8P/S
 - DS-7608NXI-K1/8P
 - DS-7616NI-E2/16P
 - DS-7616NI-I2/16P
+- DS-7616NI-K2
 - DS-7616NI-Q2
 - DS-7616NI-Q2/16P
 - DS-7616NXI-I2/16P/S
@@ -200,9 +204,12 @@ Download logs from `Settings / System / Logs`
 
 ### DVR
 
+- HiWatch DVR-108P-G/N
+- iDS-7204HUHI-M1/E
 - iDS-7204HUHI-M1/FA/A
 - iDS-7204HUHI-M1/P
 - iDS-7208HQHI-M1(A)/S(C)
+- iDS-7208HUHI-M1/S/A
 
 ### IP Camera
 
@@ -212,8 +219,10 @@ Download logs from `Settings / System / Logs`
 - DS-2CD2087G2-LU
 - DS-2CD2146G2-ISU
 - DS-2CD2155FWD-I
+- DS-2CD2346G2-ISU/SL
 - DS-2CD2346G2-IU
 - DS-2CD2386G2-IU
+- DS-2CD2387G2-LSU/SL
 - DS-2CD2387G2-LU
 - DS-2CD2387G2H-LISU/SL
 - DS-2CD2425FWD-IW
@@ -224,7 +233,9 @@ Download logs from `Settings / System / Logs`
 - DS-2CD2785G1-IZS
 - DS-2CD2H46G2-IZS (C)
 - DS-2CD2T46G2-ISU/SL
+- DS-2CD2T86G2-ISU/SL
 - DS-2CD2T87G2-L
 - DS-2CD2T87G2P-LSU/SL
 - DS-2DE4425IW-DE (PTZ)
 - DS-2SE4C425MWG-E/26
+- DS-2TD1228-2-QA (thermal)
