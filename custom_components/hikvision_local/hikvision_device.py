@@ -6,7 +6,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.util import slugify
@@ -161,6 +161,19 @@ class HikvisionDevice(ISAPIClient):
                 event.disabled = "center" not in event.notifications  # Disable if not set Notify Surveillance Center
                 events.append(event)
         return events
+
+    def enable_event_entities(self, event: EventInfo) -> None:
+        """Enable the event's sensor and switch that were disabled for lack of 'Notify Surveillance Center'.
+
+        The entity registry reloads the config entry after enabling, which starts polling them.
+        """
+        entity_registry = er.async_get(self.hass)
+        for domain in ("binary_sensor", "switch"):
+            entity_id = entity_registry.async_get_entity_id(domain, DOMAIN, f"{domain}.{event.unique_id}")
+            entry = entity_registry.async_get(entity_id) if entity_id else None
+            if entry and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                entity_registry.async_update_entity(entity_id, disabled_by=None)
+                _LOGGER.info("Enabled %s after turning on notifications for %s", entity_id, event.trigger_id)
 
     def handle_exception(self, ex: Exception, details: str = ""):
         """Handle common exceptions."""

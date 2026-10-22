@@ -20,6 +20,11 @@ SCAN_INTERVAL_AUDIO_ALARM = timedelta(minutes=5)
 _LOGGER = logging.getLogger(__name__)
 
 
+def notify_switch_unique_id(event) -> str:
+    """Return the unique ID of the 'notify Home Assistant' switch of an event."""
+    return ENTITY_ID_FORMAT.format(f"{event.unique_id}_notify_center")
+
+
 class EventsCoordinator(DataUpdateCoordinator):
     """Manage fetching events state from NVR or camera."""
 
@@ -66,6 +71,18 @@ class EventsCoordinator(DataUpdateCoordinator):
                 data[_id] = await self.device.get_io_port_status("output", i)
             except Exception as ex:  # pylint: disable=broad-except
                 self.device.handle_exception(ex, f"Cannot fetch state for alarm output {i}")
+
+        # Get 'Notify Surveillance Center' state of event triggers
+        events = [*self.device.events_info, *[event for camera in self.device.cameras for event in camera.events_info]]
+        events = [event for event in events if event.trigger_id]
+        if events:
+            try:
+                notify_center = await self.device.get_events_notify_center([event.trigger_id for event in events])
+                for event in events:
+                    if event.trigger_id in notify_center:
+                        data[notify_switch_unique_id(event)] = notify_center[event.trigger_id]
+            except Exception as ex:  # pylint: disable=broad-except
+                self.device.handle_exception(ex, "Cannot fetch events notification methods")
 
         # Get connection status of IP cameras connected to NVR
         if self.device.capabilities.support_channel_status:
