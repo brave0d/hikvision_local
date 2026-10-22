@@ -26,6 +26,7 @@ class AlertInfo:
     mac: str = ""
     region_id: int = 0
     detection_target: str = field(default=None)
+    target_type: str = field(default=None)
 
 
 @dataclass

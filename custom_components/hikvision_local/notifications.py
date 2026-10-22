@@ -188,7 +188,12 @@ class EventNotificationsView(HomeAssistantView):
         if entity_id:
             entity = self.hass.states.get(entity_id)
             if entity:
-                self.hass.states.async_set(entity_id, STATE_ON, entity.attributes)
+                attributes = dict(entity.attributes)
+                if alert.target_type:
+                    attributes["target_type"] = alert.target_type
+                else:
+                    attributes.pop("target_type", None)
+                self.hass.states.async_set(entity_id, STATE_ON, attributes)
                 self.fire_hass_event(alert)
             return
         raise ValueError(f"Entity not found {entity_id}")
@@ -208,6 +213,8 @@ class EventNotificationsView(HomeAssistantView):
         if alert.detection_target:
             message["detection_target"] = alert.detection_target
             message["region_id"] = alert.region_id
+        if alert.target_type:
+            message["target_type"] = alert.target_type
 
         self.hass.bus.fire(
             HIKVISION_EVENT,
