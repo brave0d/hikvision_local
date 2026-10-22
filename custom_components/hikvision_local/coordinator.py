@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import slugify
 
-from .const import CONF_ALARM_SERVER_HOST, DOMAIN, HOLIDAY_MODE
+from .const import CAMERAS_STATUS, CONF_ALARM_SERVER_HOST, DOMAIN, HOLIDAY_MODE
 
 SCAN_INTERVAL_EVENTS = timedelta(seconds=120)
 SCAN_INTERVAL_HOLIDAYS = timedelta(minutes=60)
@@ -66,6 +66,13 @@ class EventsCoordinator(DataUpdateCoordinator):
                 data[_id] = await self.device.get_io_port_status("output", i)
             except Exception as ex:  # pylint: disable=broad-except
                 self.device.handle_exception(ex, f"Cannot fetch state for alarm output {i}")
+
+        # Get connection status of IP cameras connected to NVR
+        if self.device.capabilities.support_channel_status:
+            try:
+                data[CAMERAS_STATUS] = await self.device.get_cameras_online_status()
+            except Exception as ex:  # pylint: disable=broad-except
+                self.device.handle_exception(ex, "Cannot fetch cameras connection status")
 
         # Refresh HDD data
         try:

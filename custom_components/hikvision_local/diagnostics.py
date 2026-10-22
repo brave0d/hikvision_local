@@ -134,6 +134,7 @@ async def _async_get_diagnostics(
         "System/Holidays",
         "System/Video/inputs/channels",
         "ContentMgmt/InputProxy/channels",
+        "ContentMgmt/InputProxy/channels/status",
         "ContentMgmt/Storage",
         "Security/adminAccesses",
         "Event/triggers",

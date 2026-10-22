@@ -28,6 +28,9 @@
   },
   "entity": {
     "binary_sensor": {
+      "connection": {
+        "name": "Połączenie"
+      },
       "motiondetection": {
         "name": "Ruch"
       },
