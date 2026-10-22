@@ -93,6 +93,12 @@ async def test_ipc_vmd_detection_alert(
     """Test incoming motion detection event alert from ip camera."""
 
     entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_motiondetection"
+    bus_events = []
+
+    def bus_event_listener(event: Event) -> None:
+        bus_events.append(event)
+
+    hass.bus.async_listen(HIKVISION_EVENT, bus_event_listener)
 
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_OFF
@@ -111,6 +117,12 @@ async def test_ipc_vmd_detection_alert(
     assert response.status == HTTPStatus.OK
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_ON
+    assert sensor.attributes.get("target_type") == "human"
+
+    await hass.async_block_till_done()
+    assert len(bus_events) == 2
+    assert "target_type" not in bus_events[0].data
+    assert bus_events[1].data["target_type"] == "human"
 
 
 @pytest.mark.parametrize("init_integration", ["DS-2TD1228-2-QA"], indirect=True)
