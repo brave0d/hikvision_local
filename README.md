@@ -66,6 +66,28 @@ Creates an automation that allows to display text overlay on a selected video st
 
 [<img src="https://my.home-assistant.io/badges/blueprint_import.svg">](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/brave0d/hikvision_local/blob/main/blueprints/display_sensor_state_on_hikvision_video.yaml)
 
+### Actions
+
+| Action | Target | What it does |
+|--------|--------|--------------|
+| `hikvision_local.ptz_move` | camera entity | Moves a PTZ camera: `direction` (up, down, left, right, the diagonals, zoom_in, zoom_out) at half speed, or `pan`, `tilt` and `zoom` speeds from -100 to 100. `duration` in milliseconds, 1000 by default; 0 keeps moving until `ptz_stop`. Needs the "Remote: PTZ Control" permission. |
+| `hikvision_local.ptz_stop` | camera entity | Stops a PTZ camera. |
+| `hikvision_local.ptz` | camera entity | ONVIF-style PTZ with the fields Advanced Camera Card sends: `pan` (LEFT, RIGHT), `tilt` (UP, DOWN), `zoom` (ZOOM_IN, ZOOM_OUT), `speed` 0 to 1, `continuous_duration` in seconds, `move_mode` (ContinuousMove, GotoPreset, Stop) and `preset`. |
+| `hikvision_local.update_snapshot` | image entity | Shows a snapshot file (`filename`) in an image entity. Used by the snapshot blueprint. |
+| `hikvision_local.reboot` | `config_entry_id` | Reboots the device. Needs the "Remote: Shutdown/Reboot" permission. |
+| `hikvision_local.isapi_request` | `config_entry_id` | Sends a custom ISAPI request (`method`, `path`, `payload`) and returns the response. POST and PUT change the device's settings, so use them with care. |
+
+Example: pan a PTZ camera left for two seconds.
+
+```yaml
+action: hikvision_local.ptz_move
+target:
+  entity_id: camera.garden_main
+data:
+  direction: left
+  duration: 2000
+```
+
 ## Preview
 
 ### IP Camera device view
@@ -92,6 +114,11 @@ The scope supported features depends on device model, setup and firmware version
 2. restart Home Assistant
 3. on `Settings / Devices & Services` page press `+ Add Integration`
 4. search for `Hikvision Local` and add your Hikvision device using config dialog, repeat the last 2 steps for more devices
+
+### Removal
+
+1. On the `Settings / Devices & Services` page, open `Hikvision Local`, open the three-dot menu of the device and choose `Delete`. If the integration set the device's Notifications Host, it is reset to `http://0.0.0.0:80/`; otherwise reset it in the device's web interface so the device stops sending events.
+2. To remove the integration completely, remove `Hikvision Local` in HACS (or delete `config/custom_components/hikvision_local`) and restart Home Assistant.
 
 ## Hikvision device setup checklist
 
