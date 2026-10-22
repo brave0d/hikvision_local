@@ -1194,6 +1194,7 @@ class ISAPIClient:
             detection_target,
             target_type,
             event_state=event_state,
+            ip_address=alert.get("ipAddress"),
         )
 
     async def get_camera_image(
