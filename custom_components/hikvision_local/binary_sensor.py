@@ -33,6 +33,9 @@ async def async_setup_entry(
     for camera in device.cameras:
         for event in camera.events_info:
             entities.append(EventBinarySensor(device, camera.id, event))
+            # Person and vehicle sensors for motion detection that tells targets apart
+            for target in event.targets:
+                entities.append(MotionTargetBinarySensor(device, camera.id, event, target))
 
     # General Events
     for event in device.events_info:
@@ -102,3 +105,18 @@ class CameraConnectionBinarySensor(CoordinatorEntity, BinarySensorEntity):
             "detect_result": (self._status or {}).get("detect_result"),
             "ip_address": self.camera.ip_addr,
         }
+
+
+class MotionTargetBinarySensor(BinarySensorEntity):
+    """Motion detection of one target (person or vehicle), from the alert's targetType."""
+
+    _attr_has_entity_name = True
+    _attr_is_on = False
+    _attr_device_class = BinarySensorDeviceClass.MOTION
+
+    def __init__(self, device: HikvisionDevice, device_id: int, event: EventInfo, target: str) -> None:
+        """Initialize."""
+        self._attr_unique_id = ENTITY_ID_FORMAT.format(f"{event.unique_id}_{target}")
+        self._attr_translation_key = f"motion_{target}"
+        self._attr_device_info = device.hass_device_info(device_id)
+        self._attr_entity_registry_enabled_default = not event.disabled

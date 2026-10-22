@@ -11,6 +11,10 @@ EVENT_BASIC: Final = "basic"
 EVENT_IO: Final = "io"
 EVENT_SMART: Final = "smart"
 EVENT_PIR: Final = "pir"
+EVENT_MOTION: Final = "motiondetection"
+
+# Targets AcuSense cameras tell apart in motion detection alerts (targetType)
+MOTION_TARGETS: Final = ("human", "vehicle")
 EVENTS = {
     "motiondetection": {
         "type": EVENT_BASIC,
