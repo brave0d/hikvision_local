@@ -21,6 +21,7 @@ from .const import ALARM_SERVER_PATH, DOMAIN, HIKVISION_EVENT
 from .hikvision_device import HikvisionDevice
 from .isapi import AlertInfo, IPCamera, ISAPIClient, ISAPIUnsupportedEventError
 from .isapi.const import EVENT_IO, EVENT_MOTION, MOTION_TARGETS
+from .isapi.isapi import split_targets
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -209,11 +210,12 @@ class EventNotificationsView(HomeAssistantView):
         entity_registry = async_get(self.hass)
         entity_id = entity_registry.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, unique_id)
         if entity_id:
+            # The person and vehicle sensors can be enabled without the motion sensor.
+            self.trigger_target_sensors(entity_registry, unique_id, alert)
             entity = self.hass.states.get(entity_id)
             if entity:
                 attributes = dict(entity.attributes)
                 attributes.pop("target_type", None)
-                self.trigger_target_sensors(entity_registry, unique_id, alert)
                 if alert.event_state == "inactive":
                     # The event has ended, or the device sends a heartbeat (videoloss).
                     self.hass.states.async_set(entity_id, STATE_OFF, attributes)
@@ -229,7 +231,7 @@ class EventNotificationsView(HomeAssistantView):
         """Set the person and vehicle sensors of a motion alert."""
         if alert.event_id != EVENT_MOTION:
             return
-        targets = (alert.target_type or "").split(",")
+        targets = split_targets(alert.target_type)
         for target in MOTION_TARGETS:
             entity_id = entity_registry.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, f"{unique_id}_{target}")
             if not entity_id or not (entity := self.hass.states.get(entity_id)):
