@@ -54,6 +54,24 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 **NOTE**
 Events must have the "Notify Surveillance Center" linkage action for Home Assistant to be notified. Otherwise their binary sensors and switches are added as disabled entities. The event's "Notify HA" switch adds that action from Home Assistant and enables them.
 
+### Entities
+
+What a device gets depends on its model, firmware and settings.
+
+| Entity | Where | Notes |
+|--------|-------|-------|
+| Camera | each camera or NVR channel | Main and sub streams; the sub stream is disabled by default. |
+| Image | each camera | Latest snapshot, updated by the snapshot blueprint. |
+| Event binary sensors | each camera, and the NVR for its inputs | On while the device reports the event. Disabled when the event doesn't notify Home Assistant. |
+| Person, Vehicle | AcuSense cameras | Motion of that target. |
+| Connection | each IP camera on an NVR | Diagnostic. |
+| Detection switches | each camera, and the NVR for its inputs | Turn an event's detection on or off on the device. |
+| "Notify HA" switches | each event | Add or remove the event's Notify Surveillance Center action. |
+| Alarm output, Holiday mode | NVR | |
+| Light | cameras with a supplement light | ColorVu white light or IR, with brightness. |
+| Audio alarm | cameras with a speaker | Sound and volume, how many times it plays, and a test button. |
+| Storage, Notifications host, Last event | each device | Diagnostic sensors. |
+
 ### Blueprints
 
 #### Take Multiple Snapshots On Detection Event
