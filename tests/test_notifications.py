@@ -448,3 +448,30 @@ async def test_alert_matches_device_by_address_in_alert(
     assert response.status == HTTPStatus.OK
     assert (sensor := hass.states.get(entity_id))
     assert sensor.state == STATE_ON
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_camera_alert_without_channel_id(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """A camera alert with channel ID 0 goes to the camera's channel."""
+
+    entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_fielddetection"
+    payload = """<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.255</ipAddress>
+    <macAddress>a6:63:9e:f8:01:09</macAddress>
+    <channelID>0</channelID>
+    <eventType>fielddetection</eventType>
+    <eventState>active</eventState>
+    </EventNotificationAlert>"""
+
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_OFF
+
+    view = EventNotificationsView(hass)
+    response = await view.post(mock_event_notification(None, payload=payload))
+
+    assert response.status == HTTPStatus.OK
+    assert (sensor := hass.states.get(entity_id))
+    assert sensor.state == STATE_ON
