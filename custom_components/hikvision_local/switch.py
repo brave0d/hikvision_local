@@ -129,6 +129,8 @@ class NotifyCenterSwitch(CoordinatorEntity, SwitchEntity):
             await self.coordinator.device.set_event_notify_center(self.event, True)
             self.event.disabled = False
             self.coordinator.device.enable_event_entities(self.event)
+        except ValueError as ex:
+            raise HomeAssistantError(str(ex)) from ex
         finally:
             await self.coordinator.async_request_refresh()
 
@@ -136,6 +138,8 @@ class NotifyCenterSwitch(CoordinatorEntity, SwitchEntity):
         """Turn off."""
         try:
             await self.coordinator.device.set_event_notify_center(self.event, False)
+        except ValueError as ex:
+            raise HomeAssistantError(str(ex)) from ex
         finally:
             await self.coordinator.async_request_refresh()
 
