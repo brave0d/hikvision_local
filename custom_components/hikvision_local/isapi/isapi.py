@@ -87,6 +87,29 @@ def event_channel_suffix(*values: str | None) -> int:
     return 0
 
 
+def get_trigger_notifications(event_trigger: dict) -> list[dict]:
+    """Return the notification method entries of an Event/triggers entry."""
+    notifications = deep_get(event_trigger.get("EventTriggerNotificationList") or {}, "EventTriggerNotification", [])
+    if isinstance(notifications, dict):
+        notifications = [notifications]
+    return [notify for notify in notifications if isinstance(notify, dict)]
+
+
+def notifies_center(event_trigger: dict) -> bool:
+    """Return True if an Event/triggers entry has the 'Notify Surveillance Center' action."""
+    return any(notify.get("notificationMethod") == "center" for notify in get_trigger_notifications(event_trigger))
+
+
+def get_event_triggers_list(event_triggers: dict) -> list[dict]:
+    """Return the entries of an Event/triggers response."""
+    if event_notification := event_triggers.get("EventNotification"):
+        event_triggers = event_notification
+    triggers = deep_get(event_triggers, "EventTriggerList.EventTrigger", [])
+    if isinstance(triggers, dict):
+        triggers = [triggers]
+    return [trigger for trigger in triggers if isinstance(trigger, dict)]
+
+
 Node = dict[str, Any]
 
 SEARCH_PAGE_SIZE = 50
@@ -352,9 +375,7 @@ class ISAPIClient:
     async def get_supported_events(self, system_capabilities: dict) -> list[EventInfo]:
         """Get list of all supported events available."""
 
-        def create_event_info(event_trigger: dict):
-            notification_list = event_trigger.get("EventTriggerNotificationList", {}) or {}
-
+        def create_event_info(event_trigger: dict, trigger_id: str | None = None):
             event_type = event_trigger.get("eventType")
             if not event_type:
                 return None
@@ -384,28 +405,22 @@ class ISAPIClient:
 
             url = self.get_event_url(event_id, channel_id, io_port, is_proxy)
 
-            notifications = deep_get(notification_list, "EventTriggerNotification", [])
-
             return EventInfo(
                 channel_id=channel_id,
                 io_port_id=io_port,
                 id=event_id,
                 url=url,
                 is_proxy=is_proxy,
-                notifications=[notify.get("notificationMethod") for notify in notifications] if notifications else [],
+                notifications=[notify.get("notificationMethod") for notify in get_trigger_notifications(event_trigger)],
+                trigger_id=event_trigger.get("id") or trigger_id,
             )
 
         events = []
 
         # Get events from Event/triggers
         event_triggers = await self.request(GET, "Event/triggers")
-        event_notification = event_triggers.get("EventNotification")
-        if event_notification:
-            available_events = deep_get(event_notification, "EventTriggerList.EventTrigger", [])
-        else:
-            available_events = deep_get(event_triggers, "EventTriggerList.EventTrigger", [])
 
-        for event_trigger in available_events:
+        for event_trigger in get_event_triggers_list(event_triggers):
             if event := create_event_info(event_trigger):
                 events.append(event)
 
@@ -415,7 +430,7 @@ class ISAPIClient:
             if is_supported:
                 event_trigger = await self.request(GET, "Event/triggers/scenechangedetection-1")
                 event_trigger = deep_get(event_trigger, "EventTrigger", {})
-                if event := create_event_info(event_trigger):
+                if event := create_event_info(event_trigger, "scenechangedetection-1"):
                     events.append(event)
 
         # Multi-channel cameras need events fetched per channel. Some devices also answer
@@ -435,9 +450,10 @@ class ISAPIClient:
                     if event_id not in EVENTS:
                         continue
                     if not [e for e in events if (e.id == event_id and e.channel_id == channel_id)]:
-                        event_trigger = await self.request(GET, f"Event/triggers/{event_id}-{channel_id}")
+                        trigger_id = f"{event_id}-{channel_id}"
+                        event_trigger = await self.request(GET, f"Event/triggers/{trigger_id}")
                         event_trigger = deep_get(event_trigger, "EventTrigger", {})
-                        if event := create_event_info(event_trigger):
+                        if event := create_event_info(event_trigger, trigger_id):
                             events.append(event)
 
         return events
@@ -1038,6 +1054,51 @@ class ISAPIClient:
             for channel in channels
             if isinstance(channel, dict) and channel.get("id")
         }
+
+    async def get_events_notify_center(self, trigger_ids: list[str]) -> dict[str, bool]:
+        """Return whether each event trigger notifies the surveillance center (Home Assistant)."""
+        result = {
+            trigger["id"]: notifies_center(trigger)
+            for trigger in get_event_triggers_list(await self.request(GET, "Event/triggers"))
+            if trigger.get("id") in trigger_ids
+        }
+        # Triggers missing from the list, on devices that only answer them one by one
+        for trigger_id in trigger_ids:
+            if trigger_id not in result:
+                trigger = deep_get(await self.request(GET, f"Event/triggers/{trigger_id}"), "EventTrigger", {})
+                if trigger:
+                    result[trigger_id] = notifies_center(trigger)
+        return result
+
+    async def set_event_notify_center(self, event: EventInfo, is_enabled: bool) -> None:
+        """Add or remove the 'Notify Surveillance Center' action of an event trigger."""
+        url = f"Event/triggers/{event.trigger_id}"
+        data = await self.request(GET, url)
+        event_trigger = data.get("EventTrigger") if data else None
+        if not isinstance(event_trigger, dict):
+            raise ValueError(f"Cannot read {url}")
+
+        if notifies_center(event_trigger) != is_enabled:
+            notifications = get_trigger_notifications(event_trigger)
+            if is_enabled:
+                notifications.append(
+                    {"id": "center", "notificationMethod": "center", "notificationRecurrence": "beginning"}
+                )
+            else:
+                notifications = [notify for notify in notifications if notify.get("notificationMethod") != "center"]
+
+            # Only the notification methods change; the rest of the trigger is sent back as read.
+            notification_list = event_trigger.get("EventTriggerNotificationList") or {}
+            if notifications:
+                notification_list["EventTriggerNotification"] = notifications
+            else:
+                notification_list.pop("EventTriggerNotification", None)
+            event_trigger["EventTriggerNotificationList"] = notification_list or None
+
+            await self.request(PUT, url, present="xml", data=xmltodict.unparse(data))
+
+        methods = [method for method in event.notifications if method != "center"]
+        event.notifications = [*methods, "center"] if is_enabled else methods
 
     async def get_io_port_status(self, port_type: str, port_no: int) -> str:
         """Get status of physical ports."""

@@ -51,6 +51,7 @@ class EventInfo:
     is_proxy: bool = False  # True if the event comes from device connected via NVR
     disabled: bool = False
     notifications: list[str] = field(default_factory=list)
+    trigger_id: str | None = None  # ID in Event/triggers (e.g. VMD-1), used to set notification methods
 
 
 @dataclass
