@@ -20,6 +20,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 
 - Camera entities for main and sub streams
 - Real-time Acusense events notifications through binary sensors and HA events (hikvision_local_event)
+- Person and Vehicle motion sensors for AcuSense cameras whose motion detection tells humans and vehicles apart
 - Switches for Acusense events detection
 - "Notify HA" switches that add or remove an event's Notify Surveillance Center action, which sends its alerts to Home Assistant
 - Switches for NVR Outputs and PIR sensor
