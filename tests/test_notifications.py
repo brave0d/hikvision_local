@@ -517,3 +517,55 @@ async def test_alert_without_event_type_logs_a_warning(
 
     assert response.status == HTTPStatus.OK
     assert "Cannot process incoming event without an event type" in caplog.text
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+@pytest.mark.parametrize(
+    "content_type",
+    ["application/xml; charset=UTF-8", "Application/XML;charset=utf-8", 'text/xml; charset="UTF-8"', None],
+)
+async def test_alert_with_content_type_parameters(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    content_type: str | None,
+) -> None:
+    """XML alerts are read whatever parameters or case the Content-Type has, or without one."""
+
+    entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_motiondetection"
+    request = mock_event_notification("vmd")
+    request.headers = {"Content-Type": content_type} if content_type else {}
+
+    view = EventNotificationsView(hass)
+    response = await view.post(request)
+
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(entity_id).state == STATE_ON
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2386G2-IU"], indirect=True)
+async def test_multipart_alert_with_part_content_type_parameters(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """A multipart alert whose XML part has Content-Type parameters is read."""
+
+    entity_id = "binary_sensor.ds_2cd2386g2_iu00000000aawrj00000000_1_motiondetection"
+    xml = load_fixture("ISAPI/EventNotificationAlert", "vmd")
+    body = (
+        "--boundary\r\n"
+        'Content-Disposition: form-data; name="MoveDetection.xml"\r\n'
+        "content-type: application/xml; charset=UTF-8\r\n\r\n"
+        f"{xml}\r\n"
+        "--boundary\r\n"
+        "Content-Type: image/jpeg\r\n\r\n"
+        "\xff\xd8\r\n"
+        "--boundary--\r\n"
+    )
+    request = mock_event_notification(None, payload=body)
+    request.headers = {"Content-Type": "multipart/form-data; boundary=boundary"}
+
+    view = EventNotificationsView(hass)
+    response = await view.post(request)
+
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(entity_id).state == STATE_ON
