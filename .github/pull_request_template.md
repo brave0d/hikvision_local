@@ -12,5 +12,5 @@
 - [ ] Tests added or updated; `pytest` passes
 - [ ] `ruff check` and `ruff format --check` pass
 - [ ] No `unique_id` changes, or a registry migration is included
-- [ ] English strings added in `strings.json` and `translations/en.json`
+- [ ] English strings added in `translations/en.json` (and other languages where you can)
 - Tested on hardware: <!-- device model and firmware, or "not tested on hardware" -->
