@@ -1295,6 +1295,168 @@
           }
         }
       },
+      "ContentMgmt/InputProxy/channels/status": {
+        "response": {
+          "InputProxyChannelStatusList": {
+            "@version": "1.0",
+            "@xmlns": "http://www.hikvision.com/ver20/XMLSchema",
+            "InputProxyChannelStatus": [
+              {
+                "id": "1",
+                "sourceInputPortDescriptor": {
+                  "proxyProtocol": "HIKVISION",
+                  "addressingFormatType": "ipaddress",
+                  "ipAddress": "1.0.0.11",
+                  "managePortNo": "8000",
+                  "srcInputPort": "1",
+                  "userName": "user",
+                  "password": null,
+                  "connMode": "manual",
+                  "streamType": "auto",
+                  "deviceID": null
+                },
+                "online": "true",
+                "streamingProxyChannelIdList": {
+                  "streamingProxyChannelId": [
+                    "101",
+                    "102"
+                  ]
+                },
+                "relatedIOProxy": {
+                  "inputProxyPortIdList": {
+                    "inputProxyPortId": "I-101"
+                  },
+                  "outputProxyPortIdList": {
+                    "outputProxyPortId": "O-101"
+                  }
+                },
+                "bitStreamType": "mainStream",
+                "rateType": "VBR",
+                "codeParam": "H.264",
+                "chanDetectResult": "connect",
+                "url": "http://1.0.0.11:80",
+                "SecurityStatus": {
+                  "PasswordStatus": "risk"
+                }
+              },
+              {
+                "id": "2",
+                "sourceInputPortDescriptor": {
+                  "proxyProtocol": "HIKVISION",
+                  "addressingFormatType": "ipaddress",
+                  "ipAddress": "1.0.0.156",
+                  "managePortNo": "8000",
+                  "srcInputPort": "1",
+                  "userName": "user",
+                  "password": null,
+                  "connMode": "manual",
+                  "streamType": "auto",
+                  "deviceID": null
+                },
+                "online": "true",
+                "streamingProxyChannelIdList": {
+                  "streamingProxyChannelId": [
+                    "201",
+                    "202"
+                  ]
+                },
+                "relatedIOProxy": {
+                  "inputProxyPortIdList": {
+                    "inputProxyPortId": "I-201"
+                  },
+                  "outputProxyPortIdList": {
+                    "outputProxyPortId": "O-201"
+                  }
+                },
+                "bitStreamType": "mainStream",
+                "rateType": "VBR",
+                "codeParam": "H.264",
+                "chanDetectResult": "connect",
+                "url": "http://1.0.0.156:80",
+                "SecurityStatus": {
+                  "PasswordStatus": "risk"
+                }
+              },
+              {
+                "id": "3",
+                "sourceInputPortDescriptor": {
+                  "proxyProtocol": "HIKVISION",
+                  "addressingFormatType": "ipaddress",
+                  "ipAddress": "1.0.0.8",
+                  "managePortNo": "8000",
+                  "srcInputPort": "1",
+                  "userName": "user",
+                  "password": null,
+                  "connMode": "manual",
+                  "streamType": "auto",
+                  "deviceID": null
+                },
+                "online": "true",
+                "streamingProxyChannelIdList": {
+                  "streamingProxyChannelId": [
+                    "301",
+                    "302"
+                  ]
+                },
+                "relatedIOProxy": {
+                  "inputProxyPortIdList": {
+                    "inputProxyPortId": "I-301"
+                  },
+                  "outputProxyPortIdList": {
+                    "outputProxyPortId": "O-301"
+                  }
+                },
+                "bitStreamType": "mainStream",
+                "rateType": "VBR",
+                "codeParam": "H.264",
+                "chanDetectResult": "connect",
+                "url": "http://1.0.0.8:80",
+                "SecurityStatus": {
+                  "PasswordStatus": "risk"
+                }
+              },
+              {
+                "id": "4",
+                "sourceInputPortDescriptor": {
+                  "proxyProtocol": "HIKVISION",
+                  "addressingFormatType": "ipaddress",
+                  "ipAddress": "1.0.0.83",
+                  "managePortNo": "8000",
+                  "srcInputPort": "1",
+                  "userName": "user",
+                  "password": null,
+                  "connMode": "manual",
+                  "streamType": "auto",
+                  "deviceID": null
+                },
+                "online": "true",
+                "streamingProxyChannelIdList": {
+                  "streamingProxyChannelId": [
+                    "401",
+                    "402"
+                  ]
+                },
+                "relatedIOProxy": {
+                  "inputProxyPortIdList": {
+                    "inputProxyPortId": "I-401"
+                  },
+                  "outputProxyPortIdList": {
+                    "outputProxyPortId": "O-401"
+                  }
+                },
+                "bitStreamType": "mainStream",
+                "rateType": "VBR",
+                "codeParam": "H.264",
+                "chanDetectResult": "connect",
+                "url": "http://1.0.0.83:80",
+                "SecurityStatus": {
+                  "PasswordStatus": "risk"
+                }
+              }
+            ]
+          }
+        }
+      },
       "ContentMgmt/Storage": {
         "response": {
           "storage": {
