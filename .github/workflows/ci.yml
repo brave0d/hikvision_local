@@ -69,7 +69,7 @@ jobs:
       - name: Run pytest
         run: |
           if [ "${{ matrix.name }}" = "latest" ]; then
-            pytest --cov=custom_components/hikvision_local --cov-report=term-missing --cov-fail-under=83
+            pytest --cov=custom_components/hikvision_local --cov-report=term-missing --cov-fail-under=88
           else
             pytest
           fi
