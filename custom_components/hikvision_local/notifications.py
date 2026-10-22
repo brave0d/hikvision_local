@@ -163,6 +163,15 @@ class EventNotificationsView(HomeAssistantView):
                 ][0]
             except IndexError:
                 alert.channel_id = alert.channel_id - 32
+        elif (
+            not alert.channel_id
+            and alert.event_id != EVENT_IO
+            and not self.device.device_info.is_nvr
+            and self.device.cameras
+            and not any(event.id == alert.event_id for event in self.device.events_info)
+        ):
+            # Some cameras send video event alerts without a channel ID.
+            alert.channel_id = self.device.cameras[0].id
 
     def trigger_sensor(self, alert: AlertInfo) -> None:
         """Determine entity and set binary sensor state."""
