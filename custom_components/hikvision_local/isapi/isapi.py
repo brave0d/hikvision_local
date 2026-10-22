@@ -1065,8 +1065,13 @@ class ISAPIClient:
         # Triggers missing from the list, on devices that only answer them one by one
         for trigger_id in trigger_ids:
             if trigger_id not in result:
-                trigger = deep_get(await self.request(GET, f"Event/triggers/{trigger_id}"), "EventTrigger", {})
-                if trigger:
+                try:
+                    response = await self.request(GET, f"Event/triggers/{trigger_id}")
+                except (HTTPStatusError, ISAPIForbiddenError) as ex:
+                    # One unreadable trigger leaves only its own switch unknown.
+                    _LOGGER.debug("Cannot read Event/triggers/%s: %s", trigger_id, ex)
+                    continue
+                if trigger := deep_get(response, "EventTrigger", {}):
                     result[trigger_id] = notifies_center(trigger)
         return result
 
