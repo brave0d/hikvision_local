@@ -23,10 +23,12 @@ from .const import (
     CONNECTION_TYPE_PROXIED,
     EVENT_BASIC,
     EVENT_IO,
+    EVENT_MOTION,
     EVENT_PIR,
     EVENTS,
     EVENTS_ALTERNATE_ID,
     GET,
+    MOTION_TARGETS,
     MUTEX_ALTERNATE_ID,
     POST,
     PUT,
@@ -226,6 +228,10 @@ class ISAPIClient:
             self.audio_alarm = await self.get_audio_alarm()
 
         self.supported_events = await self.get_supported_events(capabilities)
+        for event in self.supported_events:
+            if event.id == EVENT_MOTION and event.url:
+                with suppress(Exception):
+                    event.targets = await self.get_motion_targets(event.url)
 
         await self.get_protocols()
 
@@ -661,6 +667,14 @@ class ISAPIClient:
             return json.loads(response)
         except ValueError:
             return {}
+
+    async def get_motion_targets(self, url: str) -> list[str]:
+        """Return the targets (human, vehicle) motion detection tells apart, from its targetType setting."""
+        data = await self.request(GET, url)
+        target_type = deep_get(data, "MotionDetection.MotionDetectionLayout.targetType", "")
+        if not isinstance(target_type, str):
+            return []
+        return [target for target in MOTION_TARGETS if target in target_type.split(",")]
 
     def get_event_url(self, event_id: str, channel_id: int, io_port_id: int, is_proxy: bool) -> str | None:
         """Get event ISAPI URL."""
