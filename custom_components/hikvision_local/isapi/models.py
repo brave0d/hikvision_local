@@ -52,6 +52,7 @@ class EventInfo:
     disabled: bool = False
     notifications: list[str] = field(default_factory=list)
     trigger_id: str | None = None  # ID in Event/triggers (e.g. VMD-1), used to set notification methods
+    targets: list[str] = field(default_factory=list)  # motion targets the camera detects (human, vehicle)
 
 
 @dataclass

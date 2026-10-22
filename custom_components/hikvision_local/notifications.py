@@ -20,7 +20,8 @@ from requests_toolbelt.multipart import MultipartDecoder
 from .const import ALARM_SERVER_PATH, DOMAIN, HIKVISION_EVENT
 from .hikvision_device import HikvisionDevice
 from .isapi import AlertInfo, IPCamera, ISAPIClient, ISAPIUnsupportedEventError
-from .isapi.const import EVENT_IO
+from .isapi.const import EVENT_IO, EVENT_MOTION, MOTION_TARGETS
+from .isapi.isapi import split_targets
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -209,6 +210,8 @@ class EventNotificationsView(HomeAssistantView):
         entity_registry = async_get(self.hass)
         entity_id = entity_registry.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, unique_id)
         if entity_id:
+            # The person and vehicle sensors can be enabled without the motion sensor.
+            self.trigger_target_sensors(entity_registry, unique_id, alert)
             entity = self.hass.states.get(entity_id)
             if entity:
                 attributes = dict(entity.attributes)
@@ -223,6 +226,20 @@ class EventNotificationsView(HomeAssistantView):
                 self.fire_hass_event(alert)
             return
         raise ValueError(f"Entity not found {entity_id}")
+
+    def trigger_target_sensors(self, entity_registry, unique_id: str, alert: AlertInfo) -> None:
+        """Set the person and vehicle sensors of a motion alert."""
+        if alert.event_id != EVENT_MOTION:
+            return
+        targets = split_targets(alert.target_type)
+        for target in MOTION_TARGETS:
+            entity_id = entity_registry.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, f"{unique_id}_{target}")
+            if not entity_id or not (entity := self.hass.states.get(entity_id)):
+                continue
+            if alert.event_state == "inactive":
+                self.hass.states.async_set(entity_id, STATE_OFF, entity.attributes)
+            elif target in targets:
+                self.hass.states.async_set(entity_id, STATE_ON, entity.attributes)
 
     def fire_hass_event(self, alert: AlertInfo):
         """Fire HASS event."""

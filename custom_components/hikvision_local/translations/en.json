@@ -28,6 +28,12 @@
   },
   "entity": {
     "binary_sensor": {
+      "motion_human": {
+        "name": "Person"
+      },
+      "motion_vehicle": {
+        "name": "Vehicle"
+      },
       "connection": {
         "name": "Connection"
       },
