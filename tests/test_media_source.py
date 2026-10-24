@@ -294,3 +294,20 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
         await source.async_resolve_media(MediaSourceItem(hass, DOMAIN, "FOO|bar", None))
     with pytest.raises(Unresolvable):
         await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "CAM|missing|1", None))
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2387G2-LSU"], indirect=True)
+async def test_device_without_storage_has_no_recordings(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A camera without an SD card or NAS isn't offered in the recordings browser."""
+    device = init_integration.runtime_data
+    assert device.storage == []
+    source = await async_get_media_source(hass)
+
+    root = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "", None))
+    assert root.children == []
+
+    # A link kept from before lists no made-up days.
+    respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/record/tracks/101/dailyDistribution").respond(status_code=403)
+    cam_id = f"CAM|{init_integration.entry_id}|{device.cameras[0].id}"
+    days = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, cam_id, None))
+    assert days.children == []
