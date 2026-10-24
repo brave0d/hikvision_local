@@ -14,7 +14,7 @@ from homeassistant.components.media_source import (
     PlayMedia,
     Unresolvable,
 )
-from homeassistant.components.stream import Stream, create_stream
+from homeassistant.components.stream import FORMAT_CONTENT_TYPE, HLS_PROVIDER, Stream, create_stream
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -47,6 +47,7 @@ STREAM_IDLE_TIMEOUT = 600
 LABELS = {
     "en": {
         "events": "Events",
+        "live": "Live",
         "motion": "Motion",
         "fieldDetection": "Intrusion",
         "lineDetection": "Line crossing",
@@ -58,6 +59,7 @@ LABELS = {
     },
     "pl": {
         "events": "Zdarzenia",
+        "live": "Na żywo",
         "motion": "Ruch",
         "fieldDetection": "Wtargnięcie",
         "lineDetection": "Przekroczenie linii",
@@ -193,11 +195,31 @@ class HikvisionMediaSource(MediaSource):
             return []
         return [event for event in events if event.channel_id in (None, camera.id)]
 
-    def _camera_thumbnail(self, device: HikvisionDevice, camera: AnalogCamera | IPCamera) -> str | None:
-        """Return a still image URL of the camera main stream entity."""
+    def _camera_entity_id(self, device: HikvisionDevice, camera: AnalogCamera | IPCamera) -> str | None:
+        """Return the entity ID of the camera's main stream, if it is enabled."""
         unique_id = slugify(f"{device.device_info.serial_no.lower()}_{get_stream_id(camera.id)}")
         entity_id = er.async_get(self.hass).async_get_entity_id("camera", DOMAIN, unique_id)
+        return entity_id if entity_id and self.hass.states.get(entity_id) else None
+
+    def _camera_thumbnail(self, device: HikvisionDevice, camera: AnalogCamera | IPCamera) -> str | None:
+        """Return a still image URL of the camera main stream entity."""
+        entity_id = self._camera_entity_id(device, camera)
         return f"/api/camera_proxy/{entity_id}" if entity_id else None
+
+    def _live(self, device: HikvisionDevice, camera: AnalogCamera | IPCamera) -> BrowseMediaSource | None:
+        """Return the camera's live view, played by Home Assistant's camera media source."""
+        if not (entity_id := self._camera_entity_id(device, camera)):
+            return None
+        return BrowseMediaSource(
+            domain="camera",
+            identifier=entity_id,
+            media_class=MediaClass.VIDEO,
+            media_content_type=FORMAT_CONTENT_TYPE[HLS_PROVIDER],
+            title=self._label("live"),
+            thumbnail=f"/api/camera_proxy/{entity_id}",
+            can_play=True,
+            can_expand=False,
+        )
 
     def _camera_name(self, device: HikvisionDevice, camera: AnalogCamera | IPCamera) -> str:
         """Return the camera name as shown in Home Assistant, falling back to the device channel name."""
@@ -228,9 +250,9 @@ class HikvisionMediaSource(MediaSource):
                 can_expand=True,
             )
             for entry_id, device in self._get_devices()
-            # Cameras without an SD card or NAS keep their recordings on the NVR, if anywhere.
-            if device.storage
             for camera in device.cameras
+            # Recordings need an SD card, disk or NAS; live view needs the camera entity.
+            if device.storage or self._camera_entity_id(device, camera)
         ]
         return BrowseMediaSource(
             domain=DOMAIN,
@@ -265,7 +287,9 @@ class HikvisionMediaSource(MediaSource):
             # The device can't list its recording days: offer the recent ones to search.
             days = [today - datetime.timedelta(days=offset) for offset in range(DAYS_FALLBACK)]
 
-        children = [
+        live = self._live(device, camera)
+        children = [live] if live else []
+        children += [
             BrowseMediaSource(
                 domain=DOMAIN,
                 identifier=f"DAY|{entry_id}|{camera_id}|{day.isoformat()}",
