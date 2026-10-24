@@ -228,6 +228,8 @@ class HikvisionMediaSource(MediaSource):
                 can_expand=True,
             )
             for entry_id, device in self._get_devices()
+            # Cameras without an SD card or NAS keep their recordings on the NVR, if anywhere.
+            if device.storage
             for camera in device.cameras
         ]
         return BrowseMediaSource(
@@ -259,7 +261,8 @@ class HikvisionMediaSource(MediaSource):
                 )
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.debug("Daily distribution not available for %s: %s", camera.name, ex)
-        if not days:
+        if not days and device.storage:
+            # The device can't list its recording days: offer the recent ones to search.
             days = [today - datetime.timedelta(days=offset) for offset in range(DAYS_FALLBACK)]
 
         children = [
