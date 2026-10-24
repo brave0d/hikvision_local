@@ -3,9 +3,11 @@
 import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from homeassistant.components import media_source
 from homeassistant.components.media_source import MediaSourceItem, Unresolvable
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 import httpx
 import pytest
@@ -229,7 +231,11 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
     respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/record/tracks/101/dailyDistribution").respond(text=DAILY_DISTRIBUTION)
     today = dt_util.now().date()
     days = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, cam_id, None))
-    titles = [child.title for child in days.children]
+    live = days.children[0]
+    assert (live.title, live.can_play, live.can_expand) == ("Live", True, False)
+    assert live.media_content_id.startswith("media-source://camera/camera.")
+    titles = [child.title for child in days.children[1:]]
+    assert titles
     assert titles == sorted(titles, reverse=True)
     assert all(datetime.date.fromisoformat(title) <= today for title in titles)
 
@@ -297,17 +303,44 @@ async def test_browse_and_resolve(hass: HomeAssistant, init_integration: MockCon
 
 
 @pytest.mark.parametrize("init_integration", ["DS-2CD2387G2-LSU"], indirect=True)
-async def test_device_without_storage_has_no_recordings(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
-    """A camera without an SD card or NAS isn't offered in the recordings browser."""
+async def test_device_without_storage_offers_live_view_only(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """A camera without an SD card or NAS has a live view but no recording days."""
     device = init_integration.runtime_data
     assert device.storage == []
     source = await async_get_media_source(hass)
 
     root = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "", None))
-    assert root.children == []
+    assert len(root.children) == 1
 
-    # A link kept from before lists no made-up days.
     respx.post(f"{TEST_HOST}/ISAPI/ContentMgmt/record/tracks/101/dailyDistribution").respond(status_code=403)
-    cam_id = f"CAM|{init_integration.entry_id}|{device.cameras[0].id}"
-    days = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, cam_id, None))
-    assert days.children == []
+    camera = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, root.children[0].identifier, None))
+    assert [child.title for child in camera.children] == ["Live"]
+
+    # Home Assistant's camera media source plays it; its stream URL is stubbed here.
+    assert await async_setup_component(hass, "media_source", {})
+    hass.config.components.add("stream")
+    with patch(
+        "homeassistant.components.camera.media_source.async_stream_endpoint_url",
+        AsyncMock(return_value="/api/hls/token/master_playlist.m3u8"),
+    ):
+        played = await media_source.async_resolve_media(hass, camera.children[0].media_content_id, None)
+    assert played.url == "/api/hls/token/master_playlist.m3u8"
+    assert played.mime_type == "application/vnd.apple.mpegurl"
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2387G2-LSU"], indirect=True)
+async def test_camera_without_entity_or_storage_is_not_listed(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """With the camera entity disabled and no storage there is nothing to show."""
+    registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(registry, init_integration.entry_id):
+        if entity.domain == "camera":
+            registry.async_update_entity(entity.entity_id, disabled_by=er.RegistryEntryDisabler.USER)
+    await hass.async_block_till_done()
+    source = await async_get_media_source(hass)
+
+    root = await source.async_browse_media(MediaSourceItem(hass, DOMAIN, "", None))
+    assert root.children == []
