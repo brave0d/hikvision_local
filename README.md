@@ -172,6 +172,7 @@ If you installed Hikvision Local with HACS, upgrading Home Assistant to 2026.11 
 If events don't arrive:
 - Home Assistant shows a repair issue when the device's Notifications Host is unset (`0.0.0.0`) or uses another path, such as `/api/hikvision` from hikvision_next.
 - The device's "Last event" diagnostic sensor shows when it last sent an alert. If it never changes, the device doesn't reach Home Assistant. Check the address, the port and any firewall between them.
+- If the device can't reach Home Assistant, or Home Assistant rejects its notifications (for example "Missing 'Host' header in request" in the log, from old firmware), turn on "Read events from the device (alert stream)" when reconfiguring the integration. The integration then keeps a connection open to the device and reads its events from `/ISAPI/Event/notification/alertStream`. The notifications host isn't used, so the integration doesn't set it; clear it in the device's web interface if it points at Home Assistant, or events arrive twice.
 
 ## Reporting issues
 

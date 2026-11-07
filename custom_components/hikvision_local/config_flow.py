@@ -22,6 +22,7 @@ import voluptuous as vol
 from . import HikvisionConfigEntry
 from .const import (
     CONF_ALARM_SERVER_HOST,
+    CONF_ALERT_STREAM,
     CONF_SET_ALARM_SERVER,
     DOMAIN,
     OLD_DOMAIN,
@@ -61,6 +62,7 @@ class HikvisionConfigFlow(ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_PASSWORD): str,
                 vol.Required(CONF_SET_ALARM_SERVER, default=True): bool,
                 vol.Required(CONF_ALARM_SERVER_HOST): str,
+                vol.Optional(CONF_ALERT_STREAM, default=False): bool,
                 vol.Optional(RTSP_PORT_FORCED): vol.And(int, vol.Range(min=1)),
             }
         )
@@ -149,6 +151,7 @@ class HikvisionConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_VERIFY_SSL: True,
                 CONF_SET_ALARM_SERVER: False,
                 CONF_ALARM_SERVER_HOST: "",
+                CONF_ALERT_STREAM: False,
                 **{key: value for key, value in old_entry.data.items() if key in IMPORTED_KEYS},
             }
             if not all(data.get(key) for key in (CONF_HOST, CONF_USERNAME, CONF_PASSWORD)):

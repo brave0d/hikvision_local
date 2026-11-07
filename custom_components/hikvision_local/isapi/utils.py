@@ -76,3 +76,40 @@ def parse_isapi_time(value: str | None) -> datetime.datetime | None:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=datetime.UTC)
     return parsed.astimezone(datetime.UTC)
+
+
+ALERT_START = b"<EventNotificationAlert"
+ALERT_END = b"</EventNotificationAlert>"
+MAX_ALERT_BYTES = 1024 * 1024
+
+
+class AlertStreamSplitter:
+    """Cut EventNotificationAlert documents out of the bytes of an alert stream.
+
+    Alerts are found by their XML root element, not by the multipart boundaries, which firmware
+    versions format differently. Anything between alerts, such as pictures, is dropped.
+    """
+
+    def __init__(self) -> None:
+        """Initialize."""
+        self._buffer = bytearray()
+
+    def feed(self, chunk: bytes) -> list[str]:
+        """Add a chunk of the stream and return the alerts it completes."""
+        self._buffer += chunk
+        alerts = []
+        while True:
+            start = self._buffer.find(ALERT_START)
+            if start == -1:
+                # Keep a start tag that is cut in two by the chunk boundary.
+                del self._buffer[: max(0, len(self._buffer) - len(ALERT_START) + 1)]
+                return alerts
+            end = self._buffer.find(ALERT_END, start)
+            if end == -1:
+                del self._buffer[:start]
+                if len(self._buffer) > MAX_ALERT_BYTES:
+                    self._buffer.clear()
+                return alerts
+            end += len(ALERT_END)
+            alerts.append(self._buffer[start:end].decode("utf-8", errors="replace"))
+            del self._buffer[:end]
