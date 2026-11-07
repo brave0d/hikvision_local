@@ -28,6 +28,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Image entities for the latest snapshots
 - Audio alarm settings for cameras with a speaker: alarm sound, volume and how many times it plays, plus a button that plays the alarm once to test it
 - Recordings browser: play recordings from the camera's SD card or the NVR's disks in the Home Assistant media browser, with alarm events marked, and each camera's live view next to them
+- Two-way audio for cameras with a speaker (Home Assistant 2026.11 and later): talk through the camera from its live view. Turn on the "Two-way audio" preview under Settings > System > Labs. It needs WebRTC (Home Assistant's built-in go2rtc), and the browser allows the microphone only when Home Assistant is opened over HTTPS. Cameras connected to an NVR don't get it: NVRs offer talk only through ISAPI, not on the RTSP stream that Home Assistant uses (checked on a DS-7604NXI).
 - PTZ actions: `ptz_move`, `ptz_stop`, and an ONVIF-style `ptz` action for cards such as Advanced Camera Card
 - Supplement light (ColorVu white light, IR) as light entities, also for cameras connected to an NVR. Turning the light off sets the camera's supplement light mode to off (`close`) until it's turned on again, so the camera has no light at night meanwhile.
 - Connection status of each IP camera connected to an NVR, as a diagnostic binary sensor
@@ -159,6 +160,7 @@ If you installed Hikvision Local with HACS, upgrading Home Assistant to 2026.11 
   - Remote: Parameters Settings
   - Remote: Log Search / Interrogate Working Status
   - Remote: Live View
+  - Remote: Two-way Audio (for talking through the camera)
   - Remote: Notify Surveillance Center / Trigger Alarm Output
 - Events
   - Notify Surveillance Center (can also be set from Home Assistant with the event's "Notify HA" switch)
