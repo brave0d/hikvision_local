@@ -62,9 +62,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: HikvisionConfigEntry) ->
     device.pending_initialization = True
     try:
         await device.get_hardware_info()
-        device_info = device.hass_device_info()
         device_registry = dr.async_get(hass)
-        device_registry.async_get_or_create(config_entry_id=entry.entry_id, **device_info)
+        device_registry.async_get_or_create(config_entry_id=entry.entry_id, **device.device_registry_fields())
     except ISAPIUnauthorizedError as ex:
         raise ConfigEntryAuthFailed from ex
     except Exception as ex:  # pylint: disable=broad-except
