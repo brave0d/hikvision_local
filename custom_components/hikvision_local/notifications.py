@@ -295,13 +295,19 @@ async def read_alert_stream(hass: HomeAssistant, device: HikvisionDevice) -> Non
                 if unavailable:
                     _LOGGER.info("Alert stream of %s is available again", device.host)
                     unavailable = False
+                if not received:
+                    # The credentials work, so a later 401 gets a retry before reauthentication.
+                    device.auth_token_expired = False
                 received = True
                 delay = ALERT_STREAM_RETRY_FIRST
                 handler.handle_alert(xml, device=device)
             error = "closed by the device"
         except ISAPIUnauthorizedError as ex:
-            # Starts reauthentication when it happens twice in a row.
+            # The first 401 retries with a new session, the second starts reauthentication.
             device.handle_exception(ex, "alert stream")
+            if not device.auth_token_expired:
+                # Stop instead of locking the device user; a successful reauth reloads the entry.
+                return
             error = "unauthorized"
         except httpx.HTTPError as ex:
             error = f"{type(ex).__name__} {ex}".strip()

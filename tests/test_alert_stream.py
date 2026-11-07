@@ -64,7 +64,7 @@ def alert_stream_response(*alerts: str) -> httpx.Response:
 
 async def wait_for(condition) -> None:
     """Let the alert stream task run until the condition holds."""
-    for _ in range(100):
+    for _ in range(1000):
         if condition():
             return
         await asyncio.sleep(0)
@@ -195,3 +195,26 @@ async def test_no_alert_stream_by_default(hass: HomeAssistant, respx_mock, init_
     )
     assert hass.states.get(last_event).state == STATE_UNKNOWN
     assert hass.states.get(MOTION_SENSOR).state == STATE_OFF
+
+
+@pytest.mark.parametrize("mock_config_entry", [TEST_CONFIG_ALERT_STREAM], indirect=True)
+@pytest.mark.parametrize("init_integration", [("DS-2CD2386G2-IU", True)], indirect=True)
+async def test_alert_stream_stops_for_reauth(
+    hass: HomeAssistant, init_integration: MockConfigEntry, mock_config_entry: MockConfigEntry
+) -> None:
+    """Rejected credentials start reauthentication once and stop the stream, so the user isn't locked."""
+    route = respx.get(ALERT_STREAM_URL).respond(status_code=401)
+
+    with patch("custom_components.hikvision_local.notifications.ALERT_STREAM_RETRY_FIRST", 0):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+        await wait_for(lambda: hass.config_entries.flow.async_progress_by_handler(DOMAIN))
+        for _ in range(100):
+            await asyncio.sleep(0)
+
+        assert route.call_count == 2
+        flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+        assert [flow["context"]["source"] for flow in flows] == ["reauth"]
+
+        assert await hass.config_entries.async_unload(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
