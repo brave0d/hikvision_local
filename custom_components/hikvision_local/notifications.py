@@ -57,16 +57,26 @@ class EventNotificationsView(HomeAssistantView):
     async def post(self, request: web.Request):
         """Accept the POST request from NVR or IP Camera."""
 
+        _LOGGER.debug("--- Incoming event notification ---")
+        _LOGGER.debug("Source: %s", request.remote)
         try:
-            _LOGGER.debug("--- Incoming event notification ---")
-            _LOGGER.debug("Source: %s", request.remote)
             xml = await self.parse_event_request(request)
-            if not xml:
+        except Exception as ex:  # pylint: disable=broad-except
+            _LOGGER.warning("Cannot process incoming event %s", ex)
+        else:
+            if xml:
+                self.handle_alert(xml, remote=request.remote)
+            else:
                 _LOGGER.debug("Ignoring event notification without content")
-                return web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
+
+        return web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
+
+    def handle_alert(self, xml: str, remote: str | None = None, device: HikvisionDevice | None = None) -> None:
+        """Process one alert: find its device unless given, then update sensors and fire events."""
+        try:
             _LOGGER.debug("alert info: %s", xml)
             alert = ISAPIClient.parse_event_notification(xml)
-            self.device = self.get_isapi_device(request.remote, alert)
+            self.device = device or self.get_isapi_device(remote, alert)
             self.update_alert_channel(alert)
             async_dispatcher_send(self.hass, SIGNAL_ALERT_RECEIVED.format(self.device.entry.entry_id), alert)
             self.trigger_sensor(alert)
@@ -80,9 +90,6 @@ class EventNotificationsView(HomeAssistantView):
                 _LOGGER.debug("Ignoring %s events, the integration has no entities for them", ex.event_id)
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.warning("Cannot process incoming event %s", ex)
-
-        response = web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
-        return response
 
     def get_isapi_device(self, device_ip, alert: AlertInfo) -> HikvisionDevice:
         """Get integration instance for device sending alert."""
