@@ -115,6 +115,7 @@ class CapabilitiesInfo:
     support_channel_status: bool = False  # NVR reports the connection status of its IP cameras
     input_ports: int = 0
     output_ports: int = 0
+    audio_outputs: int = 0  # speakers or audio out connectors
 
 
 @dataclass

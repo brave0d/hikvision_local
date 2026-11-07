@@ -73,6 +73,7 @@ async def test_async_setup_entry_nvr(hass: HomeAssistant, init_integration: Mock
     assert device_info.model == "DS-7608NXI-I2/8P/S"
     assert device_info.name == "nvr"
     assert capabilities.output_ports == 1
+    assert capabilities.audio_outputs == 1
     assert device.protocols.rtsp_port == "10554"
     assert device_info.serial_no == "DS-7608NXI-I0/0P/S0000000000CCRRJ00000000WCVU"
     assert len(device.storage) == 1
@@ -115,6 +116,7 @@ async def test_async_setup_entry_ipc(hass: HomeAssistant, init_integration: Mock
     assert device_info.model == "DS-2CD2386G2-IU"
     assert device_info.name == "yard"
     assert capabilities.output_ports == 0
+    assert capabilities.audio_outputs == 0
     assert device.protocols.rtsp_port == "10554"
     assert device_info.serial_no == "DS-2CD2386G2-IU00000000AAWRJ00000000"
     assert len(device.storage) == 2
@@ -181,6 +183,7 @@ async def test_async_setup_entry_nvr_outside_network(hass: HomeAssistant, init_i
     assert device_info.model == "DS-2CD2T86G2-ISU/SL"
     assert device_info.name == "CAMERA 3"
     assert capabilities.output_ports == 1
+    assert capabilities.audio_outputs == 1
     assert device.protocols.rtsp_port == "5151"
     assert device_info.serial_no == "DS-2CD2T86G2-ISU/SL00000000AAWRAE0000000"
     assert len(device.storage) == 1
