@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from http import HTTPStatus
 import ipaddress
 import logging
@@ -16,11 +17,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity_registry import async_get
 from homeassistant.util import slugify
+import httpx
 from requests_toolbelt.multipart import MultipartDecoder
 
 from .const import ALARM_SERVER_PATH, DOMAIN, HIKVISION_EVENT, SIGNAL_ALERT_RECEIVED
 from .hikvision_device import HikvisionDevice
-from .isapi import AlertInfo, IPCamera, ISAPIClient, ISAPIUnsupportedEventError
+from .isapi import AlertInfo, IPCamera, ISAPIClient, ISAPIUnauthorizedError, ISAPIUnsupportedEventError
 from .isapi.const import EVENT_IO, EVENT_MOTION, MOTION_TARGETS
 from .isapi.isapi import split_targets
 
@@ -30,6 +32,9 @@ CONTENT_TYPE = "Content-Type"
 CONTENT_TYPE_XML = ("application/xml", "text/xml")
 CONTENT_TYPE_IMAGE = "image/jpeg"
 MAX_LOGGED_UNSUPPORTED_EVENTS = 50
+ALERT_STREAM_RETRY_FIRST = 10
+HEARTBEAT_EVENT = "videoloss"
+ALERT_STREAM_RETRY_MAX = 300
 
 
 def _mimetype(content_type: str | None) -> str:
@@ -72,13 +77,19 @@ class EventNotificationsView(HomeAssistantView):
         return web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
 
     def handle_alert(self, xml: str, remote: str | None = None, device: HikvisionDevice | None = None) -> None:
-        """Process one alert: find its device unless given, then update sensors and fire events."""
+        """Process one alert: find its device unless given, then update sensors and fire events.
+
+        A device is given for alerts from its alert stream, where the heartbeats (inactive
+        videoloss alerts about every 10 seconds) don't count as events for the "Last event" sensor.
+        """
         try:
             _LOGGER.debug("alert info: %s", xml)
             alert = ISAPIClient.parse_event_notification(xml)
             self.device = device or self.get_isapi_device(remote, alert)
             self.update_alert_channel(alert)
-            async_dispatcher_send(self.hass, SIGNAL_ALERT_RECEIVED.format(self.device.entry.entry_id), alert)
+            heartbeat = device is not None and alert.event_id == HEARTBEAT_EVENT and alert.event_state == "inactive"
+            if not heartbeat:
+                async_dispatcher_send(self.hass, SIGNAL_ALERT_RECEIVED.format(self.device.entry.entry_id), alert)
             self.trigger_sensor(alert)
         except ISAPIUnsupportedEventError as ex:
             if not ex.event_id:
@@ -266,3 +277,39 @@ class EventNotificationsView(HomeAssistantView):
             HIKVISION_EVENT,
             message,
         )
+
+
+async def read_alert_stream(hass: HomeAssistant, device: HikvisionDevice) -> None:
+    """Keep the device's alert stream open and process its alerts, reconnecting when it ends.
+
+    For devices that can't send notifications to Home Assistant, for example old firmware that
+    leaves out the Host header, which Home Assistant's web server rejects.
+    """
+    handler = EventNotificationsView(hass)
+    delay = ALERT_STREAM_RETRY_FIRST
+    unavailable = False
+    while True:
+        received = False
+        try:
+            async for xml in device.alert_stream():
+                if unavailable:
+                    _LOGGER.info("Alert stream of %s is available again", device.host)
+                    unavailable = False
+                received = True
+                delay = ALERT_STREAM_RETRY_FIRST
+                handler.handle_alert(xml, device=device)
+            error = "closed by the device"
+        except ISAPIUnauthorizedError as ex:
+            # Starts reauthentication when it happens twice in a row.
+            device.handle_exception(ex, "alert stream")
+            error = "unauthorized"
+        except httpx.HTTPError as ex:
+            error = f"{type(ex).__name__} {ex}".strip()
+        if received or unavailable:
+            # A stream that delivered alerts reconnects quietly; an outage is logged once.
+            _LOGGER.debug("Alert stream of %s ended (%s), retrying in %s s", device.host, error, delay)
+        else:
+            _LOGGER.warning("Alert stream of %s is unavailable (%s), retrying", device.host, error)
+            unavailable = True
+        await asyncio.sleep(delay)
+        delay = min(delay * 2, ALERT_STREAM_RETRY_MAX)

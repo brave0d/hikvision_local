@@ -57,7 +57,19 @@ from .models import (
     SupplementLightCapabilities,
     SupplementLightState,
 )
-from .utils import bool_to_str, deep_get, format_isapi_time, parse_isapi_response, parse_isapi_time, str_to_bool
+from .utils import (
+    AlertStreamSplitter,
+    bool_to_str,
+    deep_get,
+    format_isapi_time,
+    parse_isapi_response,
+    parse_isapi_time,
+    str_to_bool,
+)
+
+ALERT_STREAM_PATH = "Event/notification/alertStream"
+# Devices send a heartbeat (an inactive videoloss alert) about every 10 seconds.
+ALERT_STREAM_READ_TIMEOUT = 60
 
 
 # Helper to sanitize channel IDs (e.g. converting "I-1" to 1)
@@ -1435,6 +1447,29 @@ class ISAPIClient:
             raise
         else:
             return result
+
+    async def alert_stream(self) -> AsyncIterator[str]:
+        """Open the device's alert stream and yield the XML of each alert.
+
+        Ends when the device closes the stream. Raises httpx.ReadTimeout when the device sends
+        nothing, not even a heartbeat, for ALERT_STREAM_READ_TIMEOUT seconds.
+        """
+        if not self._auth_method:
+            await self._detect_auth_method()
+        url = self.get_isapi_url(ALERT_STREAM_PATH)
+        timeout = httpx.Timeout(self.timeout, read=ALERT_STREAM_READ_TIMEOUT)
+        async with self._session.stream("GET", url, auth=self._auth_method, timeout=timeout) as response:
+            try:
+                response.raise_for_status()
+            except HTTPStatusError as ex:
+                if ex.response.status_code == HTTPStatus.UNAUTHORIZED:
+                    raise ISAPIUnauthorizedError(ex) from ex
+                raise
+            _LOGGER.debug("--- [GET] %s opened", url)
+            splitter = AlertStreamSplitter()
+            async for chunk in response.aiter_bytes():
+                for xml in splitter.feed(chunk):
+                    yield xml
 
     async def request_bytes(
         self,

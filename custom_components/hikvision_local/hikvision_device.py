@@ -16,6 +16,7 @@ from .const import (
     ALARM_SERVER_PATH,
     AUDIO_ALARM_COORDINATOR,
     CONF_ALARM_SERVER_HOST,
+    CONF_ALERT_STREAM,
     CONF_SET_ALARM_SERVER,
     DOMAIN,
     EVENTS,
@@ -55,7 +56,10 @@ class HikvisionDevice(ISAPIClient):
         self.entry = entry
         self.hass = hass
         self.auth_token_expired = False
-        self.control_alarm_server_host = config[CONF_SET_ALARM_SERVER]
+        # With the alert stream, the integration reads events from the device, which needs no
+        # notifications host.
+        self.alert_stream_enabled = config.get(CONF_ALERT_STREAM, False)
+        self.control_alarm_server_host = config[CONF_SET_ALARM_SERVER] and not self.alert_stream_enabled
         self.alarm_server_host = config[CONF_ALARM_SERVER_HOST]
 
         # init ISAPI client
@@ -188,8 +192,9 @@ class HikvisionDevice(ISAPIClient):
 
     def check_alarm_server(self, alarm_server: AlarmServer | None) -> None:
         """Raise a repair issue when the device doesn't send events to Home Assistant."""
-        if self.control_alarm_server_host or alarm_server is None:
-            # The integration sets the alarm server itself, or the device can't report it.
+        if self.control_alarm_server_host or self.alert_stream_enabled or alarm_server is None:
+            # The integration sets the alarm server itself, reads the alert stream instead, or the
+            # device can't report it.
             ir.async_delete_issue(self.hass, DOMAIN, self.alarm_server_issue_id)
             return
         ip_address = alarm_server.ip_address if alarm_server.ip_address not in (None, "", "0.0.0.0") else None

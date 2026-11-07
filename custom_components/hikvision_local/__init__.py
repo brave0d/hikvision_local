@@ -26,7 +26,7 @@ from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN
 from .hikvision_device import HikvisionDevice
 from .isapi import ISAPIUnauthorizedError
-from .notifications import EventNotificationsView
+from .notifications import EventNotificationsView, read_alert_stream
 from .services import setup_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,6 +84,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HikvisionConfigEntry) ->
         hass.http.register_view(EventNotificationsView(hass))
 
     refresh_disabled_entities_in_registry(hass, device)
+
+    if device.alert_stream_enabled:
+        # Cancelled when the entry unloads.
+        entry.async_create_background_task(hass, read_alert_stream(hass, device), f"{DOMAIN} alert stream")
 
     return True
 
