@@ -1,5 +1,7 @@
 """Tests for camera platform."""
 
+from dataclasses import dataclass
+
 from homeassistant.components.camera import DOMAIN as CAMERA_DOMAIN
 from homeassistant.components.camera.helper import get_camera_from_entity_id
 from homeassistant.const import STATE_IDLE
@@ -10,6 +12,7 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
 
+from custom_components.hikvision_local import camera as camera_platform
 from custom_components.hikvision_local.hikvision_device import HikvisionDevice
 from tests.conftest import TEST_HOST, load_fixture
 
@@ -189,3 +192,55 @@ async def test_nvr_with_onvif_cameras(hass: HomeAssistant, init_integration: Moc
         unique_serial_no.add(camera.serial_no)
 
     assert len(device.cameras) == len(unique_serial_no)
+
+
+try:
+    from homeassistant.components.camera import CameraEntityCapabilities
+except ImportError:  # Home Assistant 2026.10: stand-in with the same shape
+
+    @dataclass(frozen=True, kw_only=True)
+    class CameraEntityCapabilities:
+        two_way_audio: bool = False
+
+
+@pytest.mark.parametrize(
+    ("init_integration", "two_way_audio"),
+    [
+        ("DS-2CD2387G2-LSU", True),  # camera with a speaker
+        ("DS-2SE4C425MWG-E-26", True),  # PTZ dome with a speaker
+        ("DS-2TD1228-2-QA", True),  # thermal camera with two channels
+        ("DS-2CD2386G2-IU", False),  # camera without a speaker
+        ("DS-7608NXI-I2", False),  # NVR: no RTSP backchannel for its channels
+        ("DVR-108P-G", False),  # DVR with an audio output
+    ],
+    indirect=["init_integration"],
+)
+async def test_camera_two_way_audio(
+    hass: HomeAssistant, init_integration: MockConfigEntry, monkeypatch: pytest.MonkeyPatch, two_way_audio: bool
+) -> None:
+    """Cameras with a speaker declare two-way audio."""
+
+    monkeypatch.setattr(camera_platform, "CameraEntityCapabilities", CameraEntityCapabilities)
+    assert await hass.config_entries.async_reload(init_integration.entry_id)
+    await hass.async_block_till_done()
+
+    entity_ids = hass.states.async_entity_ids(CAMERA_DOMAIN)
+    assert entity_ids
+    for entity_id in entity_ids:
+        capabilities = getattr(get_camera_from_entity_id(hass, entity_id), "_attr_camera_entity_capabilities", None)
+        assert (capabilities == CameraEntityCapabilities(two_way_audio=True)) is two_way_audio
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2387G2-LSU"], indirect=True)
+async def test_camera_without_capabilities_support(
+    hass: HomeAssistant, init_integration: MockConfigEntry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Without CameraEntityCapabilities (Home Assistant 2026.10), cameras set up without two-way audio."""
+
+    monkeypatch.setattr(camera_platform, "CameraEntityCapabilities", None)
+    assert await hass.config_entries.async_reload(init_integration.entry_id)
+    await hass.async_block_till_done()
+
+    entity_id = hass.states.async_entity_ids(CAMERA_DOMAIN)[0]
+    camera_entity = get_camera_from_entity_id(hass, entity_id)
+    assert "_attr_camera_entity_capabilities" not in vars(camera_entity)

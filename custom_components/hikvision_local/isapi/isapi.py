@@ -228,6 +228,7 @@ class ISAPIClient:
         )
         self.capabilities.input_ports = int(deep_get(capabilities, "SysCap.IOCap.IOInputPortNums", 0))
         self.capabilities.output_ports = int(deep_get(capabilities, "SysCap.IOCap.IOOutputPortNums", 0))
+        self.capabilities.audio_outputs = int(deep_get(capabilities, "SysCap.AudioCap.audioOutputNums", 0))
         self.capabilities.support_alarm_server = bool(await self.get_alarm_server())
 
         # Set if NVR based on whether more than 1 supported IP or analog cameras
