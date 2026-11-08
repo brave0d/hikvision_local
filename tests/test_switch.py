@@ -1,9 +1,17 @@
 """Tests for switch platform."""
 
 import json
+from unittest.mock import AsyncMock, patch
 
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
-from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON, STATE_OFF, STATE_ON
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    STATE_OFF,
+    STATE_ON,
+    STATE_UNAVAILABLE,
+)
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
 import httpx
@@ -12,6 +20,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
 import xmltodict
 
+from custom_components.hikvision_local.const import EVENTS_COORDINATOR
 from custom_components.hikvision_local.hikvision_device import HikvisionDevice
 from custom_components.hikvision_local.isapi import EventInfo
 from custom_components.hikvision_local.isapi.const import EVENT_IO
@@ -305,3 +314,44 @@ async def test_holiday_mode_on_29_february(hass: HomeAssistant, init_integration
 
     holiday = xmltodict.parse(endpoint.calls.last.request.content)["HolidayList"]["holiday"][0]
     assert holiday["holidayDate"] == {"startDate": "2028-02-29", "endDate": "2029-02-28"}
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_switches_unavailable_when_device_offline(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """Switches go unavailable while the device doesn't answer, and come back when it does."""
+
+    entity_id = "switch.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_1_alarm_output"
+    device: HikvisionDevice = init_integration.runtime_data
+    coordinator = device.coordinators[EVENTS_COORDINATOR]
+    offline = AsyncMock(side_effect=httpx.ConnectError("All connection attempts failed"))
+
+    with (
+        patch.object(device, "get_event_enabled_state", offline),
+        patch.object(device, "get_io_port_status", offline),
+    ):
+        await coordinator.async_refresh()
+        await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == STATE_UNAVAILABLE
+
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == STATE_OFF
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_switches_stay_available_when_requests_are_refused(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """A device that answers, even with errors, isn't offline."""
+
+    entity_id = "switch.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_1_alarm_output"
+    device: HikvisionDevice = init_integration.runtime_data
+    refused = AsyncMock(side_effect=ValueError("refused"))
+
+    with (
+        patch.object(device, "get_event_enabled_state", refused),
+        patch.object(device, "get_io_port_status", refused),
+    ):
+        await device.coordinators[EVENTS_COORDINATOR].async_refresh()
+        await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state != STATE_UNAVAILABLE
