@@ -43,7 +43,8 @@ class EventsCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via ISAPI."""
         data = {}
-        # Requests for event and output states, and how many found the device unreachable
+        # Requests for event and output states (events without a URL send none), and how many found
+        # the device unreachable
         attempts = unreachable = 0
 
         # Get camera event status
@@ -51,7 +52,7 @@ class EventsCoordinator(DataUpdateCoordinator):
             for event in camera.events_info:
                 if event.disabled:
                     continue
-                attempts += 1
+                attempts += bool(event.url)
                 try:
                     _id = ENTITY_ID_FORMAT.format(event.unique_id)
                     data[_id] = await self.device.get_event_enabled_state(event)
@@ -63,7 +64,7 @@ class EventsCoordinator(DataUpdateCoordinator):
         for event in self.device.events_info:
             if event.disabled:
                 continue
-            attempts += 1
+            attempts += bool(event.url)
             try:
                 _id = ENTITY_ID_FORMAT.format(event.unique_id)
                 data[_id] = await self.device.get_event_enabled_state(event)
