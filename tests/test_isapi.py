@@ -401,3 +401,21 @@ async def test_event_switch_mutex_maps_vmd_human_vehicle(mock_isapi: ISAPIClient
     issues = await mock_isapi.get_event_switch_mutex(EventInfo(id="fielddetection", channel_id=1, io_port_id=0), 1)
 
     assert [issue.event_id for issue in issues] == ["motiondetection"]
+
+
+def test_parse_event_notification_with_several_durations():
+    """A duration alert listing several events is read from the first one."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+    <ipAddress>1.0.0.10</ipAddress>
+    <channelID>1</channelID>
+    <eventType>duration</eventType>
+    <eventState>active</eventState>
+    <DurationList>
+    <Duration><relationEvent>linedetection</relationEvent><occurrences>1</occurrences></Duration>
+    <Duration><relationEvent>fielddetection</relationEvent><occurrences>1</occurrences></Duration>
+    </DurationList>
+    </EventNotificationAlert>"""
+
+    alert = ISAPIClient.parse_event_notification(xml)
+
+    assert alert.event_id == "linedetection"
