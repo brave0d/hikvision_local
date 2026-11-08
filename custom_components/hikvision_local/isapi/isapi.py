@@ -1295,7 +1295,11 @@ class ISAPIClient:
         event_id = alert.get("eventType")
         if not event_id or event_id == "duration":
             # <EventNotificationAlert version="2.0"
-            event_id = deep_get(alert, "DurationList.Duration.relationEvent", "")
+            duration = deep_get(alert, "DurationList.Duration", {})
+            if isinstance(duration, list):
+                # Several events at once: take the first
+                duration = duration[0] if duration else {}
+            event_id = duration.get("relationEvent", "") if isinstance(duration, dict) else ""
         raw_event_type = event_id
         event_id = normalize_event_id(event_id)
 

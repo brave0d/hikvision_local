@@ -387,3 +387,21 @@ async def test_events_notify_center_skips_unreadable_triggers(mock_isapi):
     mock_isapi.request = AsyncMock(side_effect=respond)
 
     assert await mock_isapi.get_events_notify_center(["VMD-1", "scenechangedetection-1"]) == {"VMD-1": True}
+
+
+def test_parse_event_notification_with_several_durations():
+    """A duration alert listing several events is read from the first one."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+    <ipAddress>1.0.0.10</ipAddress>
+    <channelID>1</channelID>
+    <eventType>duration</eventType>
+    <eventState>active</eventState>
+    <DurationList>
+    <Duration><relationEvent>linedetection</relationEvent><occurrences>1</occurrences></Duration>
+    <Duration><relationEvent>fielddetection</relationEvent><occurrences>1</occurrences></Duration>
+    </DurationList>
+    </EventNotificationAlert>"""
+
+    alert = ISAPIClient.parse_event_notification(xml)
+
+    assert alert.event_id == "linedetection"
