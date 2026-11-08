@@ -2,7 +2,7 @@
 
 from http import HTTPStatus
 import logging
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
@@ -593,3 +593,17 @@ async def test_alert_without_entity_logs_at_debug(
     assert response.status == HTTPStatus.OK
     assert "Cannot process incoming event" not in caplog.text
     assert "No entity for pir alert on channel 1" in caplog.text
+
+
+async def test_hostname_resolved_in_executor(hass: HomeAssistant) -> None:
+    """A device configured by hostname is resolved in the executor, not in the event loop."""
+
+    view = EventNotificationsView(hass)
+    with (
+        patch("custom_components.hikvision_local.notifications.socket.gethostbyname", return_value="1.0.0.7") as lookup,
+        patch.object(hass, "async_add_executor_job", wraps=hass.async_add_executor_job) as executor,
+    ):
+        assert await view.get_ip("camera.local") == "1.0.0.7"
+        assert await view.get_ip("1.0.0.8") == "1.0.0.8"
+
+    executor.assert_called_once_with(lookup, "camera.local")
