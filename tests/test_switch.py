@@ -317,22 +317,24 @@ async def test_holiday_mode_on_29_february(hass: HomeAssistant, init_integration
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
-async def test_switches_unavailable_when_device_offline(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
-    """Switches go unavailable while the device doesn't answer, and come back when it does."""
+async def test_switches_unavailable_when_device_offline(
+    hass: HomeAssistant, init_integration: MockConfigEntry, respx_mock: respx.MockRouter
+) -> None:
+    """Switches go unavailable while every request times out, and come back when the device answers."""
 
     entity_id = "switch.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_1_alarm_output"
-    device: HikvisionDevice = init_integration.runtime_data
-    coordinator = device.coordinators[EVENTS_COORDINATOR]
-    offline = AsyncMock(side_effect=httpx.ConnectError("All connection attempts failed"))
+    coordinator = init_integration.runtime_data.coordinators[EVENTS_COORDINATOR]
+    routes = list(respx_mock.routes)
 
-    with (
-        patch.object(device, "get_event_enabled_state", offline),
-        patch.object(device, "get_io_port_status", offline),
-    ):
-        await coordinator.async_refresh()
-        await hass.async_block_till_done()
+    respx_mock.clear()
+    respx_mock.route().mock(side_effect=httpx.ConnectTimeout("timed out"))
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
     assert hass.states.get(entity_id).state == STATE_UNAVAILABLE
 
+    respx_mock.clear()
+    for route in routes:
+        respx_mock.routes.add(route)
     await coordinator.async_refresh()
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).state == STATE_OFF
