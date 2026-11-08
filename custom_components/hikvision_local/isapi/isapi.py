@@ -1504,7 +1504,16 @@ class ISAPIClient:
             if not self._auth_method:
                 await self._detect_auth_method()
 
+            data.setdefault("timeout", self.timeout)
             async with self._session.stream(method, full_url, auth=self._auth_method, **data) as response:
+                if response.is_error:
+                    body = await response.aread()
+                    if not body.lstrip().startswith(b"<?xml"):
+                        # A 401 or an HTML error page isn't an image.
+                        response.raise_for_status()
+                    # ISAPI XML errors are read by the caller.
+                    yield body.lstrip()
+                    return
                 async for chunk in response.aiter_bytes():
                     yield chunk
         except httpx.HTTPError as ex:
