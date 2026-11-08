@@ -35,6 +35,7 @@ from tests.conftest import TEST_CONFIG, TEST_CONFIG_OUTSIDE_NETWORK, TEST_CONFIG
         "DS-2CD2387G2-LSU",
         "DS-7604NXI-K1",
         "DVR-108P-G",
+        "DS-7108HQHI-K1",
     ],
     indirect=True,
 )
@@ -315,3 +316,22 @@ async def test_notifications_view_registered_when_first_entry_fails(
     assert earlier.state is not ConfigEntryState.LOADED
     assert init_integration.state is ConfigEntryState.LOADED
     view.assert_called_once_with(hass)
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7108HQHI-K1"], indirect=True)
+async def test_async_setup_entry_hybrid_dvr_with_ip_camera(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """A hybrid DVR with an IP camera on channel 11 and four of its eight analog inputs in use."""
+
+    device: HikvisionDevice = init_integration.runtime_data
+    assert init_integration.state == ConfigEntryState.LOADED
+    assert device.device_info.is_nvr is True
+    assert device.capabilities.analog_cameras_inputs == 8
+    assert [(camera.id, camera.connection_type) for camera in device.cameras] == [
+        (11, "Proxied"),
+        (1, "Direct"),
+        (2, "Direct"),
+        (3, "Direct"),
+        (4, "Direct"),
+    ]
