@@ -1034,7 +1034,7 @@ class ISAPIClient:
 
         if mutex_list := response.get("MutexFunctionList"):
             for mutex_item in mutex_list:
-                mutex_event_id = mutex_item.get("mutexFunction")
+                mutex_event_id = (mutex_item.get("mutexFunction") or "").lower()
                 if EVENTS_ALTERNATE_ID.get(mutex_event_id):
                     mutex_event_id = EVENTS_ALTERNATE_ID[mutex_event_id]
 
