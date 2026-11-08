@@ -626,3 +626,74 @@ async def test_field_detection_alert_with_two_regions(hass: HomeAssistant, init_
         {"region_id": 3, "detection_target": "human"},
         {"region_id": 1, "detection_target": "vehicle"},
     ]
+
+
+DURATION_ALERT = """<?xml version="1.0" encoding="UTF-8"?>
+<EventNotificationAlert version="2.0" xmlns="http://www.hikvision.com/ver20/XMLSchema">
+    <ipAddress>1.0.0.255</ipAddress>
+    <macAddress>a6:63:9e:f8:01:09</macAddress>
+    <channelID>1</channelID>
+    <eventType>duration</eventType>
+    <eventState>active</eventState>
+    <DurationList>{durations}</DurationList>
+</EventNotificationAlert>"""
+
+
+def duration_alert(*events: str) -> str:
+    return DURATION_ALERT.format(
+        durations="".join(f"<Duration><relationEvent>{event}</relationEvent></Duration>" for event in events)
+    )
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2146G2-ISU"], indirect=True)
+async def test_duration_alert_with_several_events(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """A duration alert listing several ongoing events turns on each event's sensor and fires each event."""
+
+    prefix = "binary_sensor.ds_2cd2146g2_isu00000000aawrg00000000_1"
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
+
+    request = mock_event_notification(None, payload=duration_alert("linedetection", "fielddetection"))
+    response = await EventNotificationsView(hass).post(request)
+    await hass.async_block_till_done()
+
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(f"{prefix}_linedetection").state == STATE_ON
+    assert hass.states.get(f"{prefix}_fielddetection").state == STATE_ON
+    assert [event.data["event_id"] for event in bus_events] == ["linedetection", "fielddetection"]
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2146G2-ISU"], indirect=True)
+async def test_duration_alert_skips_unsupported_events(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """An unsupported event in a duration list doesn't stop the supported ones."""
+
+    prefix = "binary_sensor.ds_2cd2146g2_isu00000000aawrg00000000_1"
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
+
+    request = mock_event_notification(None, payload=duration_alert("unknownevent", "fielddetection"))
+    await EventNotificationsView(hass).post(request)
+    await hass.async_block_till_done()
+
+    assert hass.states.get(f"{prefix}_fielddetection").state == STATE_ON
+    assert [event.data["event_id"] for event in bus_events] == ["fielddetection"]
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2146G2-ISU"], indirect=True)
+async def test_duration_alert_continues_after_a_failing_event(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """An error on one event of a duration alert doesn't stop the next one."""
+
+    prefix = "binary_sensor.ds_2cd2146g2_isu00000000aawrg00000000_1"
+    view = EventNotificationsView(hass)
+    trigger_sensor = view.trigger_sensor
+
+    def fail_first(alert):
+        if alert.event_id == "linedetection":
+            raise RuntimeError("broken")
+        trigger_sensor(alert)
+
+    with patch.object(view, "trigger_sensor", side_effect=fail_first):
+        await view.post(mock_event_notification(None, payload=duration_alert("linedetection", "fielddetection")))
+    await hass.async_block_till_done()
+
+    assert hass.states.get(f"{prefix}_fielddetection").state == STATE_ON

@@ -10,7 +10,7 @@ import respx
 import xmltodict
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
-from custom_components.hikvision_local.isapi import EventInfo, ISAPIClient, StorageInfo
+from custom_components.hikvision_local.isapi import EventInfo, ISAPIClient, ISAPIUnsupportedEventError, StorageInfo
 from custom_components.hikvision_local.isapi.isapi import _same_address, clean_int, normalize_event_id
 from tests.conftest import load_fixture, mock_endpoint
 
@@ -422,7 +422,7 @@ async def test_event_switch_mutex_maps_vmd_human_vehicle(mock_isapi: ISAPIClient
 
 
 def test_parse_event_notification_with_several_durations():
-    """A duration alert listing several events is read from the first one."""
+    """A duration alert listing several events gives one alert per event."""
     xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
     <ipAddress>1.0.0.10</ipAddress>
     <channelID>1</channelID>
@@ -434,9 +434,10 @@ def test_parse_event_notification_with_several_durations():
     </DurationList>
     </EventNotificationAlert>"""
 
-    alert = ISAPIClient.parse_event_notification(xml)
+    alerts = ISAPIClient.parse_event_notifications(xml)
 
-    assert alert.event_id == "linedetection"
+    assert [alert.event_id for alert in alerts] == ["linedetection", "fielddetection"]
+    assert {alert.channel_id for alert in alerts} == {1}
 
 
 async def test_notification_host_port_change_is_written(mock_isapi):
@@ -461,3 +462,34 @@ async def test_notification_host_port_change_is_written(mock_isapi):
 def test_same_address(a, b, same):
     """Addresses compare by value, hostnames without case."""
     assert _same_address(a, b) is same
+
+
+def test_parse_duration_alert_without_supported_events():
+    """A duration alert listing only unsupported events raises the unsupported event error."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+    <channelID>1</channelID>
+    <eventType>duration</eventType>
+    <DurationList><Duration><relationEvent>unknownevent</relationEvent></Duration></DurationList>
+    </EventNotificationAlert>"""
+
+    with pytest.raises(ISAPIUnsupportedEventError) as err:
+        ISAPIClient.parse_event_notifications(xml)
+    assert err.value.event_id == "unknownevent"
+
+
+def test_parse_duration_alert_deduplicates_events():
+    """Names for one event in a duration list give one alert."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+    <channelID>1</channelID>
+    <eventType>duration</eventType>
+    <DurationList>
+    <Duration><relationEvent>VMD</relationEvent></Duration>
+    <Duration><relationEvent>motiondetection</relationEvent></Duration>
+    <Duration><relationEvent>linedetection</relationEvent></Duration>
+    </DurationList>
+    </EventNotificationAlert>"""
+
+    assert [alert.event_id for alert in ISAPIClient.parse_event_notifications(xml)] == [
+        "motiondetection",
+        "linedetection",
+    ]
