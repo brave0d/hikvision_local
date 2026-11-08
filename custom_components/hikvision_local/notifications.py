@@ -78,20 +78,30 @@ class EventNotificationsView(HomeAssistantView):
         return web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
 
     async def handle_alert(self, xml: str, remote: str | None = None, device: HikvisionDevice | None = None) -> None:
-        """Process one alert: find its device unless given, then update sensors and fire events.
+        """Process one alert message: find its device unless given, then update sensors and fire events.
 
         A device is given for alerts from its alert stream, where the heartbeats (inactive
         videoloss alerts about every 10 seconds) don't count as events for the "Last event" sensor.
         """
         try:
             _LOGGER.debug("alert info: %s", xml)
-            alert = ISAPIClient.parse_event_notification(xml)
-            self.device = device or await self.get_isapi_device(remote, alert)
-            self.update_alert_channel(alert)
-            heartbeat = device is not None and alert.event_id == HEARTBEAT_EVENT and alert.event_state == "inactive"
-            if not heartbeat:
-                async_dispatcher_send(self.hass, SIGNAL_ALERT_RECEIVED.format(self.device.entry.entry_id), alert)
-            self.trigger_sensor(alert)
+            # A duration alert can report several ongoing events, one alert each.
+            alerts = ISAPIClient.parse_event_notifications(xml)
+            self.device = device or await self.get_isapi_device(remote, alerts[0])
+            for alert in alerts:
+                try:
+                    self.update_alert_channel(alert)
+                    heartbeat = (
+                        device is not None and alert.event_id == HEARTBEAT_EVENT and alert.event_state == "inactive"
+                    )
+                    if not heartbeat:
+                        async_dispatcher_send(
+                            self.hass, SIGNAL_ALERT_RECEIVED.format(self.device.entry.entry_id), alert
+                        )
+                    self.trigger_sensor(alert)
+                except Exception as ex:  # pylint: disable=broad-except
+                    # One event failing doesn't stop the others in the same alert.
+                    _LOGGER.warning("Cannot process incoming %s event %s", alert.event_id, ex)
         except ISAPIUnsupportedEventError as ex:
             if not ex.event_id:
                 _LOGGER.warning("Cannot process incoming event without an event type")

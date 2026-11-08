@@ -1296,7 +1296,17 @@ class ISAPIClient:
 
     @staticmethod
     def parse_event_notification(xml: str) -> AlertInfo:
-        """Parse incoming EventNotificationAlert XML message."""
+        """Parse incoming EventNotificationAlert XML message; the first event of a duration list."""
+        return ISAPIClient.parse_event_notifications(xml)[0]
+
+    @staticmethod
+    def parse_event_notifications(xml: str) -> list[AlertInfo]:
+        """Parse incoming EventNotificationAlert XML message into one alert per event it reports.
+
+        A duration alert lists the events ongoing on the channel, each in a Duration entry. Every
+        supported one gives an alert; unsupported ones are skipped. Raises ISAPIUnsupportedEventError
+        when the message reports no supported event.
+        """
 
         # Fix for some cameras sending non html encoded data
         xml = xml.replace("&", "&amp;")
@@ -1304,20 +1314,13 @@ class ISAPIClient:
         data = xmltodict.parse(xml)
         alert = data["EventNotificationAlert"]
 
-        event_id = alert.get("eventType")
-        if not event_id or event_id == "duration":
+        event_types = [alert.get("eventType") or ""]
+        if event_types[0] in ("", "duration"):
             # <EventNotificationAlert version="2.0"
-            duration = deep_get(alert, "DurationList.Duration", {})
-            if isinstance(duration, list):
-                # Several events at once: take the first
-                duration = duration[0] if duration else {}
-            event_id = duration.get("relationEvent", "") if isinstance(duration, dict) else ""
-        raw_event_type = event_id
-        event_id = normalize_event_id(event_id)
+            durations = deep_get(alert, "DurationList.Duration", [])
+            related = [entry.get("relationEvent") for entry in durations if isinstance(entry, dict)]
+            event_types = list(dict.fromkeys(event for event in related if event)) or [""]
 
-        channel_id = clean_int(alert.get("channelID", alert.get("dynChannelID", 0)))
-        if not channel_id:
-            channel_id = event_channel_suffix(raw_event_type)
         io_port_id = clean_int(alert.get("inputIOPortID", 0))
         # <EventNotificationAlert version="1.0"
         device_serial = deep_get(alert, "Extensions.serialNumber.#text")
@@ -1335,22 +1338,39 @@ class ISAPIClient:
         target_type = alert.get("targetType")
         event_state = str(alert.get("eventState", "active")).lower()
 
-        if event_id not in EVENTS:
-            raise ISAPIUnsupportedEventError(event_id)
-
-        return AlertInfo(
-            channel_id,
-            io_port_id,
-            event_id,
-            device_serial,
-            mac,
-            region_id,
-            detection_target,
-            target_type,
-            event_state=event_state,
-            ip_address=alert.get("ipAddress"),
-            regions=regions,
-        )
+        # The alert's region and target fields don't say which event they belong to, so every event
+        # in a duration list gets them.
+        alerts = []
+        unsupported = []
+        for raw_event_type in event_types:
+            event_id = normalize_event_id(raw_event_type)
+            if event_id not in EVENTS:
+                unsupported.append(event_id)
+                continue
+            if any(existing.event_id == event_id for existing in alerts):
+                # Different names for one event, such as vmd and motiondetection
+                continue
+            channel_id = clean_int(alert.get("channelID", alert.get("dynChannelID", 0)))
+            if not channel_id:
+                channel_id = event_channel_suffix(raw_event_type)
+            alerts.append(
+                AlertInfo(
+                    channel_id,
+                    io_port_id,
+                    event_id,
+                    device_serial,
+                    mac,
+                    region_id,
+                    detection_target,
+                    target_type,
+                    event_state=event_state,
+                    ip_address=alert.get("ipAddress"),
+                    regions=regions,
+                )
+            )
+        if not alerts:
+            raise ISAPIUnsupportedEventError(unsupported[0])
+        return alerts
 
     async def get_camera_image(
         self,
