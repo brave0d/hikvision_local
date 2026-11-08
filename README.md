@@ -218,6 +218,7 @@ Models reported to work. Recorded data from many of them is used in the tests.
 
 ### DVR
 
+- DS-7108HQHI-K1
 - HiWatch DVR-108P-G/N
 - iDS-7204HUHI-M1/E
 - iDS-7204HUHI-M1/FA/A
