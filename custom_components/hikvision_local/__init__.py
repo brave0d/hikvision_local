@@ -138,6 +138,9 @@ def refresh_disabled_entities_in_registry(hass: HomeAssistant, device: Hikvision
         if not entity_id:
             return
         entity = entity_registry.async_get(entity_id)
+        if entity.disabled_by not in (None, er.RegistryEntryDisabler.INTEGRATION):
+            # Disabled by the user (or another source): leave it as it is.
+            return
         if entity.disabled != event.disabled:
             disabled_by = er.RegistryEntryDisabler.INTEGRATION if event.disabled else None
             entity_registry.async_update_entity(entity_id, disabled_by=disabled_by)

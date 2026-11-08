@@ -13,6 +13,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 import respx
 import xmltodict
 
+from custom_components.hikvision_local import refresh_disabled_entities_in_registry
 from custom_components.hikvision_local.const import DOMAIN
 from custom_components.hikvision_local.coordinator import notify_switch_unique_id
 from tests.conftest import TEST_HOST
@@ -149,3 +150,18 @@ async def test_notify_switch_reports_unreadable_trigger(hass: HomeAssistant, ini
         )
 
     assert not endpoint.called
+
+
+@pytest.mark.parametrize("init_integration", [MODEL], indirect=True)
+async def test_refresh_keeps_entities_the_user_disabled(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """Entities the user disabled stay disabled when the integration syncs them with Notify Surveillance Center."""
+
+    registry = er.async_get(hass)
+    event = camera_event(init_integration, "fielddetection")
+    assert not event.disabled
+    sensor_id = registry.async_get_entity_id("binary_sensor", DOMAIN, f"binary_sensor.{event.unique_id}")
+    registry.async_update_entity(sensor_id, disabled_by=er.RegistryEntryDisabler.USER)
+
+    refresh_disabled_entities_in_registry(hass, init_integration.runtime_data)
+
+    assert registry.async_get(sensor_id).disabled_by == er.RegistryEntryDisabler.USER
