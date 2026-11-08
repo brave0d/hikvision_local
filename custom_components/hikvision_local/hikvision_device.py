@@ -1,6 +1,7 @@
 "ISAPI client for Home Assistant integration."
 
 import logging
+import time
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -40,6 +41,9 @@ from .isapi.const import EVENT_IO
 
 _LOGGER = logging.getLogger(__name__)
 
+# Seconds of 401 answers, with no successful request in between, before asking for the credentials again.
+REAUTH_AFTER_UNAUTHORIZED = 180
+
 
 class HikvisionDevice(ISAPIClient):
     """Hikvision device for Home Assistant integration."""
@@ -55,7 +59,6 @@ class HikvisionDevice(ISAPIClient):
         config = entry.data if entry else data
         self.entry = entry
         self.hass = hass
-        self.auth_token_expired = False
         # With the alert stream, the integration reads events from the device, which needs no
         # notifications host.
         self.alert_stream_enabled = config.get(CONF_ALERT_STREAM, False)
@@ -245,14 +248,19 @@ class HikvisionDevice(ISAPIClient):
         error = "Unexpected exception"
 
         if isinstance(ex, ISAPIUnauthorizedError):
-            if not self.auth_token_expired:
-                # after device reboot, authorization token may have expired
-                self.auth_token_expired = True
+            # Some devices answer 401 for single endpoints, or for a while after a reboot, although
+            # the credentials are valid. Ask for them again only when nothing has succeeded for a while.
+            now = time.monotonic()
+            if self.unauthorized_since is None:
+                self.unauthorized_since = now
+                # Detect the authentication method again on the next request.
                 self._auth_method = None
-                self._session = get_async_client(self.hass, self.verify_ssl)
-                _LOGGER.warning("Unauthorized access to %s, started checking if token expired", self.host)
+                _LOGGER.debug("Unauthorized access to %s | %s | %s", self.host, details, ex)
                 return
-            self.auth_token_expired = False
+            if now - self.unauthorized_since < REAUTH_AFTER_UNAUTHORIZED:
+                _LOGGER.debug("Unauthorized access to %s | %s | %s", self.host, details, ex)
+                return
+            self.unauthorized_since = None
             self.entry.async_start_reauth(self.hass)
             error = "Unauthorized access"
         elif isinstance(ex, ISAPIForbiddenError):

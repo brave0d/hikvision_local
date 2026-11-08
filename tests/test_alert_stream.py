@@ -205,7 +205,10 @@ async def test_alert_stream_stops_for_reauth(
     """Rejected credentials start reauthentication once and stop the stream, so the user isn't locked."""
     route = respx.get(ALERT_STREAM_URL).respond(status_code=401)
 
-    with patch("custom_components.hikvision_local.notifications.ALERT_STREAM_RETRY_FIRST", 0):
+    with (
+        patch("custom_components.hikvision_local.notifications.ALERT_STREAM_RETRY_FIRST", 0),
+        patch("custom_components.hikvision_local.hikvision_device.REAUTH_AFTER_UNAUTHORIZED", 0),
+    ):
         assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
         await hass.async_block_till_done()
         await wait_for(lambda: hass.config_entries.flow.async_progress_by_handler(DOMAIN))
@@ -215,6 +218,58 @@ async def test_alert_stream_stops_for_reauth(
         assert route.call_count == 2
         flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
         assert [flow["context"]["source"] for flow in flows] == ["reauth"]
+
+        assert await hass.config_entries.async_unload(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+
+@pytest.mark.parametrize("mock_config_entry", [TEST_CONFIG_ALERT_STREAM], indirect=True)
+@pytest.mark.parametrize("init_integration", [("DS-2CD2386G2-IU", True)], indirect=True)
+async def test_alert_stream_stops_when_reauth_is_open(
+    hass: HomeAssistant, init_integration: MockConfigEntry, mock_config_entry: MockConfigEntry
+) -> None:
+    """The stream stops on a 401 when reauthentication was already started elsewhere."""
+    route = respx.get(ALERT_STREAM_URL).respond(status_code=401)
+
+    with patch("custom_components.hikvision_local.notifications.ALERT_STREAM_RETRY_FIRST", 0):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+        mock_config_entry.async_start_reauth(hass)
+        await hass.async_block_till_done()
+        calls = route.call_count
+        for _ in range(100):
+            await asyncio.sleep(0)
+
+        # At most the attempt in flight when reauth started, then no more.
+        assert route.call_count <= calls + 1
+
+        assert await hass.config_entries.async_unload(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+
+@pytest.mark.parametrize("mock_config_entry", [TEST_CONFIG_ALERT_STREAM], indirect=True)
+@pytest.mark.parametrize("init_integration", [("DS-2CD2386G2-IU", True)], indirect=True)
+async def test_alert_stream_alerts_clear_unauthorized(
+    hass: HomeAssistant, init_integration: MockConfigEntry, mock_config_entry: MockConfigEntry
+) -> None:
+    """Alerts arriving on the stream show the credentials work."""
+
+    async def body():
+        # Set after the stream opened, which clears it too, so only the alert can clear it.
+        mock_config_entry.runtime_data.unauthorized_since = 1.0
+        yield multipart(('application/xml; charset="UTF-8"', HEARTBEAT))
+
+    respx.get(ALERT_STREAM_URL).mock(
+        side_effect=lambda request: httpx.Response(
+            200, headers={"Content-Type": "multipart/mixed; boundary=boundary"}, content=body()
+        )
+    )
+
+    with patch("custom_components.hikvision_local.notifications.ALERT_STREAM_RETRY_FIRST", 3600):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+        device = mock_config_entry.runtime_data
+        await wait_for(lambda: device.unauthorized_since is None)
 
         assert await hass.config_entries.async_unload(mock_config_entry.entry_id)
         await hass.async_block_till_done()

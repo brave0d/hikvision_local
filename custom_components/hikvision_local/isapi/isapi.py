@@ -160,6 +160,8 @@ class ISAPIClient:
         self.isapi_prefix = "ISAPI"
         self._session = session
         self._auth_method: httpx._auth.Auth = None
+        # Monotonic time of the first 401 since the last successful request.
+        self.unauthorized_since: float | None = None
 
         self.rtsp_port_forced = rtsp_port_forced
 
@@ -1431,6 +1433,7 @@ class ISAPIClient:
                 **request_kwargs,
             )
             response.raise_for_status()
+            self.unauthorized_since = None
             result = parse_isapi_response(response, present)
             _LOGGER.debug("--- [%s] %s", method, full_url)
             if data:
@@ -1466,6 +1469,7 @@ class ISAPIClient:
                 if ex.response.status_code == HTTPStatus.UNAUTHORIZED:
                     raise ISAPIUnauthorizedError(ex) from ex
                 raise
+            self.unauthorized_since = None
             _LOGGER.debug("--- [GET] %s opened", url)
             splitter = AlertStreamSplitter()
             async for chunk in response.aiter_bytes():

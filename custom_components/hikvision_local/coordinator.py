@@ -99,9 +99,6 @@ class EventsCoordinator(DataUpdateCoordinator):
         except Exception as ex:  # pylint: disable=broad-except
             self.device.handle_exception(ex, "Cannot fetch storage state")
 
-        if self.device.auth_token_expired:
-            self.device.auth_token_expired = False
-
         return data
 
 
@@ -173,9 +170,6 @@ class SupplementLightCoordinator(DataUpdateCoordinator):
                 camera.supplement_light.state = state
                 unique_id = self.device.build_camera_light_unique_id(camera)
                 data[unique_id] = state
-
-        if self.device.auth_token_expired:
-            self.device.auth_token_expired = False
 
         return data
 

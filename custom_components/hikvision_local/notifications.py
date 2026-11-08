@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.config_entries import SOURCE_REAUTH
 from homeassistant.const import CONTENT_TYPE_TEXT_PLAIN, STATE_OFF, STATE_ON, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -295,17 +296,16 @@ async def read_alert_stream(hass: HomeAssistant, device: HikvisionDevice) -> Non
                 if unavailable:
                     _LOGGER.info("Alert stream of %s is available again", device.host)
                     unavailable = False
-                if not received:
-                    # The credentials work, so a later 401 gets a retry before reauthentication.
-                    device.auth_token_expired = False
                 received = True
+                # Alerts arriving means the credentials work.
+                device.unauthorized_since = None
                 delay = ALERT_STREAM_RETRY_FIRST
                 handler.handle_alert(xml, device=device)
             error = "closed by the device"
         except ISAPIUnauthorizedError as ex:
-            # The first 401 retries with a new session, the second starts reauthentication.
+            # Reauthentication starts when the device has answered 401 for a while.
             device.handle_exception(ex, "alert stream")
-            if not device.auth_token_expired:
+            if any(device.entry.async_get_active_flows(hass, {SOURCE_REAUTH})):
                 # Stop instead of locking the device user; a successful reauth reloads the entry.
                 return
             error = "unauthorized"
