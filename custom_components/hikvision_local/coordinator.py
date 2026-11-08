@@ -7,8 +7,9 @@ import logging
 
 from homeassistant.components.switch import ENTITY_ID_FORMAT
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import slugify
+import httpx
 
 from .const import CAMERAS_STATUS, CONF_ALARM_SERVER_HOST, DOMAIN, HOLIDAY_MODE
 
@@ -42,35 +43,48 @@ class EventsCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via ISAPI."""
         data = {}
+        # Requests for event and output states (events without a URL send none), and how many found
+        # the device unreachable
+        attempts = unreachable = 0
 
         # Get camera event status
         for camera in self.device.cameras:
             for event in camera.events_info:
                 if event.disabled:
                     continue
+                attempts += bool(event.url)
                 try:
                     _id = ENTITY_ID_FORMAT.format(event.unique_id)
                     data[_id] = await self.device.get_event_enabled_state(event)
                 except Exception as ex:  # pylint: disable=broad-except
+                    unreachable += isinstance(ex, httpx.TransportError)
                     self.device.handle_exception(ex, f"Cannot fetch state for {event.id}")
 
         # Get NVR event status
         for event in self.device.events_info:
             if event.disabled:
                 continue
+            attempts += bool(event.url)
             try:
                 _id = ENTITY_ID_FORMAT.format(event.unique_id)
                 data[_id] = await self.device.get_event_enabled_state(event)
             except Exception as ex:  # pylint: disable=broad-except
+                unreachable += isinstance(ex, httpx.TransportError)
                 self.device.handle_exception(ex, f"Cannot fetch state for {event.id}")
 
         # Get output port(s) status
         for i in range(1, self.device.capabilities.output_ports + 1):
+            attempts += 1
             try:
                 _id = ENTITY_ID_FORMAT.format(f"{slugify(self.device.device_info.serial_no.lower())}_{i}_alarm_output")
                 data[_id] = await self.device.get_io_port_status("output", i)
             except Exception as ex:  # pylint: disable=broad-except
+                unreachable += isinstance(ex, httpx.TransportError)
                 self.device.handle_exception(ex, f"Cannot fetch state for alarm output {i}")
+
+        if attempts and unreachable == attempts:
+            # The device doesn't answer at all: its entities become unavailable until it does.
+            raise UpdateFailed(f"{self.device.host} doesn't answer")
 
         # Get 'Notify Surveillance Center' state of event triggers
         events = [*self.device.events_info, *[event for camera in self.device.cameras for event in camera.events_info]]
