@@ -14,5 +14,5 @@
     "xmltodict>=0.13.0",
     "requests-toolbelt==1.0.0"
   ],
-  "version": "2.1.0"
+  "version": "2.1.1"
 }
