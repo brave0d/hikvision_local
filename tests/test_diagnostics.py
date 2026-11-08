@@ -114,3 +114,12 @@ def test_anonymise_data_replaces_hosts_in_urls() -> None:
     assert "admin" not in other
     assert "secret" not in other
     assert "token" not in other
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_diagnostics_entry_not_loaded(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """Diagnostics of an entry that isn't loaded report its state instead of failing."""
+
+    await hass.config_entries.async_unload(init_integration.entry_id)
+
+    assert await async_get_config_entry_diagnostics(hass, init_integration) == {"config_entry_state": "not_loaded"}
