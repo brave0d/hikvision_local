@@ -223,5 +223,16 @@
       "title": "Usuń {device} z hikvision_next",
       "description": "**{device}** jest skonfigurowane jednocześnie w Hikvision Local i hikvision_next. Obie integracje odpytują urządzenie, a host powiadomień może wskazywać tylko na jedną z nich.\n\n1. Usuń urządzenie z hikvision_next (Ustawienia > Urządzenia i usługi > hikvision_next).\n2. hikvision_next po usunięciu resetuje host powiadomień urządzenia, więc potem przeładuj Hikvision Local albo ustaw host powiadomień ponownie.\n\nTen komunikat zniknie po usunięciu wpisu z hikvision_next."
     }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "Brak urządzenia Hikvision Local o identyfikatorze wpisu konfiguracji {entry_id}."
+    },
+    "entry_not_loaded": {
+      "message": "{name} nie jest załadowane (stan: {state}). Poczekaj na zakończenie konfiguracji albo sprawdź jego stan w Ustawienia > Urządzenia oraz usługi."
+    },
+    "cannot_connect": {
+      "message": "Nie można połączyć się z {name}: {error}"
+    }
   }
 }

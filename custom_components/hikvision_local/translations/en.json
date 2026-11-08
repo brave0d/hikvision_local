@@ -223,5 +223,16 @@
       "title": "Remove {device} from hikvision_next",
       "description": "**{device}** is set up in both Hikvision Local and hikvision_next. Both poll the device, and its notifications host can point at only one of them.\n\n1. Remove the device from hikvision_next (Settings > Devices & services > hikvision_next).\n2. hikvision_next resets the device's notifications host when it is removed, so reload Hikvision Local afterwards, or set the notifications host again.\n\nThis message goes away once the hikvision_next entry is removed."
     }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No Hikvision Local device with config entry ID {entry_id}."
+    },
+    "entry_not_loaded": {
+      "message": "{name} isn't loaded (state: {state}). Wait until it has set up, or check its status in Settings > Devices & services."
+    },
+    "cannot_connect": {
+      "message": "Cannot connect to {name}: {error}"
+    }
   }
 }

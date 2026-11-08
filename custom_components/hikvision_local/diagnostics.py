@@ -9,6 +9,7 @@ import random
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntry
 from httpx import HTTPStatusError
@@ -130,6 +131,9 @@ async def _async_get_diagnostics(
     entry: HikvisionConfigEntry,
     device: DeviceEntry | None = None,
 ) -> dict[str, Any]:
+    if entry.state is not ConfigEntryState.LOADED:
+        # No device data before setup has finished.
+        return {"config_entry_state": entry.state.value}
     device = entry.runtime_data
     # Keep replacements consistent within one diagnostics file only, and don't hold raw values afterwards.
     anon_map.clear()
