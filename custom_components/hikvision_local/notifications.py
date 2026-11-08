@@ -272,6 +272,10 @@ class EventNotificationsView(HomeAssistantView):
         if alert.detection_target:
             message["detection_target"] = alert.detection_target
             message["region_id"] = alert.region_id
+        if len(alert.regions) > 1:
+            message["regions"] = [
+                {"region_id": region_id, "detection_target": target} for region_id, target in alert.regions
+            ]
         if alert.target_type:
             message["target_type"] = alert.target_type
 

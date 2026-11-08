@@ -607,3 +607,22 @@ async def test_hostname_resolved_in_executor(hass: HomeAssistant) -> None:
         assert await view.get_ip("1.0.0.8") == "1.0.0.8"
 
     executor.assert_called_once_with(lookup, "camera.local")
+
+
+@pytest.mark.parametrize("init_integration", ["DS-2CD2146G2-ISU"], indirect=True)
+async def test_field_detection_alert_with_two_regions(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """An alert reporting two regions at once keeps the first as region_id and lists both."""
+
+    bus_events = async_capture_events(hass, HIKVISION_EVENT)
+
+    response = await EventNotificationsView(hass).post(mock_event_notification("fielddetection_two_regions"))
+    await hass.async_block_till_done()
+
+    assert response.status == HTTPStatus.OK
+    data = bus_events[0].data
+    assert data["region_id"] == 3
+    assert data["detection_target"] == "human"
+    assert data["regions"] == [
+        {"region_id": 3, "detection_target": "human"},
+        {"region_id": 1, "detection_target": "vehicle"},
+    ]
