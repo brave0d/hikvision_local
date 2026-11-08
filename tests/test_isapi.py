@@ -10,7 +10,7 @@ import respx
 import xmltodict
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
-from custom_components.hikvision_local.isapi import ISAPIClient, StorageInfo
+from custom_components.hikvision_local.isapi import EventInfo, ISAPIClient, StorageInfo
 from custom_components.hikvision_local.isapi.isapi import clean_int, normalize_event_id
 from tests.conftest import load_fixture, mock_endpoint
 
@@ -122,6 +122,7 @@ def test_parse_event_notification_with_alphanumeric_channel_id():
     ("event_type", "expected"),
     [
         ("VMD", "motiondetection"),
+        ("VMDHumanVehicle", "motiondetection"),
         ("vmd-1", "motiondetection"),
         ("fielddetection", "fielddetection"),
         ("LineDetection-12", "linedetection"),
@@ -387,6 +388,19 @@ async def test_events_notify_center_skips_unreadable_triggers(mock_isapi):
     mock_isapi.request = AsyncMock(side_effect=respond)
 
     assert await mock_isapi.get_events_notify_center(["VMD-1", "scenechangedetection-1"]) == {"VMD-1": True}
+
+
+@respx.mock
+async def test_event_switch_mutex_maps_vmd_human_vehicle(mock_isapi: ISAPIClient) -> None:
+    """A mutex answer naming VMDHumanVehicle is reported as motion detection."""
+    respx.post(f"{mock_isapi.host}/ISAPI/System/mutexFunction?format=json").respond(
+        text=json.dumps({"MutexFunctionList": [{"mutexFunction": "VMDHumanVehicle", "channelID": [1]}]})
+    )
+    mock_isapi._session = httpx.AsyncClient()
+
+    issues = await mock_isapi.get_event_switch_mutex(EventInfo(id="fielddetection", channel_id=1, io_port_id=0), 1)
+
+    assert [issue.event_id for issue in issues] == ["motiondetection"]
 
 
 def test_parse_event_notification_with_several_durations():
