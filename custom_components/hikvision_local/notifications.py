@@ -71,13 +71,13 @@ class EventNotificationsView(HomeAssistantView):
             _LOGGER.warning("Cannot process incoming event %s", ex)
         else:
             if xml:
-                self.handle_alert(xml, remote=request.remote)
+                await self.handle_alert(xml, remote=request.remote)
             else:
                 _LOGGER.debug("Ignoring event notification without content")
 
         return web.Response(status=HTTPStatus.OK, content_type=CONTENT_TYPE_TEXT_PLAIN)
 
-    def handle_alert(self, xml: str, remote: str | None = None, device: HikvisionDevice | None = None) -> None:
+    async def handle_alert(self, xml: str, remote: str | None = None, device: HikvisionDevice | None = None) -> None:
         """Process one alert: find its device unless given, then update sensors and fire events.
 
         A device is given for alerts from its alert stream, where the heartbeats (inactive
@@ -86,7 +86,7 @@ class EventNotificationsView(HomeAssistantView):
         try:
             _LOGGER.debug("alert info: %s", xml)
             alert = ISAPIClient.parse_event_notification(xml)
-            self.device = device or self.get_isapi_device(remote, alert)
+            self.device = device or await self.get_isapi_device(remote, alert)
             self.update_alert_channel(alert)
             heartbeat = device is not None and alert.event_id == HEARTBEAT_EVENT and alert.event_state == "inactive"
             if not heartbeat:
@@ -103,7 +103,7 @@ class EventNotificationsView(HomeAssistantView):
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.warning("Cannot process incoming event %s", ex)
 
-    def get_isapi_device(self, device_ip, alert: AlertInfo) -> HikvisionDevice:
+    async def get_isapi_device(self, device_ip, alert: AlertInfo) -> HikvisionDevice:
         """Get integration instance for device sending alert."""
         devices: list[HikvisionDevice] = [
             entry.runtime_data
@@ -128,20 +128,21 @@ class EventNotificationsView(HomeAssistantView):
         # Search device by the request's address, or the address in the alert (behind NAT)
         addresses = {device_ip, alert.ip_address} - {None}
         for device in devices:
-            if self.get_ip(urlparse(device.host).hostname) in addresses:
+            if await self.get_ip(urlparse(device.host).hostname) in addresses:
                 return device
 
         instance_identifiers = [f"{device.device_info.mac_address} {device.host}" for device in devices]
         raise ValueError(f"Cannot find ISAPI instance for device {device_ip} in {instance_identifiers}")
 
-    def get_ip(self, ip_string: str) -> str:
+    async def get_ip(self, ip_string: str) -> str:
         """Return an IP if either hostname or IP is provided."""
 
         try:
             ipaddress.ip_address(ip_string)
             return ip_string
         except ValueError:
-            resolved_hostname = socket.gethostbyname(ip_string)
+            # gethostbyname blocks, so it runs in the executor
+            resolved_hostname = await self.hass.async_add_executor_job(socket.gethostbyname, ip_string)
             _LOGGER.debug("Resolve host %s resolves to IP %s", ip_string, resolved_hostname)
 
             return resolved_hostname
@@ -300,7 +301,7 @@ async def read_alert_stream(hass: HomeAssistant, device: HikvisionDevice) -> Non
                 # Alerts arriving means the credentials work.
                 device.unauthorized_since = None
                 delay = ALERT_STREAM_RETRY_FIRST
-                handler.handle_alert(xml, device=device)
+                await handler.handle_alert(xml, device=device)
             error = "closed by the device"
         except ISAPIUnauthorizedError as ex:
             # Reauthentication starts when the device has answered 401 for a while.
