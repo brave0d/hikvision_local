@@ -10,7 +10,7 @@ import respx
 import xmltodict
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
-from custom_components.hikvision_local.isapi import ISAPIClient, StorageInfo
+from custom_components.hikvision_local.isapi import EventInfo, ISAPIClient, StorageInfo
 from custom_components.hikvision_local.isapi.isapi import _same_address, clean_int, normalize_event_id
 from tests.conftest import load_fixture, mock_endpoint
 
@@ -140,6 +140,7 @@ def test_parse_event_notification_with_alphanumeric_channel_id():
     ("event_type", "expected"),
     [
         ("VMD", "motiondetection"),
+        ("VMDHumanVehicle", "motiondetection"),
         ("vmd-1", "motiondetection"),
         ("fielddetection", "fielddetection"),
         ("LineDetection-12", "linedetection"),
@@ -408,6 +409,36 @@ async def test_events_notify_center_skips_unreadable_triggers(mock_isapi):
 
 
 @respx.mock
+async def test_event_switch_mutex_maps_vmd_human_vehicle(mock_isapi: ISAPIClient) -> None:
+    """A mutex answer naming VMDHumanVehicle is reported as motion detection."""
+    respx.post(f"{mock_isapi.host}/ISAPI/System/mutexFunction?format=json").respond(
+        text=json.dumps({"MutexFunctionList": [{"mutexFunction": "VMDHumanVehicle", "channelID": [1]}]})
+    )
+    mock_isapi._session = httpx.AsyncClient()
+
+    issues = await mock_isapi.get_event_switch_mutex(EventInfo(id="fielddetection", channel_id=1, io_port_id=0), 1)
+
+    assert [issue.event_id for issue in issues] == ["motiondetection"]
+
+
+def test_parse_event_notification_with_several_durations():
+    """A duration alert listing several events is read from the first one."""
+    xml = """<EventNotificationAlert version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+    <ipAddress>1.0.0.10</ipAddress>
+    <channelID>1</channelID>
+    <eventType>duration</eventType>
+    <eventState>active</eventState>
+    <DurationList>
+    <Duration><relationEvent>linedetection</relationEvent><occurrences>1</occurrences></Duration>
+    <Duration><relationEvent>fielddetection</relationEvent><occurrences>1</occurrences></Duration>
+    </DurationList>
+    </EventNotificationAlert>"""
+
+    alert = ISAPIClient.parse_event_notification(xml)
+
+    assert alert.event_id == "linedetection"
+
+
 async def test_notification_host_port_change_is_written(mock_isapi):
     """A notifications host that differs only in the port is written."""
     mock_endpoint("Event/notification/httpHosts", "set_alarm_server_payload")

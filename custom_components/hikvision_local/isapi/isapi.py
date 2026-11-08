@@ -1044,7 +1044,7 @@ class ISAPIClient:
 
         if mutex_list := response.get("MutexFunctionList"):
             for mutex_item in mutex_list:
-                mutex_event_id = mutex_item.get("mutexFunction")
+                mutex_event_id = (mutex_item.get("mutexFunction") or "").lower()
                 if EVENTS_ALTERNATE_ID.get(mutex_event_id):
                     mutex_event_id = EVENTS_ALTERNATE_ID[mutex_event_id]
 
@@ -1198,7 +1198,8 @@ class ISAPIClient:
             holiday["holidayMode"]["#text"] = "date"
             holiday["holidayDate"] = {
                 "startDate": today.strftime("%Y-%m-%d"),
-                "endDate": today.replace(year=today.year + 1).strftime("%Y-%m-%d"),
+                # One year ahead; on 29 February there is no such day next year.
+                "endDate": (today + datetime.timedelta(days=365)).strftime("%Y-%m-%d"),
             }
             holiday.pop("holidayWeek", None)
             holiday.pop("holidayMonth", None)
@@ -1306,7 +1307,11 @@ class ISAPIClient:
         event_id = alert.get("eventType")
         if not event_id or event_id == "duration":
             # <EventNotificationAlert version="2.0"
-            event_id = deep_get(alert, "DurationList.Duration.relationEvent", "")
+            duration = deep_get(alert, "DurationList.Duration", {})
+            if isinstance(duration, list):
+                # Several events at once: take the first
+                duration = duration[0] if duration else {}
+            event_id = duration.get("relationEvent", "") if isinstance(duration, dict) else ""
         raw_event_type = event_id
         event_id = normalize_event_id(event_id)
 
