@@ -1496,7 +1496,7 @@ class ISAPIClient:
                         # A 401 or an HTML error page isn't an image.
                         response.raise_for_status()
                     # ISAPI XML errors are read by the caller.
-                    yield body
+                    yield body.lstrip()
                     return
                 async for chunk in response.aiter_bytes():
                     yield chunk
