@@ -31,6 +31,8 @@ from .services import setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
+NOTIFICATIONS_VIEW_REGISTERED = f"{DOMAIN}_notifications_view"
+
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS = [
@@ -79,9 +81,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: HikvisionConfigEntry) ->
 
     device.pending_initialization = False
 
-    # Only initialise view once if multiple instances of integration
-    if get_first_instance_unique_id(hass) == entry.unique_id:
+    # One view serves all devices. The first entry that loads registers it: tying it to the first
+    # configured entry left every device without it when that entry failed to set up.
+    if not hass.data.get(NOTIFICATIONS_VIEW_REGISTERED):
         hass.http.register_view(EventNotificationsView(hass))
+        hass.data[NOTIFICATIONS_VIEW_REGISTERED] = True
 
     refresh_disabled_entities_in_registry(hass, device)
 
@@ -121,12 +125,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: HikvisionConfigEntry) -
             await device.set_alarm_server("http://0.0.0.0:80", "/")
 
     return unload_ok
-
-
-def get_first_instance_unique_id(hass: HomeAssistant) -> int:
-    """Get entry unique_id for first instance of integration."""
-    entry = [entry for entry in hass.config_entries.async_entries(DOMAIN) if not entry.disabled_by][0]
-    return entry.unique_id
 
 
 def refresh_disabled_entities_in_registry(hass: HomeAssistant, device: HikvisionDevice):
