@@ -29,6 +29,7 @@ class AlertInfo:
     target_type: str = field(default=None)
     event_state: str = "active"
     ip_address: str = field(default=None)
+    regions: list[tuple[int, str | None]] = field(default_factory=list)  # (region ID, detection target)
 
 
 @dataclass
