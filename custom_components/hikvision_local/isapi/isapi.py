@@ -94,6 +94,16 @@ def normalize_event_id(event_type: str) -> str:
     return EVENTS_ALTERNATE_ID.get(event_id, event_id)
 
 
+def _same_address(a: str | None, b: str | None) -> bool:
+    """Compare IP addresses by value and hostnames without case."""
+    if not a or not b:
+        return False
+    try:
+        return ipaddress.ip_address(a) == ipaddress.ip_address(b)
+    except ValueError:
+        return a.lower() == b.lower()
+
+
 def event_channel_suffix(*values: str | None) -> int:
     """Return the channel from the first value with a suffix such as facedetection-1, or 0."""
     for value in values:
@@ -1216,7 +1226,7 @@ class ISAPIClient:
 
         return AlarmServer(
             ip_address=host.get("ipAddress"),
-            port_no=int(host.get("portNo")),
+            port_no=int(host["portNo"]) if host.get("portNo") else None,
             url=host.get("url"),
             protocol_type=host.get("protocolType"),
             host_name=host.get("hostName"),
@@ -1231,13 +1241,14 @@ class ISAPIClient:
             return
         host = self._get_event_notification_host(data)
 
-        old_address = host.get("ipAddress") if host.get("addressingFormatType") == "ipaddress" else host.get("hostname")
+        old_address = host.get("ipAddress") if host.get("addressingFormatType") == "ipaddress" else host.get("hostName")
+        port = address.port or (443 if address.scheme == "https" else 80)
 
         if (
-            host["protocolType"] == address.scheme.upper()
-            and old_address == address.hostname
-            and host.get("portNo") == str(address.port)
-            and host["url"] == path
+            host.get("protocolType") == address.scheme.upper()
+            and _same_address(old_address, address.hostname)
+            and str(host.get("portNo")) == str(port)
+            and host.get("url") == path
         ):
             return
         host["url"] = path
@@ -1259,7 +1270,7 @@ class ISAPIClient:
             del host["ipAddress"]
             host["hostName"] = address.hostname
 
-        host["portNo"] = address.port or (443 if address.scheme == "https" else 80)
+        host["portNo"] = port
         host["httpAuthenticationMethod"] = "none"
 
         xml = xmltodict.unparse(data)

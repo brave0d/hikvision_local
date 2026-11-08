@@ -11,7 +11,7 @@ import xmltodict
 
 from custom_components.hikvision_local.const import ALARM_SERVER_PATH
 from custom_components.hikvision_local.isapi import EventInfo, ISAPIClient, StorageInfo
-from custom_components.hikvision_local.isapi.isapi import clean_int, normalize_event_id
+from custom_components.hikvision_local.isapi.isapi import _same_address, clean_int, normalize_event_id
 from tests.conftest import load_fixture, mock_endpoint
 
 
@@ -93,6 +93,24 @@ async def test_update_notification_hosts_from_ipaddress_to_hostname(mock_isapi):
     await isapi.set_alarm_server("https://ha.hostname.domain", ALARM_SERVER_PATH)
 
     assert endpoint.called
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("current", "url"),
+    [
+        ("set_alarm_server_payload", "http://1.0.0.11:8123"),
+        ("set_alarm_server_outside_network_payload", "https://ha.hostname.domain"),
+    ],
+)
+async def test_notification_host_already_set_is_not_rewritten(mock_isapi, current, url):
+    """A notifications host that already matches, by IP address or hostname and default port, isn't written again."""
+    mock_endpoint("Event/notification/httpHosts", current)
+    endpoint = respx.put(f"{mock_isapi.host}/ISAPI/Event/notification/httpHosts").respond()
+
+    await mock_isapi.set_alarm_server(url, ALARM_SERVER_PATH)
+
+    assert not endpoint.called
 
 
 @pytest.mark.parametrize(
@@ -419,3 +437,27 @@ def test_parse_event_notification_with_several_durations():
     alert = ISAPIClient.parse_event_notification(xml)
 
     assert alert.event_id == "linedetection"
+
+
+async def test_notification_host_port_change_is_written(mock_isapi):
+    """A notifications host that differs only in the port is written."""
+    mock_endpoint("Event/notification/httpHosts", "set_alarm_server_payload")
+    endpoint = respx.put(f"{mock_isapi.host}/ISAPI/Event/notification/httpHosts").respond()
+
+    await mock_isapi.set_alarm_server("http://1.0.0.11:8124", ALARM_SERVER_PATH)
+
+    assert endpoint.called
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "same"),
+    [
+        ("HA.Example.org", "ha.example.org", True),
+        ("2001:db8::1", "2001:0db8:0000:0000:0000:0000:0000:0001", True),
+        ("1.0.0.11", "1.0.0.12", False),
+        (None, "1.0.0.11", False),
+    ],
+)
+def test_same_address(a, b, same):
+    """Addresses compare by value, hostnames without case."""
+    assert _same_address(a, b) is same
