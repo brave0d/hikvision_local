@@ -4,15 +4,17 @@ import asyncio
 import logging
 
 from homeassistant.components.camera.helper import get_camera_from_entity_id
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
     ServiceResponse,
     SupportsResponse,
 )
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.service import async_extract_entity_ids
+import httpx
 from httpx import HTTPStatusError
 import voluptuous as vol
 
@@ -25,6 +27,7 @@ from .const import (
     ATTR_CONFIG_ENTRY_ID,
     DOMAIN,
 )
+from .hikvision_device import HikvisionDevice
 from .isapi import ISAPIForbiddenError, ISAPIUnauthorizedError
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,24 +135,66 @@ async def _ptz_targets(call: ServiceCall) -> list[str]:
     return entity_ids
 
 
+# Entries whose saved settings are complete, so reboot can connect while setup fails. Not migration
+# errors: their settings may be from an older version.
+REBOOT_UNLOADED_STATES = (ConfigEntryState.SETUP_RETRY, ConfigEntryState.SETUP_ERROR, ConfigEntryState.NOT_LOADED)
+
+
+def _get_entry(hass: HomeAssistant, entry_id: str) -> ConfigEntry:
+    """Return the integration's config entry, or raise a readable error."""
+    entry = hass.config_entries.async_get_entry(entry_id)
+    if entry is None or entry.domain != DOMAIN:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="entry_not_found",
+            translation_placeholders={"entry_id": entry_id},
+        )
+    return entry
+
+
+def _get_loaded_device(hass: HomeAssistant, entry_id: str) -> HikvisionDevice:
+    """Return the device of a loaded config entry, or raise a readable error."""
+    entry = _get_entry(hass, entry_id)
+    if entry.state is not ConfigEntryState.LOADED:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="entry_not_loaded",
+            translation_placeholders={"name": entry.title, "state": entry.state.value},
+        )
+    return entry.runtime_data
+
+
 def setup_services(hass: HomeAssistant) -> None:
     """Set up the services for the Hikvision component."""
 
     async def handle_reboot(call: ServiceCall):
         """Handle the reboot action call."""
-        entry_id = call.data.get(ATTR_CONFIG_ENTRY_ID)
-        entry = hass.config_entries.async_get_entry(entry_id)
-        device = entry.runtime_data
+        entry = _get_entry(hass, call.data[ATTR_CONFIG_ENTRY_ID])
+        if entry.state is ConfigEntryState.LOADED:
+            device = entry.runtime_data
+        elif entry.state in REBOOT_UNLOADED_STATES and not entry.disabled_by:
+            # A reboot is most needed when setup keeps failing, so connect with the saved settings.
+            device = HikvisionDevice(hass, data=entry.data)
+        else:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="entry_not_loaded",
+                translation_placeholders={"name": entry.title, "state": entry.state.value},
+            )
         try:
             await device.reboot()
         except (HTTPStatusError, ISAPIForbiddenError, ISAPIUnauthorizedError) as ex:
             raise HomeAssistantError(ex.response.content) from ex
+        except httpx.HTTPError as ex:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="cannot_connect",
+                translation_placeholders={"name": entry.title, "error": str(ex) or type(ex).__name__},
+            ) from ex
 
     async def handle_isapi_request(call: ServiceCall) -> ServiceResponse:
         """Handle the custom ISAPI request action call."""
-        entry_id = call.data.get(ATTR_CONFIG_ENTRY_ID)
-        entry = hass.config_entries.async_get_entry(entry_id)
-        device = entry.runtime_data
+        device = _get_loaded_device(hass, call.data[ATTR_CONFIG_ENTRY_ID])
         method = call.data.get("method", "POST")
         path = call.data["path"].strip("/")
         payload = call.data.get("payload")

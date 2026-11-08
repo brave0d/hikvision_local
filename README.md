@@ -94,7 +94,7 @@ Creates an automation that allows to display text overlay on a selected video st
 | `hikvision_local.ptz_stop` | camera entity | Stops a PTZ camera. |
 | `hikvision_local.ptz` | camera entity | ONVIF-style PTZ with the fields Advanced Camera Card sends: `pan` (LEFT, RIGHT), `tilt` (UP, DOWN), `zoom` (ZOOM_IN, ZOOM_OUT), `speed` 0 to 1, `continuous_duration` in seconds, `move_mode` (ContinuousMove, GotoPreset, Stop) and `preset`. |
 | `hikvision_local.update_snapshot` | image entity | Shows a snapshot file (`filename`) in an image entity. Used by the snapshot blueprint. |
-| `hikvision_local.reboot` | `config_entry_id` | Reboots the device. Needs the "Remote: Shutdown/Reboot" permission. |
+| `hikvision_local.reboot` | `config_entry_id` | Reboots the device. Needs the "Remote: Shutdown/Reboot" permission. Also works while the device's setup keeps failing, using its saved address and credentials. |
 | `hikvision_local.isapi_request` | `config_entry_id` | Sends a custom ISAPI request (`method`, `path`, `payload`) and returns the response. POST and PUT change the device's settings, so use them with care. |
 
 Example: pan a PTZ camera left for two seconds.
