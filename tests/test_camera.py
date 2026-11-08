@@ -61,6 +61,23 @@ async def test_camera_snapshot(hass: HomeAssistant, init_integration: MockConfig
 
 @respx.mock
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_camera_snapshot_http_error_page(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
+    """An HTTP error page from the device isn't returned as an image."""
+
+    entity_id = "camera.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_101"
+    camera_entity = get_camera_from_entity_id(hass, entity_id)
+
+    image_url = f"{TEST_HOST}/ISAPI/Streaming/channels/101/picture"
+    route = respx.get(image_url).respond(
+        status_code=401, headers={"Content-Type": "text/html"}, content=b"<html>Unauthorized</html>"
+    )
+
+    assert await camera_entity.async_camera_image() is None
+    assert route.calls.last.request.extensions["timeout"]["read"] == init_integration.runtime_data.timeout
+
+
+@respx.mock
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
 async def test_camera_snapshot_device_error(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
     """Test camera snapshot with 2 attempts."""
 
