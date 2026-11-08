@@ -1,11 +1,14 @@
 """Tests for sensor platform."""
 
+from dataclasses import replace
+from unittest.mock import AsyncMock, patch
+
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.hikvision_local.const import SECONDARY_COORDINATOR
+from custom_components.hikvision_local.const import EVENTS_COORDINATOR, SECONDARY_COORDINATOR
 
 
 @pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
@@ -87,3 +90,24 @@ async def test_alarm_server_sensor_without_coordinator_data(
 
     state = hass.states.get("sensor.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_alarm_server_address")
     assert state.state == "unknown"
+
+
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_storage_sensor_follows_events_coordinator(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """Storage sensors show the state and free space from the latest events coordinator refresh."""
+
+    entity_id = "sensor.ds_7608nxi_i0_0p_s0000000000ccrrj00000000wcvu_1_hdd1"
+    device = init_integration.runtime_data
+    hdd = device.storage[0]
+    updated = replace(hdd, status="error", freespace=hdd.freespace - 1000)
+
+    with patch.object(device, "get_storage_devices", AsyncMock(return_value=[updated])):
+        await device.coordinators[EVENTS_COORDINATOR].async_refresh()
+        await hass.async_block_till_done()
+
+    sensor = hass.states.get(entity_id)
+    assert sensor.state == "ERROR"
+    assert sensor.attributes["freespace"] == hdd.freespace - 1000
