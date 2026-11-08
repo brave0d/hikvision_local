@@ -14,7 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from . import HikvisionConfigEntry
-from .const import CONF_ALARM_SERVER_HOST, SECONDARY_COORDINATOR, SIGNAL_ALERT_RECEIVED
+from .const import CONF_ALARM_SERVER_HOST, EVENTS_COORDINATOR, SECONDARY_COORDINATOR, SIGNAL_ALERT_RECEIVED
 from .isapi import AlertInfo, StorageInfo
 
 NOTIFICATION_HOST_KEYS = [
@@ -40,8 +40,10 @@ async def async_setup_entry(
         for key in NOTIFICATION_HOST_KEYS:
             entities.append(AlarmServerSensor(coordinator, key))
 
+        # The events coordinator refreshes the storage state every few minutes.
+        storage_coordinator = device.coordinators.get(EVENTS_COORDINATOR, coordinator)
         for item in list(device.storage):
-            entities.append(StorageSensor(coordinator, item))
+            entities.append(StorageSensor(storage_coordinator, item))
 
     if device.capabilities.support_alarm_server:
         entities.append(LastAlertSensor(entry))
@@ -97,12 +99,14 @@ class StorageSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return extra attributes."""
+        # The current data, not the one from setup.
+        hdd = self.coordinator.device.get_storage_device_by_id(self.hdd.id) or self.hdd
         attrs = {}
-        attrs["type"] = self.hdd.type
-        attrs["capacity"] = self.hdd.capacity
-        attrs["freespace"] = self.hdd.freespace
-        if self.hdd.ip:
-            attrs["ip"] = self.hdd.ip
+        attrs["type"] = hdd.type
+        attrs["capacity"] = hdd.capacity
+        attrs["freespace"] = hdd.freespace
+        if hdd.ip:
+            attrs["ip"] = hdd.ip
         return attrs
 
 
