@@ -1188,7 +1188,8 @@ class ISAPIClient:
             holiday["holidayMode"]["#text"] = "date"
             holiday["holidayDate"] = {
                 "startDate": today.strftime("%Y-%m-%d"),
-                "endDate": today.replace(year=today.year + 1).strftime("%Y-%m-%d"),
+                # One year ahead; on 29 February there is no such day next year.
+                "endDate": (today + datetime.timedelta(days=365)).strftime("%Y-%m-%d"),
             }
             holiday.pop("holidayWeek", None)
             holiday.pop("holidayMonth", None)
