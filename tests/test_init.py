@@ -289,3 +289,29 @@ async def test_async_setup_entry_dvr_reporting_no_analog_inputs(
     dvr_device = devices[(DOMAIN, device.device_info.serial_no)]
     camera_device = devices[(DOMAIN, device.cameras[0].serial_no)]
     assert camera_device.via_device_id == dvr_device.id
+
+
+@pytest.mark.parametrize("init_integration", [("DS-2CD2386G2-IU", True)], indirect=True)
+async def test_notifications_view_registered_when_first_entry_fails(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """The notifications view is registered by the entry that loads, even when an earlier entry didn't."""
+
+    # Put another entry first, one that never loads.
+    await hass.config_entries.async_remove(init_integration.entry_id)
+    # No mocked responses for its address, so its setup fails.
+    earlier = MockConfigEntry(
+        domain=DOMAIN, data={**TEST_CONFIG, "host": "http://1.0.0.254"}, unique_id="earlier", version=3
+    )
+    earlier.add_to_hass(hass)
+    init_integration = MockConfigEntry(domain=DOMAIN, data=TEST_CONFIG, unique_id="loaded", version=3)
+    init_integration.add_to_hass(hass)
+    assert hass.config_entries.async_entries(DOMAIN)[0] is earlier
+
+    with patch("custom_components.hikvision_local.EventNotificationsView") as view:
+        assert await hass.config_entries.async_setup(init_integration.entry_id)
+        await hass.async_block_till_done()
+
+    assert earlier.state is not ConfigEntryState.LOADED
+    assert init_integration.state is ConfigEntryState.LOADED
+    view.assert_called_once_with(hass)
