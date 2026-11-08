@@ -291,3 +291,17 @@ async def test_motion_detection_toggle_keeps_grid_only_areas(mock_isapi, model: 
     expected = xmltodict.parse(xmltodict.unparse(original))["MotionDetection"]
     expected["enabled"] = new_state
     assert sent == expected
+
+
+@respx.mock
+@pytest.mark.parametrize("init_integration", ["DS-7608NXI-I2"], indirect=True)
+async def test_holiday_mode_on_29_february(hass: HomeAssistant, init_integration: MockConfigEntry, freezer) -> None:
+    """Holiday mode turned on on 29 February runs for a year, to 28 February."""
+
+    freezer.move_to("2028-02-29 12:00:00")
+    endpoint = respx.put(f"{TEST_HOST}/ISAPI/System/Holidays").respond()
+
+    await init_integration.runtime_data.set_holiday_enabled_state(True)
+
+    holiday = xmltodict.parse(endpoint.calls.last.request.content)["HolidayList"]["holiday"][0]
+    assert holiday["holidayDate"] == {"startDate": "2028-02-29", "endDate": "2029-02-28"}

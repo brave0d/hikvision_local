@@ -94,6 +94,16 @@ def normalize_event_id(event_type: str) -> str:
     return EVENTS_ALTERNATE_ID.get(event_id, event_id)
 
 
+def _same_address(a: str | None, b: str | None) -> bool:
+    """Compare IP addresses by value and hostnames without case."""
+    if not a or not b:
+        return False
+    try:
+        return ipaddress.ip_address(a) == ipaddress.ip_address(b)
+    except ValueError:
+        return a.lower() == b.lower()
+
+
 def event_channel_suffix(*values: str | None) -> int:
     """Return the channel from the first value with a suffix such as facedetection-1, or 0."""
     for value in values:
@@ -1034,7 +1044,7 @@ class ISAPIClient:
 
         if mutex_list := response.get("MutexFunctionList"):
             for mutex_item in mutex_list:
-                mutex_event_id = mutex_item.get("mutexFunction")
+                mutex_event_id = (mutex_item.get("mutexFunction") or "").lower()
                 if EVENTS_ALTERNATE_ID.get(mutex_event_id):
                     mutex_event_id = EVENTS_ALTERNATE_ID[mutex_event_id]
 
@@ -1188,7 +1198,8 @@ class ISAPIClient:
             holiday["holidayMode"]["#text"] = "date"
             holiday["holidayDate"] = {
                 "startDate": today.strftime("%Y-%m-%d"),
-                "endDate": today.replace(year=today.year + 1).strftime("%Y-%m-%d"),
+                # One year ahead; on 29 February there is no such day next year.
+                "endDate": (today + datetime.timedelta(days=365)).strftime("%Y-%m-%d"),
             }
             holiday.pop("holidayWeek", None)
             holiday.pop("holidayMonth", None)
@@ -1215,7 +1226,7 @@ class ISAPIClient:
 
         return AlarmServer(
             ip_address=host.get("ipAddress"),
-            port_no=int(host.get("portNo")),
+            port_no=int(host["portNo"]) if host.get("portNo") else None,
             url=host.get("url"),
             protocol_type=host.get("protocolType"),
             host_name=host.get("hostName"),
@@ -1230,13 +1241,14 @@ class ISAPIClient:
             return
         host = self._get_event_notification_host(data)
 
-        old_address = host.get("ipAddress") if host.get("addressingFormatType") == "ipaddress" else host.get("hostname")
+        old_address = host.get("ipAddress") if host.get("addressingFormatType") == "ipaddress" else host.get("hostName")
+        port = address.port or (443 if address.scheme == "https" else 80)
 
         if (
-            host["protocolType"] == address.scheme.upper()
-            and old_address == address.hostname
-            and host.get("portNo") == str(address.port)
-            and host["url"] == path
+            host.get("protocolType") == address.scheme.upper()
+            and _same_address(old_address, address.hostname)
+            and str(host.get("portNo")) == str(port)
+            and host.get("url") == path
         ):
             return
         host["url"] = path
@@ -1258,7 +1270,7 @@ class ISAPIClient:
             del host["ipAddress"]
             host["hostName"] = address.hostname
 
-        host["portNo"] = address.port or (443 if address.scheme == "https" else 80)
+        host["portNo"] = port
         host["httpAuthenticationMethod"] = "none"
 
         xml = xmltodict.unparse(data)
@@ -1295,7 +1307,11 @@ class ISAPIClient:
         event_id = alert.get("eventType")
         if not event_id or event_id == "duration":
             # <EventNotificationAlert version="2.0"
-            event_id = deep_get(alert, "DurationList.Duration.relationEvent", "")
+            duration = deep_get(alert, "DurationList.Duration", {})
+            if isinstance(duration, list):
+                # Several events at once: take the first
+                duration = duration[0] if duration else {}
+            event_id = duration.get("relationEvent", "") if isinstance(duration, dict) else ""
         raw_event_type = event_id
         event_id = normalize_event_id(event_id)
 

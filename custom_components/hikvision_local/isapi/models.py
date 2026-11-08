@@ -10,7 +10,7 @@ class AlarmServer:
 
     ip_address: str
     host_name: str
-    port_no: int
+    port_no: int | None
     url: str
     protocol_type: str
 
