@@ -2,15 +2,15 @@
 Everybody is invited and welcome to contribute to hikvision_local integration.
 
 -   Pull requests are created against the [**main**](https://github.com/brave0d/hikvision_local/tree/main) branch.
-- Code must follow [Home Assistant code style guidelines](https://developers.home-assistant.io/docs/development_guidelines)
+- Code must follow [Home Assistant code style guidelines](https://contributors.home-assistant.io/core/development/style/)
 - Line length limit must be 120 characters
 - Code is formatted and linted with ruff (`ruff format` and `ruff check`); `pre-commit install` runs both before each commit
 - One change per commit, with a semantic prefix: `feat`, `fix`, `refactor`, `test`, `chore` or `docs`
 - Pull requests are squash-merged; the PR title becomes the commit on `main`
 
 ## Development Environment
-1. Set up the Home Assistant core devcontainer with the [devcontainer guide](https://developers.home-assistant.io/docs/setup_devcontainer_environment) (on Windows it sets up WSL2 first), then follow [Set up development environment](https://developers.home-assistant.io/docs/development_environment/).
-2. Mount the integration into the devcontainer's config directory in `.devcontainer/devcontainer.json` of your core checkout:
+1. Set up the Home Assistant core development container as [Set up the development environment](https://contributors.home-assistant.io/core/development/environment/#development-container) describes. On Windows it runs inside WSL2.
+2. Mount the integration into the container's config directory in `.devcontainer/devcontainer.json` of your core checkout. On Windows, clone hikvision_local inside WSL2 too and use its WSL path as the source:
 ```json
   "mounts": [
     "source=/path/on/your/disk/hikvision_local/custom_components/hikvision_local,target=${containerWorkspaceFolder}/config/custom_components/hikvision_local,type=bind"
@@ -43,7 +43,7 @@ This approach should make it easier to develop this integration for an even grea
 
 ### Test Environment on Windows
 
-Home Assistant development on Windows needs WSL. Set it up as the [Home Assistant developer documentation](https://developers.home-assistant.io/docs/development_environment/#developing-on-windows) describes, then follow the steps above inside it.
+Home Assistant development on Windows runs inside WSL2. Set it up as [Install Docker on Windows](https://contributors.home-assistant.io/core/development/environment/#install-docker-on-windows) describes, then follow the steps above inside it.
 
 #### Run the tests in Docker
 If you just want to run the tests, you can use Docker instead:
