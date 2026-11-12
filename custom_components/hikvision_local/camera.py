@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.camera import Camera, CameraEntityFeature
+from homeassistant.components.camera import Camera, CameraEntityCapabilities, CameraEntityFeature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
@@ -10,11 +10,6 @@ from homeassistant.util import slugify
 from . import HikvisionConfigEntry
 from .hikvision_device import HikvisionDevice
 from .isapi import AnalogCamera, CameraStreamInfo, IPCamera
-
-try:
-    from homeassistant.components.camera import CameraEntityCapabilities
-except ImportError:  # Home Assistant 2026.10
-    CameraEntityCapabilities = None
 
 # deviceType of cameras; recorders report NVR, DVR or IPC
 CAMERA_DEVICE_TYPES = ("IPCamera", "IPDome")
@@ -63,11 +58,7 @@ class HikvisionCamera(Camera):
 
         # go2rtc sends the talk audio over the RTSP backchannel. Cameras with a speaker offer it. NVRs
         # don't offer it for their channels, only ISAPI talk, which go2rtc in Home Assistant can't use.
-        if (
-            CameraEntityCapabilities
-            and device.device_info.device_type in CAMERA_DEVICE_TYPES
-            and device.capabilities.audio_outputs
-        ):
+        if device.device_info.device_type in CAMERA_DEVICE_TYPES and device.capabilities.audio_outputs:
             self._attr_camera_entity_capabilities = CameraEntityCapabilities(two_way_audio=True)
 
     async def stream_source(self) -> str | None:
