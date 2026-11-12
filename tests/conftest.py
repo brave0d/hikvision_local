@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 import respx
 import xmltodict
 
@@ -44,9 +44,15 @@ TEST_CONFIG_OUTSIDE_NETWORK = {
 }
 
 
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
-    yield
+@pytest.fixture
+def respx_mock():
+    """Mock httpx requests.
+
+    Replaces the fixture of respx's pytest plugin, which is disabled in pyproject.toml so that Home
+    Assistant 2026.11 can alias httpx to httpx2 before respx imports it.
+    """
+    with respx.mock:
+        yield respx.mock
 
 
 # Home Assistant logs these instead of failing the test, which hid the HA 2026.9 via_device breakage.

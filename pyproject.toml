@@ -12,5 +12,8 @@ combine-as-imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Home Assistant 2026.11 aliases httpx to httpx2, which fails once respx has imported httpx.
+# tests/conftest.py provides the respx_mock fixture instead of the plugin.
+addopts = "-p no:respx"
 testpaths = ["tests"]
 markers = ["generated_entity_ids: keep the entity IDs Home Assistant generates instead of the pre-2.0 IDs"]

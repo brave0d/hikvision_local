@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import issue_registry as ir
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.hikvision_local.const import CONF_ALARM_SERVER_HOST, CONF_SET_ALARM_SERVER, DOMAIN, OLD_DOMAIN
 from custom_components.hikvision_local.isapi import ISAPIUnauthorizedError

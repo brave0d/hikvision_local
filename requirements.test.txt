@@ -1,6 +1,6 @@
 # Home Assistant test harness, pinned to the latest stable release we support.
 # Dependabot keeps this pin current.
-pytest-homeassistant-custom-component==0.13.373
+pytest-homeassistant==2026.11.1
 
 # Integration requirements (manifest.json)
 xmltodict>=0.13.0

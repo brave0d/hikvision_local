@@ -7,7 +7,7 @@ from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, STATE_OFF, STA
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 import respx
 
 from custom_components.hikvision_local.hikvision_device import HikvisionDevice
