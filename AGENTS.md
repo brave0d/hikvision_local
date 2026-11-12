@@ -13,7 +13,7 @@ Conventions for automated contributors to this repository. People should read
 
 ## Environment
 
-- Python 3.14, Home Assistant 2026.11 or later (minimum in `hacs.json`).
+- Python 3.14.2 or later, Home Assistant 2026.11 or later (minimum in `hacs.json`).
 - `pip install -r requirements.test.txt`, then `pytest`, `ruff check custom_components tests` and
   `ruff format --check custom_components tests`. CI runs the same commands.
 
