@@ -2,33 +2,31 @@
 Everybody is invited and welcome to contribute to hikvision_local integration.
 
 -   Pull requests are created against the [**main**](https://github.com/brave0d/hikvision_local/tree/main) branch.
-- Code must follow [Home Assistant code style guidelines](https://developers.home-assistant.io/docs/development_guidelines)
+- Code must follow [Home Assistant code style guidelines](https://contributors.home-assistant.io/core/development/style/)
 - Line length limit must be 120 characters
 - Code is formatted and linted with ruff (`ruff format` and `ruff check`); `pre-commit install` runs both before each commit
 - One change per commit, with a semantic prefix: `feat`, `fix`, `refactor`, `test`, `chore` or `docs`
 - Pull requests are squash-merged; the PR title becomes the commit on `main`
 
 ## Development Environment
-1. Set up devcontainer using guide at https://developers.home-assistant.io/docs/development_environment/
-2. Mount the integration repo in `.devcontainer/devcontainer.json`
-```
+1. Set up the Home Assistant core development container as [Set up the development environment](https://contributors.home-assistant.io/core/development/environment/#development-container) describes. On Windows it runs inside WSL2.
+2. Mount the integration into the container's config directory in `.devcontainer/devcontainer.json` of your core checkout. On Windows, clone hikvision_local inside WSL2 too and use its WSL path as the source:
+```json
   "mounts": [
-    "source=/path/on/your/disk/hikvision_local/custom_components/hikvision_local,
-    target=${containerWorkspaceFolder}/config/custom_components/hikvision_local,
-    type=bind"
+    "source=/path/on/your/disk/hikvision_local/custom_components/hikvision_local,target=${containerWorkspaceFolder}/config/custom_components/hikvision_local,type=bind"
   ]
 ```
-3. Run / Start Debugging
+3. Rebuild the container, then run the **Run Home Assistant Core** task or start debugging.
 
 NOTE: the first container build and launch Home Assistant may take longer.
 
 ## Test Environment
 
-Install Python 3.14 or later and project dependencies:
+Install Python 3.14.2 or later and project dependencies:
 ```
 pip install -r requirements.test.txt
 ```
-and run `pytest`. CI runs the tests on the minimum supported Home Assistant (see `hacs.json`) and on the latest stable release. For running tests in debug mode vscode is recommended.
+and run `pytest`. The tests use [pytest-homeassistant](https://github.com/home-assistant/core/tree/dev/packages/pytest-homeassistant), the test package Home Assistant publishes with each release; its README lists the fixtures and helpers it provides. CI runs the tests on the minimum supported Home Assistant (see `hacs.json`) and on the latest stable release. For running tests in debug mode vscode is recommended.
 
 There are 2 types of tests:
 
@@ -43,91 +41,26 @@ The fixtures can be recorded for any device in the Device Info window by clickin
 
 This approach should make it easier to develop this integration for an even greater number of devices without the need for physical access to the device.
 
-### NOTE: Test Environment on Windows
+### Test Environment on Windows
 
-If you develop on Windows, Home Assistant's test harness has some limits when you want to run the unit tests.
+Home Assistant development on Windows runs inside WSL2. Set it up as [Install Docker on Windows](https://contributors.home-assistant.io/core/development/environment/#install-docker-on-windows) describes, then follow the steps above inside it.
 
-See this [issue](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154) for more detail.
+#### Run the tests in Docker
+If you just want to run the tests, you can use Docker instead:
 
-#### RUN Test Environment on Windows
-If you just want run the tests, the simplest way is to use docker on your PC:
+1. Install [Docker](https://docs.docker.com/desktop/setup/install/windows-install/).
 
-1. Install [docker](https://docs.docker.com/desktop/setup/install/windows-install/)
-
-2. in a cmd window run:
+2. In a cmd window run:
 ```
 REM go to your hikvision_local directory. example:
 cd C:\Users\john\Documents\github\hikvision_local
 
 REM Build a docker container
-docker build -f run_test.dockerfile -t mine/pytest-homeassistant-custom-component:latest .
+docker build -f run_test.dockerfile -t hikvision-local-tests:latest .
 
 REM Clear console and Run test in your container
-cls && docker run --rm -v .:/app mine/pytest-homeassistant-custom-component:latest
+cls && docker run --rm -v .:/app hikvision-local-tests:latest
 ```
 
-#### DEBUG Test Environment in VS Code on windows
-If you want to debug the tests in Visual Studio Code:
-
-1. Install [docker](https://docs.docker.com/desktop/setup/install/windows-install/)
-
-2. Configure VS Code tasks(in ./vscode/task.json)
-```
-{
-    "tasks": [
-        {
-          "label": "docker-build phcc",
-          "type": "docker-build",
-          "platform": "python",
-          "dockerBuild":{
-            "context": "${workspaceFolder}",
-            "dockerfile":"${workspaceFolder}/run_test.dockerfile",
-            "tag":"minevs/pytest-homeassistant-custom-component:latest"
-          }
-        },
-        {
-            "label": "docker-run: debug",
-            "type": "docker-run",
-            "dependsOn": ["docker-build phcc"],
-            "python": {
-              "args": ["."],
-              "module": "pytest"
-            },
-            "dockerRun":{
-                "image":"minevs/pytest-homeassistant-custom-component:latest",
-                "volumes":[{
-                    "localPath":"${workspaceFolder}",
-                    "containerPath": "/app"
-                }]
-            }
-        }
-    ]
-}
-```
-
-3. Configure VS Code launcher(in ./vscode/launch.json)
-```
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-          "name": "Docker: Python tests debug",
-          "type": "docker",
-          "request": "launch",
-          "preLaunchTask": "docker-run: debug",
-          "python": {
-            "pathMappings": [
-              {
-                "localRoot": "${workspaceFolder}",
-                "remoteRoot": "/app"
-              }
-            ]
-          }
-        }
-    ]
-}
-```
-
-4. add a breakpoint
-
-5. run the "Docker: Python tests debug" job in VS Code
+#### Debug the tests in VS Code with Docker
+The repository's `.vscode/tasks.json` builds the same image and starts pytest in it, and `.vscode/launch.json` attaches the debugger. Install [Docker](https://docs.docker.com/desktop/setup/install/windows-install/), add a breakpoint, then run "Docker: Python tests debug" (or "Docker: Python tests debug 1 file") in VS Code.
