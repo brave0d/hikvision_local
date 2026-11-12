@@ -45,7 +45,7 @@ This approach should make it easier to develop this integration for an even grea
 
 ### NOTE: Test Environment on Windows
 
-If you develop on windows, there are some limits with pytest-homeassistant-custom-component when you want to run the unit tests
+If you develop on Windows, Home Assistant's test harness has some limits when you want to run the unit tests.
 
 See this [issue](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154) for more detail.
 

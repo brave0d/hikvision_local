@@ -20,7 +20,7 @@ body:
     id: versions
     attributes:
       label: Home Assistant and integration versions
-      placeholder: Home Assistant 2026.10.2, Hikvision Local 2.0.0
+      placeholder: Home Assistant 2026.11.1, Hikvision Local 2.2.0
     validations:
       required: true
   - type: textarea

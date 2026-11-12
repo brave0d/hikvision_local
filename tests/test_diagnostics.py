@@ -5,7 +5,7 @@ import re
 
 from homeassistant.core import HomeAssistant
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.hikvision_local.diagnostics import anonymise_data, async_get_config_entry_diagnostics
 

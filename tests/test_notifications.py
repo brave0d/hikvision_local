@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry, async_capture_events
+from pytest_homeassistant.common import MockConfigEntry, async_capture_events
 
 from custom_components.hikvision_local.const import HIKVISION_EVENT, RTSP_PORT_FORCED
 from custom_components.hikvision_local.notifications import EventNotificationsView

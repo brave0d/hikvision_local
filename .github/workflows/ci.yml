@@ -37,7 +37,7 @@ jobs:
         include:
           # Minimum supported Home Assistant, as declared in hacs.json.
           - name: min
-            harness: "pytest-homeassistant-custom-component==0.13.371"
+            harness: "pytest-homeassistant==2026.11.0"
           # Latest stable: the pin in requirements.test.txt, kept current by Dependabot.
           - name: latest
             harness: ""
@@ -52,7 +52,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -n "${{ matrix.harness }}" ]; then
-            sed -i "s/^pytest-homeassistant-custom-component==.*/${{ matrix.harness }}/" requirements.test.txt
+            sed -i "s/^pytest-homeassistant==.*/${{ matrix.harness }}/" requirements.test.txt
             grep -qx "${{ matrix.harness }}" requirements.test.txt
           fi
           pip install -r requirements.test.txt
@@ -85,7 +85,7 @@ jobs:
         include:
           # Newest harness, including beta releases of Home Assistant.
           - name: beta
-          # Home Assistant from the dev branch, on top of the newest harness.
+          # Home Assistant and its test package from the dev branch.
           - name: dev
     steps:
       - uses: actions/checkout@v7
@@ -95,11 +95,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          sed -i "/^pytest-homeassistant-custom-component==/d" requirements.test.txt
+          sed -i "/^pytest-homeassistant==/d" requirements.test.txt
           pip install -r requirements.test.txt
-          pip install --pre --upgrade pytest-homeassistant-custom-component
           if [ "${{ matrix.name }}" = "dev" ]; then
-            pip install --upgrade "https://github.com/home-assistant/core/archive/refs/heads/dev.tar.gz"
+            core="https://github.com/home-assistant/core/archive/refs/heads/dev.tar.gz"
+            pip install --upgrade "$core" "pytest-homeassistant @ $core#subdirectory=packages/pytest-homeassistant"
+          else
+            pip install --pre --upgrade pytest-homeassistant
           fi
           python -c "from homeassistant.const import __version__; print('Home Assistant', __version__)"
       - name: Run pytest

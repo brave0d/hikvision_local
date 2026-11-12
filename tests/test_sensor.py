@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.hikvision_local.const import EVENTS_COORDINATOR, SECONDARY_COORDINATOR
 
