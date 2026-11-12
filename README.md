@@ -28,7 +28,7 @@ Hikvision Local uses its own domain, `hikvision_local`, so it can be installed n
 - Image entities for the latest snapshots
 - Audio alarm settings for cameras with a speaker: alarm sound, volume and how many times it plays, plus a button that plays the alarm once to test it
 - Recordings browser: play recordings from the camera's SD card or the NVR's disks in the Home Assistant media browser, with alarm events marked, and each camera's live view next to them
-- Two-way audio for cameras with a speaker (Home Assistant 2026.11 and later): talk through the camera from its live view. Turn on the "Two-way audio" preview under Settings > System > Labs. It needs WebRTC (Home Assistant's built-in go2rtc), and the browser allows the microphone only when Home Assistant is opened over HTTPS. Cameras connected to an NVR don't get it: NVRs offer talk only through ISAPI, not on the RTSP stream that Home Assistant uses (checked on a DS-7604NXI).
+- Two-way audio for cameras with a speaker: talk through the camera from its live view. Turn on the "Two-way audio" preview under Settings > System > Labs. It needs WebRTC (Home Assistant's built-in go2rtc), and the browser allows the microphone only when Home Assistant is opened over HTTPS. Cameras connected to an NVR don't get it: NVRs offer talk only through ISAPI, not on the RTSP stream that Home Assistant uses (checked on a DS-7604NXI).
 - PTZ actions: `ptz_move`, `ptz_stop`, and an ONVIF-style `ptz` action for cards such as Advanced Camera Card
 - Supplement light (ColorVu white light, IR) as light entities, also for cameras connected to an NVR. Turning the light off sets the camera's supplement light mode to off (`close`) until it's turned on again, so the camera has no light at night meanwhile.
 - Connection status of each IP camera connected to an NVR, as a diagnostic binary sensor
@@ -122,21 +122,15 @@ The scope supported features depends on device model, setup and firmware version
 
 [<img src="https://my.home-assistant.io/badges/hacs_repository.svg">](https://my.home-assistant.io/redirect/hacs_repository/?owner=brave0d&repository=hikvision_local&category=integration)
 
-The button above opens the repository in the Marketplace (Home Assistant 2026.11 and later) or in HACS (2026.10).
+Hikvision Local needs Home Assistant 2026.11 or later.
 
-### With the Marketplace (Home Assistant 2026.11 and later)
+### With the Marketplace
 
 1. Press the button above. The Marketplace, under `Settings / Marketplace`, offers to add the repository as a custom repository, then to download `Hikvision Local`. It needs a GitHub connection.
 2. Integrations with a setup dialog load without a restart. On the `Settings / Devices & Services` page press `+ Add Integration`.
 3. Search for `Hikvision Local` and add your Hikvision device using the setup dialog. Repeat the last 2 steps for more devices.
 
 Updates appear under `Settings / Updates`.
-
-### With HACS (Home Assistant 2026.10)
-
-1. In HACS, open the three-dot menu, choose `Custom repositories`, add `https://github.com/brave0d/hikvision_local` with type `Integration`, then search for `Hikvision Local` and press `Download`
-2. on `Settings / Devices & Services` page press `+ Add Integration`
-3. Search for `Hikvision Local` and add your Hikvision device using config dialog, repeat the last 2 steps for more devices
 
 If you installed Hikvision Local with HACS, upgrading Home Assistant to 2026.11 moves it to the Marketplace with your other downloads; it keeps receiving updates.
 
@@ -150,7 +144,7 @@ If you installed Hikvision Local with HACS, upgrading Home Assistant to 2026.11 
 ### Removal
 
 1. On the `Settings / Devices & Services` page, open `Hikvision Local`, open the three-dot menu of the device and choose `Delete`. If the integration set the device's Notifications Host, it is reset to `http://0.0.0.0:80/`; otherwise reset it in the device's web interface so the device stops sending events.
-2. To remove the integration completely, remove `Hikvision Local` in the Marketplace or HACS (or delete `config/custom_components/hikvision_local`) and restart Home Assistant.
+2. To remove the integration completely, remove `Hikvision Local` in the Marketplace (or delete `config/custom_components/hikvision_local`) and restart Home Assistant.
 
 ## Hikvision device setup checklist
 
